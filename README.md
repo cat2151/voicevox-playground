@@ -14,19 +14,17 @@ VOICEVOX ローカルサーバーと連携し、テキストを音声に変換�
 VOICEVOXのローカルサーバーが起動していることが必要です。
 
 1. [VOICEVOX](https://voicevox.hiroshiba.jp/)をダウンロードしてインストール
-2. VOICEVOXを起動（ポート50021でHTTPサーバーが起動します）。GitHub Pages版（`https://cat2151.github.io/voicevox-playground/`）やローカル開発サーバー（`http://localhost:5173`）からアクセスする場合はCORSの許可が必要です。以下のように起動すると両方のオリジンを許可できます。
+2. VOICEVOXエンジンを起動（ポート50021でHTTPサーバーが起動します）。GitHub Pages版（`https://cat2151.github.io/voicevox-playground/`）からアクセスする場合は、CORSを許可した状態で以下のコマンドを使用してください。
 
-   ```powershell
-   VOICEVOX.exe --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173
+   ```bash
+   <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io
    ```
 
-   GUIを開かずサーバーだけ起動したい場合は以下を使用できます。
+   ローカル開発サーバー（`npm run dev` が提供する `http://localhost:5173`）からも利用する場合は、上記に続けて `http://localhost:5173` も追加してください。
 
-   ```powershell
-   VOICEVOX.exe run --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173
+   ```bash
+   <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173
    ```
-
-   既に起動している場合は <http://127.0.0.1:50021/setting> を開き、上記オリジンを追加して保存後にエンジンを再起動してください。
 
 ## 開発
 
