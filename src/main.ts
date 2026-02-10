@@ -5,6 +5,7 @@ const VOICEVOX_API_BASE = 'http://localhost:50021';
 const ZUNDAMON_SPEAKER_ID = 3; // ずんだもんのスピーカーID
 const REQUEST_TIMEOUT_MS = 10000; // 10 second timeout
 const AUTO_PLAY_DEBOUNCE_MS = 700;
+const WAVEFORM_TARGET_RATIO = 0.8;
 
 // VOICEVOX API types (minimal interface based on API documentation)
 interface AudioQuery {
@@ -58,6 +59,7 @@ const colorVariableCache: Record<string, string> = {};
 let isProcessing = false;
 let autoPlayTimer: number | null = null;
 let lastSynthesizedBuffer: ArrayBuffer | null = null;
+const audioCache = new Map<string, ArrayBuffer>();
 
 function invalidateColorVariableCache() {
   cachedRootComputedStyle = null;
@@ -105,6 +107,12 @@ function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
   const { ctx, width, height } = prepareCanvas(canvas);
   if (!ctx) return;
   const channelData = buffer.getChannelData(0);
+  const maxAbs = channelData.reduce((max, value) => {
+    const abs = Math.abs(value);
+    return abs > max ? abs : max;
+  }, 0);
+  const amplitudeScale =
+    (height * 0.5 * WAVEFORM_TARGET_RATIO) / (maxAbs > 0 ? maxAbs : 1);
   const samplesPerPixel = Math.max(1, Math.floor(channelData.length / width));
 
   ctx.clearRect(0, 0, width, height);
@@ -120,15 +128,15 @@ function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
   ctx.beginPath();
   for (let x = 0; x < width; x++) {
     const start = x * samplesPerPixel;
-    let min = 1;
-    let max = -1;
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
     for (let i = 0; i < samplesPerPixel && start + i < channelData.length; i++) {
       const v = channelData[start + i];
       if (v < min) min = v;
       if (v > max) max = v;
     }
-    const y1 = ((1 - max) * height) / 2;
-    const y2 = ((1 - min) * height) / 2;
+    const y1 = height / 2 - max * amplitudeScale;
+    const y2 = height / 2 - min * amplitudeScale;
     ctx.moveTo(x, y1);
     ctx.lineTo(x, y2);
   }
@@ -147,13 +155,23 @@ function drawRealtimeWaveform(values: Float32Array, canvas: HTMLCanvasElement) {
   ctx.lineTo(width, height / 2);
   ctx.stroke();
 
+  let maxAbs = 0;
+  for (let i = 0; i < values.length; i++) {
+    const v = Math.abs(values[i]);
+    if (Number.isFinite(v) && v > maxAbs) {
+      maxAbs = v;
+    }
+  }
+  const amplitudeScale =
+    (height * 0.5 * WAVEFORM_TARGET_RATIO) / (maxAbs > 0 ? maxAbs : 1);
+
   const step = values.length / width;
   ctx.strokeStyle = getColorVariable('--accent-color', '#4caf50');
   ctx.beginPath();
   for (let x = 0; x < width; x++) {
     const index = Math.floor(x * step);
-    const v = values[index] ?? 0;
-    const y = (0.5 - v / 2) * height;
+    const v = Number.isFinite(values[index]) ? values[index] : 0;
+    const y = height / 2 - v * amplitudeScale;
     if (x === 0) {
       ctx.moveTo(x, y);
     } else {
@@ -163,38 +181,67 @@ function drawRealtimeWaveform(values: Float32Array, canvas: HTMLCanvasElement) {
   ctx.stroke();
 }
 
-function drawSpectrogram(values: Float32Array, canvas: HTMLCanvasElement, x: number) {
-  const { ctx, width, height, dpr } = prepareCanvas(canvas);
-  if (!ctx) return x;
-  if (x >= width) {
-    if (width > 1) {
-      const shift = Math.max(1, Math.round(dpr));
-      ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.drawImage(canvas, shift, 0, canvas.width - shift, canvas.height, 0, 0, canvas.width - shift, canvas.height);
-      ctx.restore();
-      x = width - 1;
-    } else {
-      x = 0;
+function determineSpectrogramCeiling(values: Float32Array, previousCeiling: number) {
+  let maxMagnitude = -Infinity;
+  for (let i = 0; i < values.length; i++) {
+    const magnitude = Number.isFinite(values[i]) ? values[i] : -120;
+    if (magnitude > maxMagnitude) {
+      maxMagnitude = magnitude;
     }
   }
+  const threshold = maxMagnitude - 40;
+  let highestIndex = 1;
+  for (let i = 0; i < values.length; i++) {
+    const magnitude = Number.isFinite(values[i]) ? values[i] : -120;
+    if (magnitude >= threshold) {
+      highestIndex = i;
+    }
+  }
+  const target = Math.min(values.length - 1, Math.max(highestIndex, 1));
+  const smoothed = Number.isFinite(previousCeiling) && previousCeiling > 0
+    ? Math.max(target, Math.floor(previousCeiling * 0.85))
+    : target;
+  return Math.min(values.length - 1, Math.max(smoothed, 1));
+}
+
+function drawSpectrogram(
+  values: Float32Array,
+  canvas: HTMLCanvasElement,
+  progress: number,
+  frequencyCeiling: number,
+  lastX: number
+) {
+  const { ctx, width, height } = prepareCanvas(canvas);
+  if (!ctx || width === 0) return lastX;
 
   const accent = getColorVariable('--accent-color', '#4caf50');
   const background = getColorVariable('--bg-color', '#ffffff');
-  ctx.fillStyle = background;
-  ctx.fillRect(x, 0, 1, height);
+  const cappedCeiling = Math.max(1, Math.min(frequencyCeiling, values.length - 1));
+  const targetX = Math.max(0, Math.min(width - 1, Math.floor(progress * (width - 1))));
 
-  for (let y = 0; y < height; y++) {
-    const dataIndex = Math.floor((y / height) * values.length);
-    const magnitude = Number.isFinite(values[dataIndex]) ? values[dataIndex] : -120;
-    const normalized = Math.max(Math.min((magnitude + 120) / 120, 1), 0);
-    ctx.fillStyle = accent;
-    ctx.globalAlpha = normalized;
-    ctx.fillRect(x, height - y - 1, 1, 1);
+  if (targetX < lastX) {
+    ctx.clearRect(0, 0, width, height);
+    lastX = -1;
+  }
+
+  const startX = Math.max(lastX + 1, 0);
+  for (let drawX = startX; drawX <= targetX; drawX++) {
+    ctx.fillStyle = background;
+    ctx.globalAlpha = 1;
+    ctx.fillRect(drawX, 0, 1, height);
+
+    for (let y = 0; y < height; y++) {
+      const dataIndex = Math.floor((y / height) * (cappedCeiling + 1));
+      const magnitude = Number.isFinite(values[dataIndex]) ? values[dataIndex] : -120;
+      const normalized = Math.max(Math.min((magnitude + 120) / 120, 1), 0);
+      ctx.fillStyle = accent;
+      ctx.globalAlpha = normalized;
+      ctx.fillRect(drawX, height - y - 1, 1, 1);
+    }
   }
   ctx.globalAlpha = 1;
 
-  return x + 1;
+  return targetX;
 }
 
 function initializeVisualizationCanvases() {
@@ -353,7 +400,10 @@ async function playAudio(
   player.start();
 
   let animationId: number | null = null;
-  let spectrogramX = 0;
+  let spectrogramX = -1;
+  let spectrogramCeiling = fftAnalyser ? fftAnalyser.size : 0;
+  const playbackDurationMs = Math.max(decodedBuffer.duration * 1000, 1);
+  const startTime = performance.now();
 
   const render = () => {
     if (waveformAnalyser && realtimeCanvas) {
@@ -363,7 +413,10 @@ async function playAudio(
 
     if (fftAnalyser && spectrogramCanvas) {
       const values = fftAnalyser.getValue() as Float32Array;
-      spectrogramX = drawSpectrogram(values, spectrogramCanvas, spectrogramX);
+      spectrogramCeiling = determineSpectrogramCeiling(values, spectrogramCeiling || values.length - 1);
+      const elapsed = performance.now() - startTime;
+      const progress = Math.min(elapsed / playbackDurationMs, 0.999);
+      spectrogramX = drawSpectrogram(values, spectrogramCanvas, progress, spectrogramCeiling, spectrogramX);
     }
 
     animationId = requestAnimationFrame(render);
@@ -415,6 +468,7 @@ async function handlePlay() {
   const renderedCanvas = document.getElementById('renderedWaveform') as HTMLCanvasElement | null;
   const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
   const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
+  const loopCheckbox = document.getElementById('loopCheckbox') as HTMLInputElement | null;
   
   if (!textArea || !playButton) {
     console.error('Required UI elements not found');
@@ -438,13 +492,24 @@ async function handlePlay() {
   initializeVisualizationCanvases();
   
   try {
-    // Step 1: Get audio query
-    showStatus('音声クエリを作成中...', 'info');
-    const audioQuery = await getAudioQuery(text, ZUNDAMON_SPEAKER_ID);
-    
-    // Step 2: Synthesize audio
-    showStatus('音声を生成中...', 'info');
-    const audioBuffer = await synthesize(audioQuery, ZUNDAMON_SPEAKER_ID);
+    let audioBuffer: ArrayBuffer;
+    let usedCache = false;
+
+    if (audioCache.has(text)) {
+      audioBuffer = audioCache.get(text) as ArrayBuffer;
+      usedCache = true;
+      showStatus('キャッシュから再生します...', 'info');
+    } else {
+      // Step 1: Get audio query
+      showStatus('音声クエリを作成中...', 'info');
+      const audioQuery = await getAudioQuery(text, ZUNDAMON_SPEAKER_ID);
+      
+      // Step 2: Synthesize audio
+      showStatus('音声を生成中...', 'info');
+      audioBuffer = await synthesize(audioQuery, ZUNDAMON_SPEAKER_ID);
+      audioCache.set(text, audioBuffer);
+    }
+
     lastSynthesizedBuffer = audioBuffer;
     const audioContext = Tone.getContext().rawContext as BaseAudioContext;
     const decodedBuffer = await audioContext.decodeAudioData(audioBuffer.slice(0));
@@ -454,11 +519,23 @@ async function handlePlay() {
     }
     
     // Step 3: Play audio
-    showStatus('音声を再生中...', 'info');
+    if (!usedCache) {
+      showStatus('音声を再生中...', 'info');
+    } else {
+      showStatus('音声を再生中（キャッシュ）...', 'info');
+    }
     await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas);
     
     showStatus('再生完了！', 'success');
     setTimeout(hideStatus, 3000);
+
+    if (loopCheckbox?.checked) {
+      setTimeout(() => {
+        if (loopCheckbox.checked) {
+          void handlePlay();
+        }
+      }, 0);
+    }
   } catch (error) {
     console.error('Error:', error);
     showStatus(
@@ -477,6 +554,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
   const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
   const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
+  const usageToggleButton = document.getElementById('usageToggleButton') as HTMLButtonElement | null;
+  const usagePanel = document.getElementById('usagePanel');
   
   if (playButton) {
     playButton.addEventListener('click', handlePlay);
@@ -490,6 +569,18 @@ document.addEventListener('DOMContentLoaded', () => {
   if (exportButton) {
     exportButton.addEventListener('click', downloadLastAudio);
     updateExportButtonState(exportButton);
+  }
+
+  if (usageToggleButton && usagePanel) {
+    usageToggleButton.addEventListener('click', () => {
+      const isHidden = usagePanel.hasAttribute('hidden');
+      if (isHidden) {
+        usagePanel.removeAttribute('hidden');
+      } else {
+        usagePanel.setAttribute('hidden', 'true');
+      }
+      usageToggleButton.setAttribute('aria-expanded', String(isHidden));
+    });
   }
 
   initializeVisualizationCanvases();
