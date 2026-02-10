@@ -204,13 +204,14 @@
         bottom: 12px;
         color: var(--muted-text);
         text-decoration: none;
-        opacity: 0.7;
-        font-size: 12px;
+        opacity: 1;
+        font-size: 13px;
         transition: opacity 0.2s ease;
       }
       .repo-link:hover,
       .repo-link:focus-visible {
         opacity: 1;
+        text-decoration: underline;
       }
     </style>
   </head>
@@ -265,7 +266,7 @@
       </div>
     </div>
 
-    <a class="repo-link" href="https://github.com/cat2151/voicevox-playground" target="_blank" rel="noopener noreferrer">GitHub: cat2151/voicevox-playground</a>
+    <a class="repo-link" href="https://github.com/cat2151/voicevox-playground" target="_blank" rel="noopener noreferrer" aria-label="GitHub: cat2151/voicevox-playground（新しいタブで開きます）">GitHub: cat2151/voicevox-playground</a>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
