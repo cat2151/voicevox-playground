@@ -67,30 +67,33 @@ async function playAudio(audioBuffer: ArrayBuffer) {
   const decodedBuffer = await audioContext.decodeAudioData(audioBuffer);
   
   // Create a Tone.js Player with the decoded buffer
-  const player = new Tone.Player({
-    url: decodedBuffer,
-    onload: () => {
-      console.log('Audio loaded and ready to play');
-    }
-  }).toDestination();
+  const player = new Tone.Player(decodedBuffer).toDestination();
   
   // Play the audio
   player.start();
   
   // Return promise that resolves when playback finishes
   return new Promise<void>((resolve) => {
+    let resolved = false;
+    
     player.onstop = () => {
-      player.dispose();
-      resolve();
+      if (!resolved) {
+        resolved = true;
+        player.dispose();
+        resolve();
+      }
     };
     
     // Also resolve after duration to handle cases where onstop doesn't fire
     setTimeout(() => {
-      if (player.state === 'started') {
-        player.stop();
+      if (!resolved) {
+        resolved = true;
+        if (player.state === 'started') {
+          player.stop();
+        }
+        player.dispose();
+        resolve();
       }
-      player.dispose();
-      resolve();
     }, decodedBuffer.duration * 1000 + 100);
   });
 }

@@ -1,8 +1,7 @@
 {
   "name": "voicevox-playground",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "VOICEVOX text-to-speech web application with Tone.js audio playback",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
