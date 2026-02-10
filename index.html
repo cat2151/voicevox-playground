@@ -5,35 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VOICEVOX Playground</title>
     <style>
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #0f172a;
+        --panel-bg: #f7f7f7;
+        --border-color: #e0e0e0;
+        --accent-color: #4caf50;
+        --muted-text: #4b5563;
+        --status-info-bg: #e3f2fd;
+        --status-info-text: #1976d2;
+        --status-error-bg: #ffebee;
+        --status-error-text: #c62828;
+        --status-success-bg: #e8f5e9;
+        --status-success-text: #2e7d32;
+        --canvas-grid: rgba(0, 0, 0, 0.06);
+        --spectrogram-low: #0f172a;
+        --spectrogram-high: #7ee0a3;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-color: #0b1221;
+          --text-color: #e5e7eb;
+          --panel-bg: #0f172a;
+          --border-color: #1f2937;
+          --accent-color: #7df2b8;
+          --muted-text: #9ca3af;
+          --status-info-bg: #102035;
+          --status-info-text: #9bdcff;
+          --status-error-bg: #2b1111;
+          --status-error-text: #fca5a5;
+          --status-success-bg: #0f2018;
+          --status-success-text: #a7f3d0;
+          --canvas-grid: rgba(255, 255, 255, 0.06);
+          --spectrogram-low: #0b1221;
+          --spectrogram-high: #a7f3d0;
+        }
+      }
+
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg-color);
+        color: var(--text-color);
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
         line-height: 1.6;
       }
       h1 {
-        color: #333;
-        border-bottom: 2px solid #4CAF50;
+        color: var(--text-color);
+        border-bottom: 2px solid var(--accent-color);
         padding-bottom: 10px;
       }
       .container {
-        background: #f5f5f5;
+        background: var(--panel-bg);
         padding: 20px;
         border-radius: 8px;
         margin: 20px 0;
+        border: 1px solid var(--border-color);
       }
       label {
         display: block;
         margin-bottom: 5px;
         font-weight: bold;
-        color: #555;
+        color: var(--muted-text);
       }
       textarea {
         width: 100%;
         min-height: 100px;
         padding: 10px;
-        border: 2px solid #ddd;
+        border: 2px solid var(--border-color);
         border-radius: 4px;
         font-size: 16px;
         font-family: inherit;
@@ -42,11 +83,11 @@
       }
       textarea:focus {
         outline: none;
-        border-color: #4CAF50;
+        border-color: var(--accent-color);
       }
       button {
-        background-color: #4CAF50;
-        color: white;
+        background-color: var(--accent-color);
+        color: #0b1a10;
         border: none;
         padding: 12px 24px;
         font-size: 16px;
@@ -56,10 +97,10 @@
         transition: background-color 0.3s;
       }
       button:hover {
-        background-color: #45a049;
+        filter: brightness(0.95);
       }
       button:disabled {
-        background-color: #cccccc;
+        background-color: #9ca3af;
         cursor: not-allowed;
       }
       .status {
@@ -69,25 +110,60 @@
         display: none;
       }
       .status.info {
-        background-color: #e3f2fd;
-        color: #1976d2;
-        border: 1px solid #90caf9;
+        background-color: var(--status-info-bg);
+        color: var(--status-info-text);
+        border: 1px solid var(--border-color);
       }
       .status.error {
-        background-color: #ffebee;
-        color: #c62828;
-        border: 1px solid #ef9a9a;
+        background-color: var(--status-error-bg);
+        color: var(--status-error-text);
+        border: 1px solid var(--border-color);
       }
       .status.success {
-        background-color: #e8f5e9;
-        color: #2e7d32;
-        border: 1px solid #a5d6a7;
+        background-color: var(--status-success-bg);
+        color: var(--status-success-text);
+        border: 1px solid var(--border-color);
+      }
+      .code-block {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        padding: 12px;
+        border-radius: 6px;
+        font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        overflow-x: auto;
+      }
+      .info {
+        margin-top: 10px;
+      }
+      .visualizer-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .visualizer__title {
+        font-weight: bold;
+        margin-bottom: 6px;
+        color: var(--muted-text);
+      }
+      canvas {
+        width: 100%;
+        height: 180px;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
       }
     </style>
   </head>
   <body>
     <h1>🎙️ VOICEVOX Playground</h1>
     
+    <div class="container info">
+      <p>GitHub Pages 版（<code>https://cat2151.github.io/voicevox-playground/</code>）からアクセスする際は、VOICEVOXエンジンを以下のコマンドで起動してCORSを許可してください。</p>
+      <div class="code-block">
+        <code>&lt;your VOICEVOX directory&gt;/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io</code>
+      </div>
+    </div>
+
     <div class="container">
       <label for="text">テキスト (Text):</label>
       <textarea id="text">ずんだもんなのだ</textarea>
@@ -95,6 +171,23 @@
       <button id="playButton">▶️ 再生 (Play)</button>
       
       <div id="status" class="status" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="container">
+      <div class="visualizer-grid">
+        <div>
+          <div class="visualizer__title">レンダリング後の波形</div>
+          <canvas id="renderedWaveform" width="760" height="180" aria-label="レンダリング後の波形"></canvas>
+        </div>
+        <div>
+          <div class="visualizer__title">リアルタイム波形</div>
+          <canvas id="realtimeWaveform" width="760" height="180" aria-label="リアルタイム波形"></canvas>
+        </div>
+        <div>
+          <div class="visualizer__title">スペクトログラム (FFT)</div>
+          <canvas id="spectrogram" width="760" height="180" aria-label="スペクトログラム"></canvas>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

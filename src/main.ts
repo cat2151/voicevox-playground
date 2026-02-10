@@ -52,6 +52,147 @@ function hideStatus() {
   }
 }
 
+function setCanvasSize(canvas: HTMLCanvasElement) {
+  const rect = canvas.getBoundingClientRect();
+  const newWidth = Math.max(1, Math.floor(rect.width));
+  const newHeight = Math.max(1, Math.floor(rect.height));
+
+  if (newWidth && newHeight && (canvas.width !== newWidth || canvas.height !== newHeight)) {
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+  }
+}
+
+function getColorVariable(name: string, fallback: string) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
+  setCanvasSize(canvas);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const { width, height } = canvas;
+  const channelData = buffer.getChannelData(0);
+  const samplesPerPixel = Math.max(1, Math.floor(channelData.length / width));
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
+  ctx.beginPath();
+  ctx.moveTo(0, height / 2);
+  ctx.lineTo(width, height / 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = getColorVariable('--accent-color', '#4caf50');
+  ctx.beginPath();
+  for (let x = 0; x < width; x++) {
+    const start = x * samplesPerPixel;
+    let min = 1;
+    let max = -1;
+    for (let i = 0; i < samplesPerPixel && start + i < channelData.length; i++) {
+      const v = channelData[start + i];
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    const y1 = ((1 - max) * height) / 2;
+    const y2 = ((1 - min) * height) / 2;
+    ctx.moveTo(x, y1);
+    ctx.lineTo(x, y2);
+  }
+  ctx.stroke();
+}
+
+function drawRealtimeWaveform(values: Float32Array, canvas: HTMLCanvasElement) {
+  setCanvasSize(canvas);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const { width, height } = canvas;
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
+  ctx.beginPath();
+  ctx.moveTo(0, height / 2);
+  ctx.lineTo(width, height / 2);
+  ctx.stroke();
+
+  const step = values.length / width;
+  ctx.strokeStyle = getColorVariable('--accent-color', '#4caf50');
+  ctx.beginPath();
+  for (let x = 0; x < width; x++) {
+    const index = Math.floor(x * step);
+    const v = values[index] ?? 0;
+    const y = (0.5 - v / 2) * height;
+    if (x === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+}
+
+function drawSpectrogram(values: Float32Array, canvas: HTMLCanvasElement, x: number) {
+  setCanvasSize(canvas);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return x;
+
+  const { width, height } = canvas;
+  if (x >= width) {
+    if (width > 1) {
+      const imageData = ctx.getImageData(1, 0, width - 1, height);
+      ctx.putImageData(imageData, 0, 0);
+      x = width - 1;
+    } else {
+      x = 0;
+    }
+  }
+
+  const accent = getColorVariable('--accent-color', '#4caf50');
+  const background = getColorVariable('--bg-color', '#ffffff');
+  ctx.fillStyle = background;
+  ctx.fillRect(x, 0, 1, height);
+
+  for (let y = 0; y < height; y++) {
+    const dataIndex = Math.floor((y / height) * values.length);
+    const magnitude = Number.isFinite(values[dataIndex]) ? values[dataIndex] : -120;
+    const normalized = Math.max(Math.min((magnitude + 120) / 120, 1), 0);
+    ctx.fillStyle = accent;
+    ctx.globalAlpha = normalized;
+    ctx.fillRect(x, height - y - 1, 1, 1);
+  }
+  ctx.globalAlpha = 1;
+
+  return x + 1;
+}
+
+function initializeVisualizationCanvases() {
+  ['renderedWaveform', 'realtimeWaveform', 'spectrogram'].forEach((id) => {
+    const canvas = document.getElementById(id) as HTMLCanvasElement | null;
+    if (!canvas) return;
+
+    setCanvasSize(canvas);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
+
+    if (id !== 'spectrogram') {
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height / 2);
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+    }
+  });
+}
+
 // VOICEVOX API: Get audio query
 async function getAudioQuery(text: string, speakerId: number): Promise<AudioQuery> {
   const controller = new AbortController();
@@ -114,29 +255,66 @@ async function synthesize(audioQuery: AudioQuery, speakerId: number): Promise<Ar
   }
 }
 
-// Play audio using Tone.js
-async function playAudio(audioBuffer: ArrayBuffer) {
-  // Start Tone.js audio context (required for user interaction)
+// Play audio using Tone.js with realtime visualizers
+async function playAudio(
+  decodedBuffer: AudioBuffer,
+  realtimeCanvas?: HTMLCanvasElement | null,
+  spectrogramCanvas?: HTMLCanvasElement | null
+) {
   await Tone.start();
-  
-  // Decode the audio data
-  const audioContext = Tone.getContext().rawContext as BaseAudioContext;
-  const decodedBuffer = await audioContext.decodeAudioData(audioBuffer);
-  
-  // Create a Tone.js Player with the decoded buffer
-  const player = new Tone.Player(decodedBuffer).toDestination();
-  
-  // Play the audio
+
+  const player = new Tone.Player(decodedBuffer);
+  const waveformAnalyser = realtimeCanvas ? new Tone.Analyser('waveform', 1024) : null;
+  const fftAnalyser = spectrogramCanvas ? new Tone.Analyser('fft', 1024) : null;
+
+  if (waveformAnalyser) {
+    player.connect(waveformAnalyser);
+  }
+
+  if (fftAnalyser) {
+    player.connect(fftAnalyser);
+  }
+
+  player.toDestination();
   player.start();
-  
-  // Return promise that resolves when playback finishes
+
+  let animationId: number | null = null;
+  let spectrogramX = 0;
+
+  const render = () => {
+    if (waveformAnalyser && realtimeCanvas) {
+      const values = waveformAnalyser.getValue() as Float32Array;
+      drawRealtimeWaveform(values, realtimeCanvas);
+    }
+
+    if (fftAnalyser && spectrogramCanvas) {
+      const values = fftAnalyser.getValue() as Float32Array;
+      spectrogramX = drawSpectrogram(values, spectrogramCanvas, spectrogramX);
+    }
+
+    animationId = requestAnimationFrame(render);
+  };
+
+  if (waveformAnalyser || fftAnalyser) {
+    render();
+  }
+
   return new Promise<void>((resolve) => {
     let resolved = false;
-    
+
+    const cleanup = () => {
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+      }
+      waveformAnalyser?.dispose();
+      fftAnalyser?.dispose();
+      player.dispose();
+    };
+
     player.onstop = () => {
       if (!resolved) {
         resolved = true;
-        player.dispose();
+        cleanup();
         resolve();
       }
     };
@@ -148,7 +326,7 @@ async function playAudio(audioBuffer: ArrayBuffer) {
         if (player.state === 'started') {
           player.stop();
         }
-        player.dispose();
+        cleanup();
         resolve();
       }
     }, decodedBuffer.duration * 1000 + 100);
@@ -159,6 +337,9 @@ async function playAudio(audioBuffer: ArrayBuffer) {
 async function handlePlay() {
   const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
   const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
+  const renderedCanvas = document.getElementById('renderedWaveform') as HTMLCanvasElement | null;
+  const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
+  const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
   
   if (!textArea || !playButton) {
     console.error('Required UI elements not found');
@@ -174,6 +355,7 @@ async function handlePlay() {
   
   // Disable button during processing
   playButton.disabled = true;
+  initializeVisualizationCanvases();
   
   try {
     // Step 1: Get audio query
@@ -183,10 +365,16 @@ async function handlePlay() {
     // Step 2: Synthesize audio
     showStatus('音声を生成中...', 'info');
     const audioBuffer = await synthesize(audioQuery, ZUNDAMON_SPEAKER_ID);
+    const audioContext = Tone.getContext().rawContext as BaseAudioContext;
+    const decodedBuffer = await audioContext.decodeAudioData(audioBuffer.slice(0));
+
+    if (renderedCanvas) {
+      drawRenderedWaveform(decodedBuffer, renderedCanvas);
+    }
     
     // Step 3: Play audio
     showStatus('音声を再生中...', 'info');
-    await playAudio(audioBuffer);
+    await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas);
     
     showStatus('再生完了！', 'success');
     setTimeout(hideStatus, 3000);
@@ -208,4 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (playButton) {
     playButton.addEventListener('click', handlePlay);
   }
+
+  initializeVisualizationCanvases();
+  window.addEventListener('resize', initializeVisualizationCanvases);
 });
