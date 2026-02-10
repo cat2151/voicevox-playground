@@ -3,6 +3,35 @@ import * as Tone from 'tone';
 // VOICEVOX API settings
 const VOICEVOX_API_BASE = 'http://localhost:50021';
 const ZUNDAMON_SPEAKER_ID = 3; // ずんだもんのスピーカーID
+const REQUEST_TIMEOUT_MS = 10000; // 10 second timeout
+
+// VOICEVOX API types (minimal interface based on API documentation)
+interface AudioQuery {
+  accent_phrases: Array<{
+    moras: Array<{
+      text: string;
+      vowel: string;
+      vowel_length: number;
+      pitch: number;
+    }>;
+    accent: number;
+    pause_mora?: {
+      text: string;
+      vowel: string;
+      vowel_length: number;
+      pitch: number;
+    };
+  }>;
+  speedScale: number;
+  pitchScale: number;
+  intonationScale: number;
+  volumeScale: number;
+  prePhonemeLength: number;
+  postPhonemeLength: number;
+  outputSamplingRate: number;
+  outputStereo: boolean;
+  kana?: string;
+}
 
 // Status display helper
 function showStatus(message: string, type: 'info' | 'error' | 'success') {
@@ -11,6 +40,8 @@ function showStatus(message: string, type: 'info' | 'error' | 'success') {
     statusDiv.textContent = message;
     statusDiv.className = `status ${type}`;
     statusDiv.style.display = 'block';
+    // Use assertive for errors so screen readers interrupt to announce them
+    statusDiv.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
   }
 }
 
@@ -22,39 +53,65 @@ function hideStatus() {
 }
 
 // VOICEVOX API: Get audio query
-async function getAudioQuery(text: string, speakerId: number): Promise<any> {
-  const response = await fetch(
-    `${VOICEVOX_API_BASE}/audio_query?text=${encodeURIComponent(text)}&speaker=${speakerId}`,
-    {
-      method: 'POST',
+async function getAudioQuery(text: string, speakerId: number): Promise<AudioQuery> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  
+  try {
+    const response = await fetch(
+      `${VOICEVOX_API_BASE}/audio_query?text=${encodeURIComponent(text)}&speaker=${speakerId}`,
+      {
+        method: 'POST',
+        signal: controller.signal,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Audio query failed: ${response.status} ${response.statusText}`);
     }
-  );
 
-  if (!response.ok) {
-    throw new Error(`Audio query failed: ${response.status} ${response.statusText}`);
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('VOICEVOXサーバーへの接続がタイムアウトしました。サーバーが起動しているか確認してください。');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return response.json();
 }
 
 // VOICEVOX API: Synthesize audio
-async function synthesize(audioQuery: any, speakerId: number): Promise<ArrayBuffer> {
-  const response = await fetch(
-    `${VOICEVOX_API_BASE}/synthesis?speaker=${speakerId}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(audioQuery),
+async function synthesize(audioQuery: AudioQuery, speakerId: number): Promise<ArrayBuffer> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  
+  try {
+    const response = await fetch(
+      `${VOICEVOX_API_BASE}/synthesis?speaker=${speakerId}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(audioQuery),
+        signal: controller.signal,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Synthesis failed: ${response.status} ${response.statusText}`);
     }
-  );
 
-  if (!response.ok) {
-    throw new Error(`Synthesis failed: ${response.status} ${response.statusText}`);
+    return response.arrayBuffer();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('VOICEVOXサーバーへの接続がタイムアウトしました。サーバーが起動しているか確認してください。');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return response.arrayBuffer();
 }
 
 // Play audio using Tone.js
@@ -63,7 +120,7 @@ async function playAudio(audioBuffer: ArrayBuffer) {
   await Tone.start();
   
   // Decode the audio data
-  const audioContext = Tone.getContext().rawContext as AudioContext;
+  const audioContext = Tone.getContext().rawContext as BaseAudioContext;
   const decodedBuffer = await audioContext.decodeAudioData(audioBuffer);
   
   // Create a Tone.js Player with the decoded buffer
@@ -100,10 +157,11 @@ async function playAudio(audioBuffer: ArrayBuffer) {
 
 // Main play function
 async function handlePlay() {
-  const textArea = document.getElementById('text') as HTMLTextAreaElement;
-  const playButton = document.getElementById('playButton') as HTMLButtonElement;
+  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
+  const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
   
   if (!textArea || !playButton) {
+    console.error('Required UI elements not found');
     return;
   }
   
