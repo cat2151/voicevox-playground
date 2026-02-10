@@ -234,13 +234,25 @@ function downloadLastAudio() {
   const link = document.createElement('a');
   link.href = url;
   link.download = 'voicevox-output.wav';
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => {
+    URL.revokeObjectURL(url);
+    link.remove();
+  }, 0);
 }
 
 function scheduleAutoPlay() {
   if (autoPlayTimer !== null) {
     window.clearTimeout(autoPlayTimer);
+  }
+
+  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
+  if (!textArea) return;
+  const text = textArea.value.trim();
+  if (!text) {
+    autoPlayTimer = null;
+    return;
   }
 
   const triggerPlay = () => {
@@ -433,7 +445,7 @@ async function handlePlay() {
     // Step 2: Synthesize audio
     showStatus('音声を生成中...', 'info');
     const audioBuffer = await synthesize(audioQuery, ZUNDAMON_SPEAKER_ID);
-    lastSynthesizedBuffer = audioBuffer.slice(0);
+    lastSynthesizedBuffer = audioBuffer;
     const audioContext = Tone.getContext().rawContext as BaseAudioContext;
     const decodedBuffer = await audioContext.decodeAudioData(audioBuffer.slice(0));
 
