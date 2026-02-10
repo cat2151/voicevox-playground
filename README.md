@@ -20,6 +20,12 @@ VOICEVOXのローカルサーバーが起動していることが必要です。
    VOICEVOX.exe --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173
    ```
 
+   GUIを開かずサーバーだけ起動したい場合は以下を使用できます。
+
+   ```powershell
+   VOICEVOX.exe run --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173
+   ```
+
    既に起動している場合は <http://127.0.0.1:50021/setting> を開き、上記オリジンを追加して保存後にエンジンを再起動してください。
 
 ## 開発
