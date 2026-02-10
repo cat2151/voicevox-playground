@@ -4,6 +4,7 @@ import * as Tone from 'tone';
 const VOICEVOX_API_BASE = 'http://localhost:50021';
 const ZUNDAMON_SPEAKER_ID = 3; // ずんだもんのスピーカーID
 const REQUEST_TIMEOUT_MS = 10000; // 10 second timeout
+const AUTO_PLAY_DEBOUNCE_MS = 700;
 
 // VOICEVOX API types (minimal interface based on API documentation)
 interface AudioQuery {
@@ -54,6 +55,9 @@ function hideStatus() {
 
 let cachedRootComputedStyle: CSSStyleDeclaration | null = null;
 const colorVariableCache: Record<string, string> = {};
+let isProcessing = false;
+let autoPlayTimer: number | null = null;
+let lastSynthesizedBuffer: ArrayBuffer | null = null;
 
 function invalidateColorVariableCache() {
   cachedRootComputedStyle = null;
@@ -216,6 +220,53 @@ function initializeVisualizationCanvases() {
   });
 }
 
+function updateExportButtonState(exportButton?: HTMLButtonElement | null) {
+  if (exportButton) {
+    exportButton.disabled = isProcessing || !lastSynthesizedBuffer;
+  }
+}
+
+function downloadLastAudio() {
+  if (!lastSynthesizedBuffer) return;
+
+  const blob = new Blob([lastSynthesizedBuffer], { type: 'audio/wav' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'voicevox-output.wav';
+  document.body.appendChild(link);
+  link.click();
+  window.setTimeout(() => {
+    URL.revokeObjectURL(url);
+    link.remove();
+  }, 0);
+}
+
+function scheduleAutoPlay() {
+  if (autoPlayTimer !== null) {
+    window.clearTimeout(autoPlayTimer);
+  }
+
+  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
+  if (!textArea) return;
+  const text = textArea.value.trim();
+  if (!text) {
+    autoPlayTimer = null;
+    return;
+  }
+
+  const triggerPlay = () => {
+    autoPlayTimer = null;
+    if (isProcessing) {
+      autoPlayTimer = window.setTimeout(triggerPlay, AUTO_PLAY_DEBOUNCE_MS);
+      return;
+    }
+    void handlePlay();
+  };
+
+  autoPlayTimer = window.setTimeout(triggerPlay, AUTO_PLAY_DEBOUNCE_MS);
+}
+
 // VOICEVOX API: Get audio query
 async function getAudioQuery(text: string, speakerId: number): Promise<AudioQuery> {
   const controller = new AbortController();
@@ -360,6 +411,7 @@ async function playAudio(
 async function handlePlay() {
   const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
   const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
+  const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
   const renderedCanvas = document.getElementById('renderedWaveform') as HTMLCanvasElement | null;
   const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
   const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
@@ -376,8 +428,13 @@ async function handlePlay() {
     return;
   }
   
-  // Disable button during processing
+  if (isProcessing) {
+    return;
+  }
+
+  isProcessing = true;
   playButton.disabled = true;
+  updateExportButtonState(exportButton);
   initializeVisualizationCanvases();
   
   try {
@@ -388,6 +445,7 @@ async function handlePlay() {
     // Step 2: Synthesize audio
     showStatus('音声を生成中...', 'info');
     const audioBuffer = await synthesize(audioQuery, ZUNDAMON_SPEAKER_ID);
+    lastSynthesizedBuffer = audioBuffer;
     const audioContext = Tone.getContext().rawContext as BaseAudioContext;
     const decodedBuffer = await audioContext.decodeAudioData(audioBuffer.slice(0));
 
@@ -409,15 +467,29 @@ async function handlePlay() {
     );
   } finally {
     playButton.disabled = false;
+    isProcessing = false;
+    updateExportButtonState(exportButton);
   }
 }
 
 // Initialize event listeners
 document.addEventListener('DOMContentLoaded', () => {
-  const playButton = document.getElementById('playButton');
+  const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
+  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
+  const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
   
   if (playButton) {
     playButton.addEventListener('click', handlePlay);
+    playButton.focus();
+  }
+
+  if (textArea) {
+    textArea.addEventListener('input', scheduleAutoPlay);
+  }
+
+  if (exportButton) {
+    exportButton.addEventListener('click', downloadLastAudio);
+    updateExportButtonState(exportButton);
   }
 
   initializeVisualizationCanvases();
