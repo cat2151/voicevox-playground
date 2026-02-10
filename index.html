@@ -49,7 +49,7 @@
         color: var(--text-color);
         max-width: 800px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 16px;
         line-height: 1.6;
       }
       h1 {
@@ -61,7 +61,7 @@
         background: var(--panel-bg);
         padding: 20px;
         border-radius: 8px;
-        margin: 20px 0;
+        margin: 12px 0;
         border: 1px solid var(--border-color);
       }
       label {
@@ -102,6 +102,19 @@
       button:disabled {
         background-color: #9ca3af;
         cursor: not-allowed;
+      }
+      .secondary-button {
+        background: transparent;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        margin-right: 8px;
+      }
+      .controls {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
       }
       .status {
         margin-top: 15px;
@@ -162,7 +175,7 @@
       }
       canvas {
         width: 100%;
-        height: 180px;
+        height: 144px;
         background: var(--bg-color);
         border: 1px solid var(--border-color);
         border-radius: 6px;
@@ -174,12 +187,27 @@
           var(--spectrogram-high)
         );
       }
+      .loop-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        color: var(--muted-text);
+        padding-left: 4px;
+      }
+      #usagePanel[hidden] {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <h1>🎙️ VOICEVOX Playground</h1>
+
+    <div class="controls">
+      <button id="usageToggleButton" class="secondary-button" aria-expanded="false" aria-controls="usagePanel">ℹ️ 利用方法</button>
+    </div>
     
-    <div class="container info">
+    <div class="container info" id="usagePanel" hidden>
       <p>GitHub Pages 版（<code>https://cat2151.github.io/voicevox-playground/</code>）からアクセスする際は、VOICEVOXエンジンを以下のコマンドで起動してCORSを許可してください。</p>
       <div class="code-block">
         <code>&lt;your VOICEVOX directory&gt;/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io</code>
@@ -194,8 +222,14 @@
       <label for="text">テキスト (Text):</label>
       <textarea id="text">ずんだもんなのだ</textarea>
       
-      <button id="playButton">▶️ 再生 (Play)</button>
-      <button id="exportButton" disabled>💾 ダウンロード (Export WAV)</button>
+      <div class="controls">
+        <button id="playButton">▶️ 再生 (Play)</button>
+        <button id="exportButton" disabled>💾 ダウンロード (Export WAV)</button>
+        <label for="loopCheckbox" class="loop-control">
+          <input type="checkbox" id="loopCheckbox" checked />
+          ループ再生
+        </label>
+      </div>
       
       <div id="status" class="status" role="status" aria-live="polite"></div>
     </div>
@@ -204,15 +238,15 @@
       <div class="visualizer-grid">
         <div>
           <div class="visualizer__title">レンダリング後の波形</div>
-          <canvas id="renderedWaveform" width="760" height="180" aria-label="レンダリング後の波形"></canvas>
+          <canvas id="renderedWaveform" width="760" height="144" aria-label="レンダリング後の波形"></canvas>
         </div>
         <div>
           <div class="visualizer__title">リアルタイム波形</div>
-          <canvas id="realtimeWaveform" width="760" height="180" aria-label="リアルタイム波形"></canvas>
+          <canvas id="realtimeWaveform" width="760" height="144" aria-label="リアルタイム波形"></canvas>
         </div>
         <div>
           <div class="visualizer__title">スペクトログラム (FFT)</div>
-          <canvas id="spectrogram" width="760" height="180" aria-label="スペクトログラム"></canvas>
+          <canvas id="spectrogram" width="760" height="144" aria-label="スペクトログラム"></canvas>
         </div>
       </div>
     </div>
