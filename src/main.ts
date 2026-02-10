@@ -6,6 +6,8 @@ const ZUNDAMON_SPEAKER_ID = 3; // ずんだもんのスピーカーID
 const REQUEST_TIMEOUT_MS = 10000; // 10 second timeout
 const AUTO_PLAY_DEBOUNCE_MS = 700;
 const WAVEFORM_TARGET_RATIO = 0.8;
+const SPECTROGRAM_MAX_COLUMNS_PER_FRAME = 12;
+const AUDIO_CACHE_LIMIT = 10;
 
 // VOICEVOX API types (minimal interface based on API documentation)
 interface AudioQuery {
@@ -128,6 +130,9 @@ function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
   ctx.beginPath();
   for (let x = 0; x < width; x++) {
     const start = x * samplesPerPixel;
+    if (start >= channelData.length) {
+      break;
+    }
     let min = Number.POSITIVE_INFINITY;
     let max = Number.NEGATIVE_INFINITY;
     for (let i = 0; i < samplesPerPixel && start + i < channelData.length; i++) {
@@ -225,7 +230,8 @@ function drawSpectrogram(
   }
 
   const startX = Math.max(lastX + 1, 0);
-  for (let drawX = startX; drawX <= targetX; drawX++) {
+  const cappedTargetX = Math.min(targetX, startX + SPECTROGRAM_MAX_COLUMNS_PER_FRAME - 1);
+  for (let drawX = startX; drawX <= cappedTargetX; drawX++) {
     ctx.fillStyle = background;
     ctx.globalAlpha = 1;
     ctx.fillRect(drawX, 0, 1, height);
@@ -241,7 +247,7 @@ function drawSpectrogram(
   }
   ctx.globalAlpha = 1;
 
-  return targetX;
+  return cappedTargetX;
 }
 
 function initializeVisualizationCanvases() {
@@ -415,7 +421,7 @@ async function playAudio(
       const values = fftAnalyser.getValue() as Float32Array;
       spectrogramCeiling = determineSpectrogramCeiling(values, spectrogramCeiling || values.length - 1);
       const elapsed = performance.now() - startTime;
-      const progress = Math.min(elapsed / playbackDurationMs, 0.999);
+      const progress = Math.min(elapsed / playbackDurationMs, 1);
       spectrogramX = drawSpectrogram(values, spectrogramCanvas, progress, spectrogramCeiling, spectrogramX);
     }
 
@@ -507,6 +513,12 @@ async function handlePlay() {
       // Step 2: Synthesize audio
       showStatus('音声を生成中...', 'info');
       audioBuffer = await synthesize(audioQuery, ZUNDAMON_SPEAKER_ID);
+      if (audioCache.size >= AUDIO_CACHE_LIMIT) {
+        const oldest = audioCache.keys().next().value;
+        if (oldest !== undefined) {
+          audioCache.delete(oldest);
+        }
+      }
       audioCache.set(text, audioBuffer);
     }
 
