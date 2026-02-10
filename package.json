@@ -1,0 +1,30 @@
+{
+  "name": "voicevox-playground",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cat2151/voicevox-playground.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/cat2151/voicevox-playground/issues"
+  },
+  "homepage": "https://github.com/cat2151/voicevox-playground#readme",
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "tone": "^15.1.22"
+  }
+}
