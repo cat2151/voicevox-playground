@@ -52,28 +52,54 @@ function hideStatus() {
   }
 }
 
-function setCanvasSize(canvas: HTMLCanvasElement) {
-  const rect = canvas.getBoundingClientRect();
-  const newWidth = Math.max(1, Math.floor(rect.width));
-  const newHeight = Math.max(1, Math.floor(rect.height));
+let cachedRootComputedStyle: CSSStyleDeclaration | null = null;
+const colorVariableCache: Record<string, string> = {};
 
-  if (newWidth && newHeight && (canvas.width !== newWidth || canvas.height !== newHeight)) {
-    canvas.width = newWidth;
-    canvas.height = newHeight;
-  }
+function invalidateColorVariableCache() {
+  cachedRootComputedStyle = null;
+  Object.keys(colorVariableCache).forEach((key) => delete colorVariableCache[key]);
 }
 
 function getColorVariable(name: string, fallback: string) {
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return value || fallback;
+  if (!cachedRootComputedStyle) {
+    cachedRootComputedStyle = getComputedStyle(document.documentElement);
+  }
+
+  const cached = colorVariableCache[name];
+  if (cached !== undefined && cached !== '') {
+    return cached;
+  }
+
+  const value = cachedRootComputedStyle.getPropertyValue(name).trim() || fallback;
+  colorVariableCache[name] = value;
+  return value;
+}
+
+function prepareCanvas(canvas: HTMLCanvasElement) {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const displayWidth = Math.max(1, Math.floor(rect.width));
+  const displayHeight = Math.max(1, Math.floor(rect.height));
+  const width = Math.max(1, Math.floor(displayWidth * dpr));
+  const height = Math.max(1, Math.floor(displayHeight * dpr));
+
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+  }
+
+  return { ctx, width: displayWidth, height: displayHeight, dpr };
 }
 
 function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
-  setCanvasSize(canvas);
-  const ctx = canvas.getContext('2d');
+  const { ctx, width, height } = prepareCanvas(canvas);
   if (!ctx) return;
-
-  const { width, height } = canvas;
   const channelData = buffer.getChannelData(0);
   const samplesPerPixel = Math.max(1, Math.floor(channelData.length / width));
 
@@ -106,11 +132,8 @@ function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
 }
 
 function drawRealtimeWaveform(values: Float32Array, canvas: HTMLCanvasElement) {
-  setCanvasSize(canvas);
-  const ctx = canvas.getContext('2d');
+  const { ctx, width, height } = prepareCanvas(canvas);
   if (!ctx) return;
-
-  const { width, height } = canvas;
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
   ctx.fillRect(0, 0, width, height);
@@ -137,15 +160,15 @@ function drawRealtimeWaveform(values: Float32Array, canvas: HTMLCanvasElement) {
 }
 
 function drawSpectrogram(values: Float32Array, canvas: HTMLCanvasElement, x: number) {
-  setCanvasSize(canvas);
-  const ctx = canvas.getContext('2d');
+  const { ctx, width, height, dpr } = prepareCanvas(canvas);
   if (!ctx) return x;
-
-  const { width, height } = canvas;
   if (x >= width) {
     if (width > 1) {
-      const imageData = ctx.getImageData(1, 0, width - 1, height);
-      ctx.putImageData(imageData, 0, 0);
+      const shift = Math.max(1, Math.round(dpr));
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(canvas, shift, 0, canvas.width - shift, canvas.height, 0, 0, canvas.width - shift, canvas.height);
+      ctx.restore();
       x = width - 1;
     } else {
       x = 0;
@@ -171,23 +194,23 @@ function drawSpectrogram(values: Float32Array, canvas: HTMLCanvasElement, x: num
 }
 
 function initializeVisualizationCanvases() {
+  invalidateColorVariableCache();
   ['renderedWaveform', 'realtimeWaveform', 'spectrogram'].forEach((id) => {
     const canvas = document.getElementById(id) as HTMLCanvasElement | null;
     if (!canvas) return;
 
-    setCanvasSize(canvas);
-    const ctx = canvas.getContext('2d');
+    const { ctx, width, height } = prepareCanvas(canvas);
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, width, height);
     ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
 
     if (id !== 'spectrogram') {
       ctx.beginPath();
-      ctx.moveTo(0, canvas.height / 2);
-      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.moveTo(0, height / 2);
+      ctx.lineTo(width, height / 2);
       ctx.stroke();
     }
   });

@@ -139,6 +139,21 @@
         display: grid;
         grid-template-columns: 1fr;
         gap: 16px;
+        background-image: linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc(10px - 1px),
+            var(--canvas-grid) calc(10px - 1px),
+            var(--canvas-grid) 10px
+          ),
+          linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent calc(10px - 1px),
+            var(--canvas-grid) calc(10px - 1px),
+            var(--canvas-grid) 10px
+          );
+        background-size: 10px 10px;
       }
       .visualizer__title {
         font-weight: bold;
@@ -152,6 +167,13 @@
         border: 1px solid var(--border-color);
         border-radius: 6px;
       }
+      #spectrogram {
+        background: linear-gradient(
+          to top,
+          var(--spectrogram-low),
+          var(--spectrogram-high)
+        );
+      }
     </style>
   </head>
   <body>
@@ -161,6 +183,10 @@
       <p>GitHub Pages 版（<code>https://cat2151.github.io/voicevox-playground/</code>）からアクセスする際は、VOICEVOXエンジンを以下のコマンドで起動してCORSを許可してください。</p>
       <div class="code-block">
         <code>&lt;your VOICEVOX directory&gt;/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io</code>
+      </div>
+      <p>ローカル開発サーバー（<code>http://localhost:5173</code>）も許可する場合は、上記コマンドに <code>http://localhost:5173</code> を追加してください。</p>
+      <div class="code-block">
+        <code>&lt;your VOICEVOX directory&gt;/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173</code>
       </div>
     </div>
 

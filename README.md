@@ -20,6 +20,12 @@ VOICEVOXのローカルサーバーが起動していることが必要です。
    <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io
    ```
 
+   ローカル開発サーバー（`npm run dev` が提供する `http://localhost:5173`）からも利用する場合は、上記に続けて `http://localhost:5173` も追加してください。
+
+   ```bash
+   <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173
+   ```
+
 ## 開発
 
 ```bash
