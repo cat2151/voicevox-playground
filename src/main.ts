@@ -1349,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateSpectrogramScaleLabel = () => {
     if (spectrogramScaleToggle) {
-      spectrogramScaleToggle.textContent = spectrogramScale === 'linear' ? '対数スケール' : 'リニアスケール';
+      spectrogramScaleToggle.textContent = spectrogramScale === 'linear' ? '対数にする' : 'リニアにする';
     }
   };
 

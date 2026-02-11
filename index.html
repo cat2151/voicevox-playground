@@ -116,6 +116,25 @@
         gap: 8px;
         margin-top: 8px;
       }
+      .input-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+      .input-column {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .input-visualizer {
+        height: 100%;
+      }
+      @media (max-width: 720px) {
+        .input-row {
+          grid-template-columns: 1fr;
+        }
+      }
       .status {
         margin-top: 15px;
         padding: 10px;
@@ -269,13 +288,12 @@
     </style>
   </head>
   <body>
-    <h1>🎙️ VOICEVOX Playground</h1>
-
     <div class="controls">
       <button id="usageToggleButton" class="secondary-button" aria-expanded="false" aria-controls="usagePanel">ℹ️ 利用方法</button>
     </div>
     
     <div class="container info" id="usagePanel" hidden>
+      <h1>🎙️ VOICEVOX Playground</h1>
       <p>GitHub Pages 版（<code>https://cat2151.github.io/voicevox-playground/</code>）からアクセスする際は、VOICEVOXエンジンを以下のコマンドで起動してCORSを許可してください。</p>
       <div class="code-block">
         <code>&lt;your VOICEVOX directory&gt;/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io</code>
@@ -287,38 +305,28 @@
     </div>
 
     <div class="container">
-      <label for="text">テキスト (Text):</label>
-      <textarea id="text">ずんだもんなのだ</textarea>
-      
-      <div class="controls">
-        <button id="playButton">▶️ 再生 (Play)</button>
-        <button id="exportButton" disabled>💾 ダウンロード (Export WAV)</button>
-        <label for="loopCheckbox" class="loop-control">
-          <input type="checkbox" id="loopCheckbox" checked />
-          ループ再生
-        </label>
+      <div class="input-row">
+        <div class="input-column">
+          <textarea id="text" aria-label="テキスト入力">ずんだもんなのだ</textarea>
+          
+          <div class="controls">
+            <button id="playButton">▶️ 再生 (Play)</button>
+            <button id="exportButton" disabled>💾 ダウンロード (Export WAV)</button>
+            <label for="loopCheckbox" class="loop-control">
+              <input type="checkbox" id="loopCheckbox" checked />
+              ループ再生
+            </label>
+          </div>
+        </div>
+        <div class="visualizer__frame input-visualizer">
+          <canvas id="realtimeWaveform" width="760" height="144" aria-label="リアルタイム波形"></canvas>
+        </div>
       </div>
       
       <div id="status" class="status" role="status" aria-live="polite"></div>
     </div>
 
     <div class="container">
-      <div class="visualizer-grid">
-        <div class="visualizer__frame">
-          <canvas id="renderedWaveform" width="760" height="144" aria-label="レンダリング後の波形"></canvas>
-        </div>
-        <div class="visualizer__frame">
-          <canvas id="realtimeWaveform" width="760" height="144" aria-label="リアルタイム波形"></canvas>
-        </div>
-        <div class="visualizer__frame">
-          <canvas id="spectrogram" width="760" height="144" aria-label="スペクトログラム"></canvas>
-          <button id="spectrogramScaleToggle" class="visualizer__action" type="button" aria-label="スペクトログラムの周波数スケール切り替え">対数スケール</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="container">
-      <div class="visualizer__title">イントネーション</div>
       <div class="intonation-area">
         <div class="intonation-canvas-wrapper">
           <div class="intonation-controls intonation-controls--top">
@@ -332,6 +340,18 @@
           <canvas id="intonationCanvas" width="760" height="180" aria-label="イントネーションの折れ線グラフ" tabindex="0"></canvas>
         </div>
         <div id="intonationLabels" class="intonation-labels" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="visualizer-grid">
+        <div class="visualizer__frame">
+          <canvas id="renderedWaveform" width="760" height="144" aria-label="レンダリング後の波形"></canvas>
+        </div>
+        <div class="visualizer__frame">
+          <canvas id="spectrogram" width="760" height="144" aria-label="スペクトログラム"></canvas>
+          <button id="spectrogramScaleToggle" class="visualizer__action" type="button" aria-label="スペクトログラムの周波数スケール切り替え">対数にする</button>
+        </div>
       </div>
     </div>
 
