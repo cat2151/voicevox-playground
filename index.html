@@ -99,6 +99,24 @@
         outline: none;
         border-color: var(--accent-color);
       }
+      input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 16px;
+        font-family: inherit;
+        box-sizing: border-box;
+        background: var(--bg-color);
+      }
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--accent-color);
+      }
+      .text-input {
+        min-height: 144px;
+        height: 100%;
+      }
       button {
         background-color: var(--accent-color);
         color: #0b1a10;
@@ -130,11 +148,22 @@
         gap: 8px;
         margin-top: 8px;
       }
+      .style-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .style-row select,
+      .style-row input[type="text"] {
+        flex: 1;
+        min-width: 0;
+      }
       .input-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
-        align-items: start;
+        align-items: stretch;
       }
       .input-column {
         display: flex;
@@ -406,32 +435,36 @@
       <div class="code-block">
         <code>&lt;your VOICEVOX directory&gt;/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173</code>
       </div>
+      <p>話者やボイスをテキスト内で切り替えるときは、区切り文字欄に開始と終端を指定します（例: <code>[]</code> または <code>[ ]</code>）。空欄のままなら切り替えません。</p>
+      <p>マーカーの中身は次の順で解釈します。</p>
+      <ul>
+        <li><code>[ずんだもん]</code> → 話者名に一致したらその話者の「ノーマル」を選択</li>
+        <li><code>[ヒソヒソ]</code> → 現在の話者に同名のボイスがあればそちらへ切り替え</li>
+        <li><code>[37]</code> → 数値はIDとして扱い、例では四国めたん ヒソヒソ</li>
+      </ul>
+      <p>開始/終端の組み合わせはスペース区切りで2つ書くか、<code>[]</code>のように1組をそのまま入力できます。</p>
     </div>
 
     <div class="container">
+      <div class="style-row">
+        <select id="styleSelect" aria-label="話者・ボイス選択"></select>
+        <input id="delimiterInput" type="text" aria-label="切替区切り文字" placeholder="例: [] または [ ]" />
+      </div>
+
       <div class="input-row">
-        <div class="input-column">
-          <label for="styleSelect">スタイル</label>
-          <select id="styleSelect" aria-label="スタイル選択"></select>
-
-          <label for="delimiterInput">スタイル切替の区切り文字（例: []）</label>
-          <textarea id="delimiterInput" rows="2" aria-label="スタイル切替の区切り文字" placeholder="例: []"></textarea>
-          <p class="helper-text">空欄なら切り替えません。囲まれた語がスタイル名に一致した場合にのみ切り替えます。</p>
-
-          <textarea id="text" aria-label="テキスト入力">ずんだもんなのだ</textarea>
-          
-          <div class="controls">
-            <button id="playButton">▶️ 再生 (Play)</button>
-            <button id="exportButton" disabled>💾 ダウンロード (Export WAV)</button>
-            <label for="loopCheckbox" class="loop-control">
-              <input type="checkbox" id="loopCheckbox" checked />
-              ループ再生
-            </label>
-          </div>
-        </div>
+        <textarea id="text" class="text-input" aria-label="テキスト入力">ずんだもんなのだ</textarea>
         <div class="visualizer__frame input-visualizer">
           <canvas id="realtimeWaveform" width="760" height="144" aria-label="リアルタイム波形"></canvas>
         </div>
+      </div>
+      
+      <div class="controls">
+        <button id="playButton">▶️ 再生 (Play)</button>
+        <button id="exportButton" disabled>💾 ダウンロード (Export WAV)</button>
+        <label for="loopCheckbox" class="loop-control">
+          <input type="checkbox" id="loopCheckbox" checked />
+          ループ再生
+        </label>
       </div>
       
       <div id="status" class="status" role="status" aria-live="polite"></div>
