@@ -102,6 +102,7 @@ let intonationBaseMax: number | null = null;
 let intonationBasePadding: number | null = null;
 let intonationTopScale = 1;
 let intonationBottomScale = 1;
+let intonationKeyboardEnabled = false;
 
 function invalidateColorVariableCache() {
   cachedRootComputedStyle = null;
@@ -971,6 +972,41 @@ function handleIntonationKeyDown(event: KeyboardEvent) {
   if (intonationSelectedIndex === null) {
     intonationSelectedIndex = 0;
   }
+  if (intonationKeyboardEnabled && event.key.length === 1) {
+    const key = event.key.toUpperCase();
+    if (key >= 'A' && key <= 'Z') {
+      const targetIndex = key.charCodeAt(0) - 65;
+      if (targetIndex < intonationPoints.length) {
+        let rangeSpan: number;
+        if (intonationChartRange && intonationChartRange.max !== undefined && intonationChartRange.min !== undefined) {
+          rangeSpan = intonationChartRange.max - intonationChartRange.min;
+        } else {
+          let min = intonationPoints[0].pitch;
+          let max = intonationPoints[0].pitch;
+          for (let i = 1; i < intonationPoints.length; i += 1) {
+            const pitch = intonationPoints[i].pitch;
+            if (pitch < min) min = pitch;
+            if (pitch > max) max = pitch;
+          }
+          rangeSpan = max - min;
+        }
+        const step = rangeSpan / 10;
+        if (step <= 0) return;
+        event.preventDefault();
+        const adjustment = event.shiftKey ? -step : step;
+        const newPitch = intonationPoints[targetIndex].pitch + adjustment;
+        const clampedPitch = intonationChartRange
+          ? Math.min(intonationChartRange.max, Math.max(intonationChartRange.min, newPitch))
+          : newPitch;
+        intonationPoints[targetIndex].pitch = clampedPitch;
+        intonationSelectedIndex = targetIndex;
+        applyPitchToQuery(targetIndex, clampedPitch);
+        drawIntonationChart(intonationPoints);
+        scheduleIntonationPlayback();
+        return;
+      }
+    }
+  }
   if (event.key === 'ArrowLeft') {
     event.preventDefault();
     intonationSelectedIndex = Math.max(0, (intonationSelectedIndex ?? 0) - 1);
@@ -1320,6 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const intonationShrinkTop = document.getElementById('intonationShrinkTop') as HTMLButtonElement | null;
   const intonationShrinkBottom = document.getElementById('intonationShrinkBottom') as HTMLButtonElement | null;
   const intonationExpandBottom = document.getElementById('intonationExpandBottom') as HTMLButtonElement | null;
+  const intonationKeyboardToggle = document.getElementById('intonationKeyboardToggle') as HTMLButtonElement | null;
   
   if (playButton) {
     playButton.addEventListener('click', handlePlay);
@@ -1364,6 +1401,28 @@ document.addEventListener('DOMContentLoaded', () => {
       initializeVisualizationCanvases();
       spectrogramNeedsReset = true;
       updateSpectrogramScaleLabel();
+    });
+  }
+
+  const updateIntonationKeyboardToggle = () => {
+    if (intonationKeyboardToggle) {
+      intonationKeyboardToggle.textContent = intonationKeyboardEnabled ? 'キーボード操作: ON' : 'キーボード操作: OFF';
+      intonationKeyboardToggle.setAttribute('aria-pressed', String(intonationKeyboardEnabled));
+      intonationKeyboardToggle.setAttribute(
+        'aria-label',
+        intonationKeyboardEnabled ? 'キーボード操作を無効にする' : 'キーボード操作を有効にする'
+      );
+    }
+  };
+
+  if (intonationKeyboardToggle) {
+    updateIntonationKeyboardToggle();
+    intonationKeyboardToggle.addEventListener('click', () => {
+      intonationKeyboardEnabled = !intonationKeyboardEnabled;
+      updateIntonationKeyboardToggle();
+      if (intonationKeyboardEnabled && intonationCanvas) {
+        intonationCanvas.focus();
+      }
     });
   }
 
