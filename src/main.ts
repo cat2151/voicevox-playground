@@ -623,12 +623,6 @@ function updateIntonationBaseRange(points: IntonationPoint[]) {
   intonationBottomScale = 1;
 }
 
-function getIntonationPitchRange() {
-  if (intonationPoints.length === 0) return null;
-  const pitches = intonationPoints.map((point) => point.pitch);
-  return { min: Math.min(...pitches), max: Math.max(...pitches) };
-}
-
 function buildIntonationPointsFromQuery(query: AudioQuery) {
   const points: IntonationPoint[] = [];
   query.accent_phrases.forEach((phrase, phraseIndex) => {
@@ -983,10 +977,21 @@ function handleIntonationKeyDown(event: KeyboardEvent) {
     if (key >= 'A' && key <= 'Z') {
       const targetIndex = key.charCodeAt(0) - 65;
       if (targetIndex < intonationPoints.length) {
-        const range = getIntonationPitchRange();
-        if (!range) return;
-        const step = (range.max - range.min) / 10;
-        if (step === 0) return;
+        let rangeSpan: number;
+        if (intonationChartRange && intonationChartRange.max !== undefined && intonationChartRange.min !== undefined) {
+          rangeSpan = intonationChartRange.max - intonationChartRange.min;
+        } else {
+          let min = intonationPoints[0].pitch;
+          let max = intonationPoints[0].pitch;
+          for (let i = 1; i < intonationPoints.length; i += 1) {
+            const pitch = intonationPoints[i].pitch;
+            if (pitch < min) min = pitch;
+            if (pitch > max) max = pitch;
+          }
+          rangeSpan = max - min;
+        }
+        const step = rangeSpan / 10;
+        if (step <= 0) return;
         event.preventDefault();
         const adjustment = event.shiftKey ? -step : step;
         const newPitch = intonationPoints[targetIndex].pitch + adjustment;
@@ -1403,6 +1408,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (intonationKeyboardToggle) {
       intonationKeyboardToggle.textContent = intonationKeyboardEnabled ? 'キーボード操作: ON' : 'キーボード操作: OFF';
       intonationKeyboardToggle.setAttribute('aria-pressed', String(intonationKeyboardEnabled));
+      intonationKeyboardToggle.setAttribute(
+        'aria-label',
+        intonationKeyboardEnabled ? 'キーボード操作を無効にする' : 'キーボード操作を有効にする'
+      );
     }
   };
 
