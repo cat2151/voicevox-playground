@@ -13,6 +13,9 @@ const MIN_LOG_FREQUENCY = 20;
 const MIN_TICK_SPACING_PX = 60;
 const MONOKAI_COLORS = ['#f92672', '#a6e22e', '#66d9ef', '#fd971f', '#ae81ff', '#e6db74'];
 const DELIMITER_STORAGE_KEY = 'voicevox-delimiter-pair';
+const FAVORITES_STORAGE_KEY = 'voicevox-favorites';
+const HISTORY_STORAGE_KEY = 'voicevox-history';
+const TEXT_LIST_LIMIT = 20;
 type FrequencyScale = 'linear' | 'log';
 
 interface VoiceStyleOption {
@@ -121,6 +124,10 @@ let intonationTopScale = 1;
 let intonationBottomScale = 1;
 let intonationKeyboardEnabled = false;
 let currentIntonationStyleId = ZUNDAMON_SPEAKER_ID;
+let favoriteTexts: string[] = [];
+let historyTexts: string[] = [];
+let favoritesListEl: HTMLUListElement | null = null;
+let historyListEl: HTMLUListElement | null = null;
 
 function invalidateColorVariableCache() {
   cachedRootComputedStyle = null;
@@ -163,6 +170,138 @@ function getStyleByName(name: string) {
 
 function getAudioCacheKey(text: string, styleId: number) {
   return `${styleId}::${text}`;
+}
+
+function loadStoredList(key: string) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item): item is string => typeof item === 'string');
+    }
+  } catch (error) {
+    console.warn(`Failed to load ${key}:`, error);
+  }
+  return [];
+}
+
+function persistList(key: string, list: string[]) {
+  try {
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch (error) {
+    console.warn(`Failed to save ${key}:`, error);
+  }
+}
+
+function dedupeAndLimit(list: string[]) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const item of list) {
+    const trimmed = item.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    result.push(trimmed);
+    if (result.length >= TEXT_LIST_LIMIT) break;
+  }
+  return result;
+}
+
+function persistLists() {
+  persistList(FAVORITES_STORAGE_KEY, favoriteTexts);
+  persistList(HISTORY_STORAGE_KEY, historyTexts);
+}
+
+function setTextAndPlay(text: string) {
+  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
+  if (!textArea) return;
+  textArea.value = text;
+  if (autoPlayTimer !== null) {
+    window.clearTimeout(autoPlayTimer);
+    autoPlayTimer = null;
+  }
+  scheduleAutoPlay();
+}
+
+function renderList(listEl: HTMLUListElement | null, items: string[], type: 'favorites' | 'history') {
+  if (!listEl) return;
+  listEl.textContent = '';
+  items.forEach((text) => {
+    const listItem = document.createElement('li');
+    listItem.className = 'text-list__item';
+
+    const playButton = document.createElement('button');
+    playButton.type = 'button';
+    playButton.className = 'text-list__text';
+    playButton.textContent = text;
+    playButton.addEventListener('click', () => setTextAndPlay(text));
+
+    const actionButton = document.createElement('button');
+    actionButton.type = 'button';
+    actionButton.className = `text-list__action ${
+      type === 'history' ? 'text-list__action--add' : 'text-list__action--remove'
+    }`;
+    actionButton.textContent = type === 'history' ? '＋' : '－';
+    actionButton.setAttribute(
+      'aria-label',
+      type === 'history' ? 'お気に入りに入れる' : 'お気に入りから削除する'
+    );
+    actionButton.addEventListener('click', () => {
+      if (type === 'history') {
+        moveToFavorites(text);
+      } else {
+        moveToHistory(text);
+      }
+    });
+
+    listItem.appendChild(playButton);
+    listItem.appendChild(actionButton);
+    listEl.appendChild(listItem);
+  });
+}
+
+function renderTextLists() {
+  renderList(favoritesListEl, favoriteTexts, 'favorites');
+  renderList(historyListEl, historyTexts, 'history');
+}
+
+function moveToFavorites(text: string) {
+  const target = text.trim();
+  if (!target) return;
+  historyTexts = historyTexts.filter((item) => item !== target);
+  favoriteTexts = [target, ...favoriteTexts.filter((item) => item !== target)];
+  favoriteTexts = dedupeAndLimit(favoriteTexts);
+  historyTexts = dedupeAndLimit(historyTexts);
+  persistLists();
+  renderTextLists();
+}
+
+function moveToHistory(text: string) {
+  const target = text.trim();
+  if (!target) return;
+  favoriteTexts = favoriteTexts.filter((item) => item !== target);
+  historyTexts = [target, ...historyTexts.filter((item) => item !== target)];
+  favoriteTexts = dedupeAndLimit(favoriteTexts);
+  historyTexts = dedupeAndLimit(historyTexts);
+  persistLists();
+  renderTextLists();
+}
+
+function addToHistory(text: string) {
+  const target = text.trim();
+  if (!target) return;
+  if (favoriteTexts.includes(target)) return;
+  historyTexts = [target, ...historyTexts.filter((item) => item !== target)];
+  historyTexts = dedupeAndLimit(historyTexts);
+  persistLists();
+  renderTextLists();
+}
+
+function initializeTextLists() {
+  favoriteTexts = dedupeAndLimit(loadStoredList(FAVORITES_STORAGE_KEY));
+  historyTexts = dedupeAndLimit(loadStoredList(HISTORY_STORAGE_KEY));
+  persistLists();
+  renderTextLists();
 }
 
 function addSegment(
@@ -1551,6 +1690,7 @@ async function handlePlay() {
     const spokenText = segments.map((segment) => segment.text).join('');
     const intonationStyleId = segments[0]?.styleId ?? selectedStyleId;
     await fetchAndRenderIntonation(spokenText, intonationStyleId);
+    addToHistory(text);
     
     showStatus('再生完了！', 'success');
     setTimeout(hideStatus, 3000);
@@ -1585,6 +1725,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const spectrogramScaleToggle = document.getElementById('spectrogramScaleToggle') as HTMLButtonElement | null;
   const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
   const delimiterInput = document.getElementById('delimiterInput') as HTMLTextAreaElement | null;
+  const favoritesToggleButton = document.getElementById('favoritesToggleButton') as HTMLButtonElement | null;
+  const favoritesPanel = document.getElementById('favoritesPanel');
+  favoritesListEl = document.getElementById('favoritesList') as HTMLUListElement | null;
+  historyListEl = document.getElementById('historyList') as HTMLUListElement | null;
   intonationCanvas = document.getElementById('intonationCanvas') as HTMLCanvasElement | null;
   intonationTimingEl = null;
   intonationLabelsEl = document.getElementById('intonationLabels');
@@ -1658,6 +1802,20 @@ document.addEventListener('DOMContentLoaded', () => {
       usageToggleButton.setAttribute('aria-expanded', String(isHidden));
     });
   }
+
+  if (favoritesToggleButton && favoritesPanel) {
+    favoritesToggleButton.addEventListener('click', () => {
+      const isHidden = favoritesPanel.hasAttribute('hidden');
+      if (isHidden) {
+        favoritesPanel.removeAttribute('hidden');
+      } else {
+        favoritesPanel.setAttribute('hidden', 'true');
+      }
+      favoritesToggleButton.setAttribute('aria-expanded', String(isHidden));
+    });
+  }
+
+  initializeTextLists();
 
   const updateSpectrogramScaleLabel = () => {
     if (spectrogramScaleToggle) {
