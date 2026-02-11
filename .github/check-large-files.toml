@@ -47,8 +47,6 @@ exclude_patterns = [
     "**/*.yaml",
     "**/*.toml",
     "**/*.lock",
-    "**/*.html",
-    "**/*.css",
     
     # ビルド成果物（拡張子で除外）
     "**/*.d.ts",
