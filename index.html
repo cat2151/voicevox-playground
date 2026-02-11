@@ -151,7 +151,7 @@
       .visualizer-grid {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 8px;
         background-image: linear-gradient(
             to right,
             transparent 0,
@@ -172,6 +172,21 @@
         font-weight: bold;
         margin-bottom: 6px;
         color: var(--muted-text);
+      }
+      .visualizer__frame {
+        position: relative;
+      }
+      .visualizer__action {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        padding: 6px 10px;
+        margin: 0;
+        font-size: 13px;
+        border: 1px solid var(--border-color);
+        background: var(--panel-bg);
+        color: var(--text-color);
+        border-radius: 6px;
       }
       canvas {
         width: 100%;
@@ -251,17 +266,15 @@
 
     <div class="container">
       <div class="visualizer-grid">
-        <div>
-          <div class="visualizer__title">レンダリング後の波形</div>
+        <div class="visualizer__frame">
           <canvas id="renderedWaveform" width="760" height="144" aria-label="レンダリング後の波形"></canvas>
         </div>
-        <div>
-          <div class="visualizer__title">リアルタイム波形</div>
+        <div class="visualizer__frame">
           <canvas id="realtimeWaveform" width="760" height="144" aria-label="リアルタイム波形"></canvas>
         </div>
-        <div>
-          <div class="visualizer__title">スペクトログラム (FFT)</div>
+        <div class="visualizer__frame">
           <canvas id="spectrogram" width="760" height="144" aria-label="スペクトログラム"></canvas>
+          <button id="spectrogramScaleToggle" class="visualizer__action" type="button" aria-label="スペクトログラムの周波数スケール切り替え">対数スケール</button>
         </div>
       </div>
     </div>
