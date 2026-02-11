@@ -600,17 +600,6 @@ function initializeIntonationCanvas() {
   ctx.strokeRect(0, 0, width, height);
 }
 
-function updateIntonationBaseRange(points: IntonationPoint[]) {
-  if (points.length === 0) {
-    intonationTopScale = 1;
-    intonationBottomScale = 1;
-    return;
-  }
-
-  intonationTopScale = 1;
-  intonationBottomScale = 1;
-}
-
 function buildIntonationPointsFromQuery(query: AudioQuery) {
   const points: IntonationPoint[] = [];
   query.accent_phrases.forEach((phrase, phraseIndex) => {
@@ -700,8 +689,8 @@ function drawIntonationChart(points: IntonationPoint[]) {
   const paddingBase = range > 0 ? range : Math.max(5, Math.abs(rawMax) * 0.1 || 5);
   const topPadding = intonationTopScale > 1 ? paddingBase * (intonationTopScale - 1) : 0;
   const bottomPadding = intonationBottomScale > 1 ? paddingBase * (intonationBottomScale - 1) : 0;
-  const minPitch = isFlatPitch ? rawMin - paddingBase : rawMin - bottomPadding;
-  const maxPitch = isFlatPitch ? rawMax + paddingBase : rawMax + topPadding;
+  const minPitch = isFlatPitch ? rawMin - (paddingBase + bottomPadding) : rawMin - bottomPadding;
+  const maxPitch = isFlatPitch ? rawMax + (paddingBase + topPadding) : rawMax + topPadding;
   const innerWidth = Math.max(1, width - margin * 2);
   const innerHeight = Math.max(1, height - margin * 2);
   const step = points.length > 1 ? innerWidth / (points.length - 1) : 0;
@@ -912,7 +901,8 @@ async function fetchAndRenderIntonation(text: string) {
     const elapsed = performance.now() - start;
     currentIntonationQuery = query;
     intonationPoints = buildIntonationPointsFromQuery(query);
-    updateIntonationBaseRange(intonationPoints);
+    intonationTopScale = 1;
+    intonationBottomScale = 1;
     intonationSelectedIndex = intonationPoints.length > 0 ? 0 : null;
     drawIntonationChart(intonationPoints);
     updateIntonationTiming(`イントネーション取得: ${Math.round(elapsed)} ms`);
