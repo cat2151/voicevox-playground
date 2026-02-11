@@ -214,7 +214,8 @@ function buildTextSegments(
     if (matchedStyle) {
       currentStyleId = matchedStyle.id;
     } else {
-      addSegment(segments, markerContent, currentStyleId);
+      const fullMarker = text.slice(startIndex, endIndex + delimiter.end.length);
+      addSegment(segments, fullMarker, currentStyleId);
     }
     cursor = endIndex + delimiter.end.length;
   }
@@ -1547,8 +1548,9 @@ async function handlePlay() {
       showStatus('音声を再生中（キャッシュ）...', 'info');
     }
     await playAudio(combinedBuffer, realtimeCanvas, spectrogramCanvas);
+    const spokenText = segments.map((segment) => segment.text).join('');
     const intonationStyleId = segments[0]?.styleId ?? selectedStyleId;
-    await fetchAndRenderIntonation(text, intonationStyleId);
+    await fetchAndRenderIntonation(spokenText, intonationStyleId);
     
     showStatus('再生完了！', 'success');
     setTimeout(hideStatus, 3000);
