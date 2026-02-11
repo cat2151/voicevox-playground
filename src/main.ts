@@ -220,7 +220,7 @@ function setTextAndPlay(text: string) {
     window.clearTimeout(autoPlayTimer);
     autoPlayTimer = null;
   }
-  void handlePlay();
+  scheduleAutoPlay();
 }
 
 function renderList(listEl: HTMLUListElement | null, items: string[], type: 'favorites' | 'history') {
@@ -290,6 +290,7 @@ function moveToHistory(text: string) {
 function addToHistory(text: string) {
   const target = text.trim();
   if (!target) return;
+  if (favoriteTexts.includes(target)) return;
   historyTexts = [target, ...historyTexts.filter((item) => item !== target)];
   historyTexts = dedupeAndLimit(historyTexts);
   persistLists();
