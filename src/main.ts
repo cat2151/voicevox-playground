@@ -153,6 +153,39 @@ function getStyleLabel(style: VoiceStyleOption) {
   return `${style.speakerName} - ${style.name} (ID: ${style.id})`;
 }
 
+function getStyleById(id: number) {
+  return availableStyles.find((style) => style.id === id) ?? null;
+}
+
+function resolveStyleMarker(marker: string, currentStyleId: number) {
+  const trimmed = marker.trim();
+  if (!trimmed) return null;
+
+  const numericId = Number(trimmed);
+  if (!Number.isNaN(numericId)) {
+    const byId = getStyleById(numericId);
+    if (byId) return byId;
+  }
+
+  const currentStyle = getStyleById(currentStyleId);
+  const currentSpeaker = currentStyle?.speakerName ?? null;
+
+  const speakerStyles = availableStyles.filter((style) => style.speakerName === trimmed);
+  if (speakerStyles.length > 0) {
+    const normalStyle = speakerStyles.find((style) => style.name === 'ノーマル');
+    return normalStyle ?? speakerStyles[0];
+  }
+
+  if (currentSpeaker) {
+    const sameSpeakerStyle = availableStyles.find(
+      (style) => style.speakerName === currentSpeaker && style.name === trimmed
+    );
+    if (sameSpeakerStyle) return sameSpeakerStyle;
+  }
+
+  return availableStyles.find((style) => style.name === trimmed) ?? null;
+}
+
 function parseDelimiterConfig(rawValue: string): { start: string; end: string } | null {
   const trimmed = rawValue.trim();
   if (trimmed.length < 2) return null;
@@ -161,11 +194,6 @@ function parseDelimiterConfig(rawValue: string): { start: string; end: string } 
     return { start: parts[0], end: parts[1] };
   }
   return { start: trimmed[0], end: trimmed[trimmed.length - 1] };
-}
-
-function getStyleByName(name: string) {
-  const target = name.trim();
-  return availableStyles.find((style) => style.name === target) ?? null;
 }
 
 function getAudioCacheKey(text: string, styleId: number) {
@@ -349,7 +377,7 @@ function buildTextSegments(
     }
 
     const markerContent = text.slice(startIndex + delimiter.start.length, endIndex);
-    const matchedStyle = getStyleByName(markerContent);
+    const matchedStyle = resolveStyleMarker(markerContent, currentStyleId);
     if (matchedStyle) {
       currentStyleId = matchedStyle.id;
     } else {
@@ -435,7 +463,7 @@ function populateStyleSelect(styleSelect: HTMLSelectElement | null) {
   if (availableStyles.length === 0) {
     const fallback = document.createElement('option');
     fallback.value = String(ZUNDAMON_SPEAKER_ID);
-    fallback.textContent = `スタイルID ${ZUNDAMON_SPEAKER_ID}`;
+    fallback.textContent = `ID ${ZUNDAMON_SPEAKER_ID}`;
     styleSelect.appendChild(fallback);
     selectedStyleId = ZUNDAMON_SPEAKER_ID;
     return;
@@ -474,9 +502,7 @@ async function fetchVoiceStyles(styleSelect: HTMLSelectElement | null) {
   } catch (error) {
     console.error('Failed to fetch speaker styles:', error);
     if (availableStyles.length === 0) {
-      availableStyles = [
-        { id: ZUNDAMON_SPEAKER_ID, name: 'スタイル未取得', speakerName: 'デフォルト' },
-      ];
+      availableStyles = [{ id: ZUNDAMON_SPEAKER_ID, name: '未取得', speakerName: 'デフォルト' }];
     }
   } finally {
     clearTimeout(timeoutId);
@@ -1606,7 +1632,7 @@ async function handlePlay() {
   const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
   const loopCheckbox = document.getElementById('loopCheckbox') as HTMLInputElement | null;
   const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
-  const delimiterInput = document.getElementById('delimiterInput') as HTMLTextAreaElement | null;
+  const delimiterInput = document.getElementById('delimiterInput') as HTMLInputElement | null;
   
   if (!textArea || !playButton) {
     console.error('Required UI elements not found');
@@ -1724,7 +1750,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const usagePanel = document.getElementById('usagePanel');
   const spectrogramScaleToggle = document.getElementById('spectrogramScaleToggle') as HTMLButtonElement | null;
   const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
-  const delimiterInput = document.getElementById('delimiterInput') as HTMLTextAreaElement | null;
+  const delimiterInput = document.getElementById('delimiterInput') as HTMLInputElement | null;
   const favoritesToggleButton = document.getElementById('favoritesToggleButton') as HTMLButtonElement | null;
   const favoritesPanel = document.getElementById('favoritesPanel');
   favoritesListEl = document.getElementById('favoritesList') as HTMLUListElement | null;
