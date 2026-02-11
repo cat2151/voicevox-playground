@@ -161,12 +161,6 @@ function resolveStyleMarker(marker: string, currentStyleId: number) {
   const trimmed = marker.trim();
   if (!trimmed) return null;
 
-  const numericId = Number(trimmed);
-  if (!Number.isNaN(numericId)) {
-    const byId = getStyleById(numericId);
-    if (byId) return byId;
-  }
-
   const currentStyle = getStyleById(currentStyleId);
   const currentSpeaker = currentStyle?.speakerName ?? null;
 
@@ -183,7 +177,13 @@ function resolveStyleMarker(marker: string, currentStyleId: number) {
     if (sameSpeakerStyle) return sameSpeakerStyle;
   }
 
-  return availableStyles.find((style) => style.name === trimmed) ?? null;
+  if (/^\d+$/.test(trimmed)) {
+    const numericId = Number(trimmed);
+    const byId = getStyleById(numericId);
+    if (byId) return byId;
+  }
+
+  return null;
 }
 
 function parseDelimiterConfig(rawValue: string): { start: string; end: string } | null {
