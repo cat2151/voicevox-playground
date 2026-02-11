@@ -84,8 +84,10 @@ let intonationTimingEl: HTMLElement | null = null;
 let currentIntonationQuery: AudioQuery | null = null;
 let intonationPoints: IntonationPoint[] = [];
 let intonationPointPositions: Array<{ x: number; y: number }> = [];
+let intonationSelectedIndex: number | null = null;
 let intonationDebounceTimer: number | null = null;
 let intonationDragIndex: number | null = null;
+let intonationActivePointerId: number | null = null;
 let intonationChartRange: IntonationChartRange | null = null;
 
 function invalidateColorVariableCache() {
@@ -347,6 +349,12 @@ function drawIntonationChart(points: IntonationPoint[]) {
     return;
   }
 
+  if (intonationSelectedIndex === null) {
+    intonationSelectedIndex = 0;
+  } else if (intonationSelectedIndex >= points.length) {
+    intonationSelectedIndex = points.length - 1;
+  }
+
   const margin = 24;
   const rawMin = points.reduce((min, point) => Math.min(min, point.pitch), points[0].pitch);
   const rawMax = points.reduce((max, point) => Math.max(max, point.pitch), points[0].pitch);
@@ -356,6 +364,7 @@ function drawIntonationChart(points: IntonationPoint[]) {
   const innerWidth = Math.max(1, width - margin * 2);
   const innerHeight = Math.max(1, height - margin * 2);
   const step = points.length > 1 ? innerWidth / (points.length - 1) : 0;
+  const isFlatPitch = rawMax === rawMin;
 
   ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
   ctx.beginPath();
@@ -384,7 +393,8 @@ function drawIntonationChart(points: IntonationPoint[]) {
   points.forEach((_, index) => {
     const pos = intonationPointPositions[index];
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+    const radius = intonationSelectedIndex === index ? 7 : 5;
+    ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
     ctx.fillStyle = accent;
     ctx.fill();
     ctx.strokeStyle = getColorVariable('--bg-color', '#ffffff');
@@ -400,6 +410,12 @@ function drawIntonationChart(points: IntonationPoint[]) {
     innerHeight,
     width,
   };
+
+  if (isFlatPitch) {
+    ctx.fillStyle = getColorVariable('--muted-text', '#6b7280');
+    ctx.font = '12px sans-serif';
+    ctx.fillText('全モーラ同一ピッチ（フラット）', margin, margin - 6);
+  }
 }
 
 function pitchFromY(y: number) {
@@ -460,7 +476,6 @@ async function playUpdatedIntonation() {
   const renderedCanvas = document.getElementById('renderedWaveform') as HTMLCanvasElement | null;
   const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
   const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
-  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
 
   isProcessing = true;
   if (playButton) playButton.disabled = true;
@@ -483,12 +498,6 @@ async function playUpdatedIntonation() {
     }
 
     await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas);
-    if (textArea) {
-      const text = textArea.value.trim();
-      if (text) {
-        audioCache.set(text, audioBuffer);
-      }
-    }
 
     showStatus('更新したイントネーションで再生しました', 'success');
     setTimeout(hideStatus, 2500);
@@ -516,6 +525,7 @@ async function fetchAndRenderIntonation(text: string) {
     const elapsed = performance.now() - start;
     currentIntonationQuery = query;
     intonationPoints = buildIntonationPointsFromQuery(query);
+    intonationSelectedIndex = intonationPoints.length > 0 ? 0 : null;
     drawIntonationChart(intonationPoints);
     updateIntonationTiming(`イントネーション取得: ${Math.round(elapsed)} ms`);
   } catch (error) {
@@ -524,7 +534,7 @@ async function fetchAndRenderIntonation(text: string) {
   }
 }
 
-function handleIntonationPointerDown(event: MouseEvent) {
+function handleIntonationPointerDown(event: MouseEvent | PointerEvent) {
   if (!intonationCanvas || intonationPointPositions.length === 0) return;
   const rect = intonationCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
@@ -532,11 +542,21 @@ function handleIntonationPointerDown(event: MouseEvent) {
   const targetIndex = findNearestIntonationPoint(x, y);
   if (targetIndex !== -1) {
     intonationDragIndex = targetIndex;
+    intonationSelectedIndex = targetIndex;
+    drawIntonationChart(intonationPoints);
+    if ('pointerId' in event) {
+      intonationActivePointerId = event.pointerId;
+      intonationCanvas.setPointerCapture(event.pointerId);
+    }
+    event.preventDefault();
   }
 }
 
-function handleIntonationPointerMove(event: MouseEvent) {
+function handleIntonationPointerMove(event: MouseEvent | PointerEvent) {
   if (intonationDragIndex === null || !intonationCanvas || intonationPointPositions.length === 0) {
+    return;
+  }
+  if ('pointerId' in event && intonationActivePointerId !== null && event.pointerId !== intonationActivePointerId) {
     return;
   }
   const rect = intonationCanvas.getBoundingClientRect();
@@ -546,10 +566,46 @@ function handleIntonationPointerMove(event: MouseEvent) {
   applyPitchToQuery(intonationDragIndex, pitch);
   drawIntonationChart(intonationPoints);
   scheduleIntonationPlayback();
+  event.preventDefault();
 }
 
 function handleIntonationPointerUp() {
+  if (intonationActivePointerId !== null && intonationCanvas) {
+    intonationCanvas.releasePointerCapture(intonationActivePointerId);
+  }
+  intonationActivePointerId = null;
   intonationDragIndex = null;
+}
+
+function handleIntonationKeyDown(event: KeyboardEvent) {
+  if (!intonationCanvas || intonationPoints.length === 0) return;
+  if (intonationSelectedIndex === null) {
+    intonationSelectedIndex = 0;
+  }
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    intonationSelectedIndex = Math.max(0, (intonationSelectedIndex ?? 0) - 1);
+    drawIntonationChart(intonationPoints);
+    return;
+  }
+  if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    intonationSelectedIndex = Math.min(intonationPoints.length - 1, (intonationSelectedIndex ?? 0) + 1);
+    drawIntonationChart(intonationPoints);
+    return;
+  }
+  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    event.preventDefault();
+    const range = intonationChartRange ? intonationChartRange.max - intonationChartRange.min : 0;
+    const delta = Math.max(range * 0.02, 1);
+    const targetIndex = intonationSelectedIndex ?? 0;
+    const adjustment = event.key === 'ArrowUp' ? delta : -delta;
+    const newPitch = intonationPoints[targetIndex].pitch + adjustment;
+    intonationPoints[targetIndex].pitch = newPitch;
+    applyPitchToQuery(targetIndex, newPitch);
+    drawIntonationChart(intonationPoints);
+    scheduleIntonationPlayback();
+  }
 }
 
 function updateExportButtonState(exportButton?: HTMLButtonElement | null) {
@@ -878,11 +934,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (intonationCanvas) {
-    intonationCanvas.addEventListener('mousedown', handleIntonationPointerDown);
-    intonationCanvas.addEventListener('mousemove', handleIntonationPointerMove);
-    intonationCanvas.addEventListener('mouseleave', handleIntonationPointerUp);
+    intonationCanvas.addEventListener('pointerdown', handleIntonationPointerDown);
+    intonationCanvas.addEventListener('pointermove', handleIntonationPointerMove);
+    intonationCanvas.addEventListener('pointerleave', handleIntonationPointerUp);
+    intonationCanvas.addEventListener('keydown', handleIntonationKeyDown);
+    intonationCanvas.addEventListener('focus', () => {
+      if (intonationPoints.length > 0 && intonationSelectedIndex === null) {
+        intonationSelectedIndex = 0;
+        drawIntonationChart(intonationPoints);
+      }
+    });
   }
   window.addEventListener('mouseup', handleIntonationPointerUp);
+  window.addEventListener('pointerup', handleIntonationPointerUp);
 
   initializeVisualizationCanvases();
   initializeIntonationCanvas();
