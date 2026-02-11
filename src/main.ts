@@ -1349,7 +1349,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateSpectrogramScaleLabel = () => {
     if (spectrogramScaleToggle) {
-      spectrogramScaleToggle.textContent = spectrogramScale === 'linear' ? '対数スケール' : 'リニアスケール';
+      const isLogScale = spectrogramScale === 'log';
+      const nextLabel = isLogScale ? 'リニアにする' : '対数にする';
+      spectrogramScaleToggle.textContent = nextLabel;
+      spectrogramScaleToggle.setAttribute('aria-pressed', String(isLogScale));
+      spectrogramScaleToggle.setAttribute('aria-label', `スペクトログラムのスケールを${nextLabel}`);
     }
   };
 
