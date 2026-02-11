@@ -207,6 +207,17 @@
         color: var(--text-color);
         border-radius: 6px;
       }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
       canvas {
         width: 100%;
         height: 144px;
@@ -288,12 +299,13 @@
     </style>
   </head>
   <body>
+    <h1 class="sr-only">VOICEVOX Playground</h1>
     <div class="controls">
       <button id="usageToggleButton" class="secondary-button" aria-expanded="false" aria-controls="usagePanel">ℹ️ 利用方法</button>
     </div>
     
     <div class="container info" id="usagePanel" hidden>
-      <h1>🎙️ VOICEVOX Playground</h1>
+      <h1 aria-hidden="true">🎙️ VOICEVOX Playground</h1>
       <p>GitHub Pages 版（<code>https://cat2151.github.io/voicevox-playground/</code>）からアクセスする際は、VOICEVOXエンジンを以下のコマンドで起動してCORSを許可してください。</p>
       <div class="code-block">
         <code>&lt;your VOICEVOX directory&gt;/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io</code>
@@ -350,7 +362,7 @@
         </div>
         <div class="visualizer__frame">
           <canvas id="spectrogram" width="760" height="144" aria-label="スペクトログラム"></canvas>
-          <button id="spectrogramScaleToggle" class="visualizer__action" type="button" aria-label="スペクトログラムの周波数スケール切り替え">対数にする</button>
+          <button id="spectrogramScaleToggle" class="visualizer__action" type="button">対数にする</button>
         </div>
       </div>
     </div>
