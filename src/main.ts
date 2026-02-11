@@ -83,6 +83,7 @@ function showStatus(message: string, type: 'info' | 'error' | 'success') {
     statusDiv.textContent = message;
     statusDiv.className = `status ${type}`;
     statusDiv.style.display = 'block';
+    statusDiv.style.visibility = 'visible';
     // Use assertive for errors so screen readers interrupt to announce them
     statusDiv.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
   }
@@ -91,7 +92,10 @@ function showStatus(message: string, type: 'info' | 'error' | 'success') {
 function hideStatus() {
   const statusDiv = document.getElementById('status');
   if (statusDiv) {
-    statusDiv.style.display = 'none';
+    statusDiv.textContent = '';
+    statusDiv.className = 'status';
+    statusDiv.style.visibility = 'hidden';
+    statusDiv.setAttribute('aria-live', 'polite');
   }
 }
 
@@ -916,6 +920,11 @@ function drawSpectrogram(
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
+    const labelMetrics = ctx.measureText('0000Hz');
+    const calculatedHeight = (labelMetrics.actualBoundingBoxAscent ?? 0) + (labelMetrics.actualBoundingBoxDescent ?? 0);
+    const labelHeight = Math.max(1, Math.ceil(calculatedHeight || 11));
+    const minLabelGap = labelHeight + 2;
+    let lastLabelY: number | null = null;
     const logMax = Math.log10(Math.max(maxFreq, minLogFreq));
     const logMin = Math.log10(Math.max(minLogFreq, 1));
     for (let freq = 0; freq <= maxFreq + 1; freq += 500) {
@@ -927,7 +936,14 @@ function drawSpectrogram(
       ctx.moveTo(leftMargin - 4, y);
       ctx.lineTo(width, y);
       ctx.stroke();
-      ctx.fillText(`${Math.round(freq)}Hz`, leftMargin - 6, y);
+      const shouldDrawLabel = lastLabelY === null
+        || Math.abs(y - lastLabelY) >= minLabelGap
+        || freq === 0
+        || freq >= maxFreq;
+      if (shouldDrawLabel) {
+        ctx.fillText(`${Math.round(freq)}Hz`, leftMargin - 6, y);
+        lastLabelY = y;
+      }
     }
   }
 
