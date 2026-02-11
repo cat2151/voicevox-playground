@@ -640,23 +640,38 @@ function buildIntonationPointsFromQuery(query: AudioQuery) {
 function renderIntonationLabels(points: IntonationPoint[]) {
   if (!intonationLabelsEl) return;
   const labelsEl = intonationLabelsEl;
-  labelsEl.textContent = '';
   if (!intonationCanvas || points.length === 0 || intonationPointPositions.length === 0) {
+    labelsEl.textContent = '';
     return;
   }
 
   const rect = intonationCanvas.getBoundingClientRect();
   labelsEl.style.width = `${rect.width}px`;
 
+  const seen = new Set<number>();
   points.forEach((point, index) => {
     if (!point.label) return;
     const pos = intonationPointPositions[index];
     if (!pos) return;
-    const labelEl = document.createElement('span');
-    labelEl.className = 'intonation-label';
-    labelEl.textContent = point.label;
+    let labelEl = labelsEl.querySelector(`.intonation-label[data-idx="${index}"]`) as HTMLSpanElement | null;
+    if (!labelEl) {
+      labelEl = document.createElement('span');
+      labelEl.className = 'intonation-label';
+      labelEl.dataset.idx = String(index);
+      labelEl.textContent = point.label;
+      labelsEl.appendChild(labelEl);
+    } else if (labelEl.textContent !== point.label) {
+      labelEl.textContent = point.label;
+    }
     labelEl.style.left = `${pos.x}px`;
-    labelsEl.appendChild(labelEl);
+    seen.add(index);
+  });
+
+  Array.from(labelsEl.querySelectorAll('.intonation-label')).forEach((el) => {
+    const idx = (el as HTMLElement).dataset.idx;
+    if (!idx || !seen.has(Number(idx))) {
+      el.remove();
+    }
   });
 }
 
@@ -773,6 +788,22 @@ function adjustIntonationScale(direction: 'top' | 'bottom', factor: number) {
     intonationBottomScale = Math.max(minScale, intonationBottomScale * factor);
   }
   drawIntonationChart(intonationPoints);
+
+  if (intonationChartRange) {
+    const { min, max } = intonationChartRange;
+    let changed = false;
+    intonationPoints.forEach((point, index) => {
+      const clampedPitch = Math.min(max, Math.max(min, point.pitch));
+      if (clampedPitch !== point.pitch) {
+        point.pitch = clampedPitch;
+        applyPitchToQuery(index, clampedPitch);
+        changed = true;
+      }
+    });
+    if (changed) {
+      drawIntonationChart(intonationPoints);
+    }
+  }
 }
 
 function pitchFromY(y: number) {
@@ -875,7 +906,6 @@ async function playUpdatedIntonation() {
 
 async function fetchAndRenderIntonation(text: string) {
   if (!intonationCanvas) return;
-  updateIntonationTiming('イントネーション取得中...');
   const start = performance.now();
   try {
     const query = await getAudioQuery(text, ZUNDAMON_SPEAKER_ID);
@@ -889,6 +919,7 @@ async function fetchAndRenderIntonation(text: string) {
   } catch (error) {
     console.error('Failed to fetch intonation:', error);
     updateIntonationTiming('イントネーションの取得に失敗しました');
+    showStatus('イントネーションの取得に失敗しました', 'error');
   }
 }
 
@@ -1283,7 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const usagePanel = document.getElementById('usagePanel');
   const spectrogramScaleToggle = document.getElementById('spectrogramScaleToggle') as HTMLButtonElement | null;
   intonationCanvas = document.getElementById('intonationCanvas') as HTMLCanvasElement | null;
-  intonationTimingEl = document.getElementById('intonationTiming');
+  intonationTimingEl = null;
   intonationLabelsEl = document.getElementById('intonationLabels');
   const intonationExpandTop = document.getElementById('intonationExpandTop') as HTMLButtonElement | null;
   const intonationShrinkTop = document.getElementById('intonationShrinkTop') as HTMLButtonElement | null;
