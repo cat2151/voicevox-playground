@@ -86,6 +86,8 @@ const audioCache = new Map<string, ArrayBuffer>();
 let intonationCanvas: HTMLCanvasElement | null = null;
 let intonationTimingEl: HTMLElement | null = null;
 let intonationLabelsEl: HTMLElement | null = null;
+let intonationMaxValueEl: HTMLElement | null = null;
+let intonationMinValueEl: HTMLElement | null = null;
 let spectrogramScale: FrequencyScale = 'linear';
 let spectrogramNeedsReset = false;
 let lastSpectrogramScale: FrequencyScale = 'linear';
@@ -97,9 +99,6 @@ let intonationDebounceTimer: number | null = null;
 let intonationDragIndex: number | null = null;
 let intonationActivePointerId: number | null = null;
 let intonationChartRange: IntonationChartRange | null = null;
-let intonationBaseMin: number | null = null;
-let intonationBaseMax: number | null = null;
-let intonationBasePadding: number | null = null;
 let intonationTopScale = 1;
 let intonationBottomScale = 1;
 let intonationKeyboardEnabled = false;
@@ -603,22 +602,11 @@ function initializeIntonationCanvas() {
 
 function updateIntonationBaseRange(points: IntonationPoint[]) {
   if (points.length === 0) {
-    intonationBaseMin = null;
-    intonationBaseMax = null;
-    intonationBasePadding = null;
     intonationTopScale = 1;
     intonationBottomScale = 1;
     return;
   }
 
-  const pitches = points.map((point) => point.pitch);
-  const min = Math.min(...pitches);
-  const max = Math.max(...pitches);
-  const padding = Math.max(5, (max - min) * 0.2);
-
-  intonationBaseMin = min;
-  intonationBaseMax = max;
-  intonationBasePadding = padding;
   intonationTopScale = 1;
   intonationBottomScale = 1;
 }
@@ -690,6 +678,8 @@ function drawIntonationChart(points: IntonationPoint[]) {
     ctx.fillText('イントネーション未取得', 12, height / 2);
     intonationPointPositions = [];
     intonationChartRange = null;
+    if (intonationMaxValueEl) intonationMaxValueEl.textContent = '';
+    if (intonationMinValueEl) intonationMinValueEl.textContent = '';
     if (intonationLabelsEl) {
       intonationLabelsEl.textContent = '';
     }
@@ -705,15 +695,24 @@ function drawIntonationChart(points: IntonationPoint[]) {
   const margin = 24;
   const rawMin = points.reduce((min, point) => Math.min(min, point.pitch), points[0].pitch);
   const rawMax = points.reduce((max, point) => Math.max(max, point.pitch), points[0].pitch);
-  const basePadding = intonationBasePadding ?? Math.max(5, (rawMax - rawMin) * 0.2);
-  const topPadding = basePadding * intonationTopScale;
-  const bottomPadding = basePadding * intonationBottomScale;
-  const minPitch = (intonationBaseMin ?? rawMin) - bottomPadding;
-  const maxPitch = (intonationBaseMax ?? rawMax) + topPadding;
+  const isFlatPitch = rawMax === rawMin;
+  const range = rawMax - rawMin;
+  const paddingBase = range > 0 ? range : Math.max(5, Math.abs(rawMax) * 0.1 || 5);
+  const topPadding = intonationTopScale > 1 ? paddingBase * (intonationTopScale - 1) : 0;
+  const bottomPadding = intonationBottomScale > 1 ? paddingBase * (intonationBottomScale - 1) : 0;
+  const minPitch = isFlatPitch ? rawMin - paddingBase : rawMin - bottomPadding;
+  const maxPitch = isFlatPitch ? rawMax + paddingBase : rawMax + topPadding;
   const innerWidth = Math.max(1, width - margin * 2);
   const innerHeight = Math.max(1, height - margin * 2);
   const step = points.length > 1 ? innerWidth / (points.length - 1) : 0;
-  const isFlatPitch = rawMax === rawMin;
+  const pitchRange = Math.max(maxPitch - minPitch, 1);
+
+  if (intonationMaxValueEl) {
+    intonationMaxValueEl.textContent = `max ${rawMax.toFixed(1)}`;
+  }
+  if (intonationMinValueEl) {
+    intonationMinValueEl.textContent = `min ${rawMin.toFixed(1)}`;
+  }
 
   ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
   ctx.beginPath();
@@ -723,7 +722,7 @@ function drawIntonationChart(points: IntonationPoint[]) {
 
   intonationPointPositions = points.map((point, index) => {
     const x = margin + step * index;
-    const normalized = (point.pitch - minPitch) / Math.max(maxPitch - minPitch, 1);
+    const normalized = (point.pitch - minPitch) / pitchRange;
     const y = height - margin - normalized * innerHeight;
     return { x, y };
   });
@@ -782,7 +781,7 @@ function drawIntonationChart(points: IntonationPoint[]) {
 
 function adjustIntonationScale(direction: 'top' | 'bottom', factor: number) {
   if (intonationPoints.length === 0) return;
-  const minScale = 0.25;
+  const minScale = 1;
   if (direction === 'top') {
     intonationTopScale = Math.max(minScale, intonationTopScale * factor);
   } else {
@@ -1352,6 +1351,8 @@ document.addEventListener('DOMContentLoaded', () => {
   intonationCanvas = document.getElementById('intonationCanvas') as HTMLCanvasElement | null;
   intonationTimingEl = null;
   intonationLabelsEl = document.getElementById('intonationLabels');
+  intonationMaxValueEl = document.getElementById('intonationMaxValue');
+  intonationMinValueEl = document.getElementById('intonationMinValue');
   const intonationExpandTop = document.getElementById('intonationExpandTop') as HTMLButtonElement | null;
   const intonationShrinkTop = document.getElementById('intonationShrinkTop') as HTMLButtonElement | null;
   const intonationShrinkBottom = document.getElementById('intonationShrinkBottom') as HTMLButtonElement | null;

@@ -266,6 +266,23 @@
       .intonation-canvas-wrapper {
         position: relative;
       }
+      .intonation-range-value {
+        position: absolute;
+        left: 10px;
+        padding: 2px 6px;
+        font-size: 12px;
+        color: var(--muted-text);
+        background: var(--panel-bg);
+        border-radius: 4px;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .intonation-range-value--max {
+        top: 8px;
+      }
+      .intonation-range-value--min {
+        bottom: 8px;
+      }
       .intonation-controls {
         position: absolute;
         left: 8px;
@@ -357,6 +374,8 @@
             <button id="intonationShrinkBottom" class="secondary-button intonation-controls__button" aria-label="下方向の幅を1/2">0.5x</button>
             <button id="intonationExpandBottom" class="secondary-button intonation-controls__button" aria-label="下方向の幅を2倍">2x</button>
           </div>
+          <div class="intonation-range-value intonation-range-value--max" id="intonationMaxValue" aria-hidden="true"></div>
+          <div class="intonation-range-value intonation-range-value--min" id="intonationMinValue" aria-hidden="true"></div>
           <canvas id="intonationCanvas" width="760" height="180" aria-label="イントネーションの折れ線グラフ" tabindex="0"></canvas>
         </div>
         <div id="intonationLabels" class="intonation-labels" aria-hidden="true"></div>
