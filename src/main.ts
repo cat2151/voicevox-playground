@@ -10,6 +10,7 @@ const SPECTROGRAM_MAX_COLUMNS_PER_FRAME = 12;
 const AUDIO_CACHE_LIMIT = 10;
 const INTONATION_DEBOUNCE_MS = 700;
 const MIN_LOG_FREQUENCY = 20;
+const MIN_TICK_SPACING_PX = 60;
 type FrequencyScale = 'linear' | 'log';
 
 // VOICEVOX API types (minimal interface based on API documentation)
@@ -84,6 +85,8 @@ const audioCache = new Map<string, ArrayBuffer>();
 let intonationCanvas: HTMLCanvasElement | null = null;
 let intonationTimingEl: HTMLElement | null = null;
 let spectrogramScale: FrequencyScale = 'linear';
+let spectrogramNeedsReset = false;
+let lastSpectrogramScale: FrequencyScale = 'linear';
 let currentIntonationQuery: AudioQuery | null = null;
 let intonationPoints: IntonationPoint[] = [];
 let intonationPointPositions: Array<{ x: number; y: number }> = [];
@@ -196,10 +199,15 @@ function getHannWindow(size: number) {
 
 function estimateFrequencySeries(
   channelData: Float32Array,
-  sampleRate: number
+  sampleRate: number,
+  maxPoints: number
 ): Array<{ time: number; freq: number }> {
   const windowSize = 2048;
-  const hopSize = windowSize / 2;
+  const targetPoints = Math.max(1, Math.min(maxPoints, Math.floor(channelData.length / windowSize)));
+  const hopSize = Math.max(
+    windowSize / 2,
+    Math.floor((channelData.length - windowSize) / Math.max(targetPoints - 1, 1))
+  );
   if (channelData.length < windowSize || sampleRate <= 0) {
     return [];
   }
@@ -322,10 +330,20 @@ function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
   }
   ctx.stroke();
 
-  // Time ticks (500ms)
+  // Time ticks (dynamic spacing)
   ctx.strokeStyle = getColorVariable('--muted-text', '#6b7280');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
+  const maxLabelCount = Math.max(1, Math.floor(innerWidth / MIN_TICK_SPACING_PX));
+  const niceIntervalsSec = [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800];
+  let intervalSec = 0.5;
+  for (const candidate of niceIntervalsSec) {
+    if (durationSec / candidate <= maxLabelCount) {
+      intervalSec = candidate;
+      break;
+    }
+  }
+  const intervalMs = intervalSec * 1000;
   const drawTick = (t: number) => {
     const ratio = Math.min(t / durationMs, 1);
     const x = leftMargin + ratio * innerWidth;
@@ -333,17 +351,15 @@ function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
     ctx.moveTo(x, height - bottomMargin);
     ctx.lineTo(x, height - bottomMargin + 6);
     ctx.stroke();
-    ctx.fillText(`${(t / 1000).toFixed(1)}s`, x, height - bottomMargin + 6);
+    const decimals = intervalSec < 1 ? 1 : 0;
+    ctx.fillText(`${(t / 1000).toFixed(decimals)}s`, x, height - bottomMargin + 6);
   };
-  for (let t = 0; t <= durationMs; t += 500) {
+  for (let t = 0; t <= durationMs + 1e-6; t += intervalMs) {
     drawTick(t);
-  }
-  if (durationMs % 500 !== 0) {
-    drawTick(durationMs);
   }
 
   // Frequency estimation overlay
-  const freqPoints = estimateFrequencySeries(channelData, buffer.sampleRate);
+  const freqPoints = estimateFrequencySeries(channelData, buffer.sampleRate, innerWidth);
   if (freqPoints.length > 0) {
     const freqMax = Math.max(1, Math.min(buffer.sampleRate / 2, 6000));
     ctx.strokeStyle = getColorVariable('--status-info-text', '#1976d2');
@@ -432,7 +448,8 @@ function drawSpectrogram(
   frequencyCeiling: number,
   lastX: number,
   sampleRate: number,
-  scale: FrequencyScale
+  scale: FrequencyScale,
+  shouldReset: boolean
 ) {
   const { ctx, width, height } = prepareCanvas(canvas);
   if (!ctx || width === 0) return lastX;
@@ -447,8 +464,9 @@ function drawSpectrogram(
   const maxFreq = Math.max(1, sampleRate / 2);
   const minLogFreq = Math.min(MIN_LOG_FREQUENCY, maxFreq);
   const targetX = Math.max(0, Math.min(drawableWidth - 1, Math.floor(progress * (drawableWidth - 1))));
+  const needsReset = shouldReset || targetX < lastX;
 
-  if (targetX < lastX) {
+  if (needsReset) {
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = background;
     ctx.fillRect(0, 0, width, height);
@@ -457,12 +475,15 @@ function drawSpectrogram(
 
   const startX = Math.max(lastX + 1, 0);
   const cappedTargetX = Math.min(targetX, startX + SPECTROGRAM_MAX_COLUMNS_PER_FRAME - 1);
-  ctx.fillStyle = background;
-  ctx.fillRect(0, 0, leftMargin, height);
-  ctx.fillRect(leftMargin, drawableHeight, drawableWidth, bottomMargin);
+  if (needsReset) {
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, leftMargin, height);
+    ctx.fillRect(leftMargin, drawableHeight, drawableWidth, bottomMargin);
+  }
 
   const yToBin = (y: number) => {
-    const ratio = y / drawableHeight;
+    const denominator = Math.max(drawableHeight - 1, 1);
+    const ratio = Math.min(Math.max(y / denominator, 0), 1);
     if (scale === 'log') {
       const freq = minLogFreq * Math.pow(maxFreq / Math.max(minLogFreq, 1), ratio);
       return Math.min(cappedCeiling, Math.max(0, Math.round((freq / maxFreq) * cappedCeiling)));
@@ -486,32 +507,34 @@ function drawSpectrogram(
   }
   ctx.globalAlpha = 1;
 
-  const axisColor = getColorVariable('--border-color', '#e0e0e0');
-  const labelColor = getColorVariable('--muted-text', '#6b7280');
-  ctx.strokeStyle = axisColor;
-  ctx.beginPath();
-  ctx.moveTo(leftMargin, 0);
-  ctx.lineTo(leftMargin, drawableHeight);
-  ctx.lineTo(width, drawableHeight);
-  ctx.stroke();
-
-  ctx.strokeStyle = getColorVariable('--canvas-grid', 'rgba(0,0,0,0.06)');
-  ctx.fillStyle = labelColor;
-  ctx.font = '11px sans-serif';
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'middle';
-  const logMax = Math.log10(Math.max(maxFreq, minLogFreq));
-  const logMin = Math.log10(Math.max(minLogFreq, 1));
-  for (let freq = 0; freq <= maxFreq + 1; freq += 500) {
-    const normalized = scale === 'log'
-      ? (freq <= 0 ? 0 : (Math.log10(Math.max(freq, minLogFreq)) - logMin) / Math.max(logMax - logMin, 1))
-      : freq / maxFreq;
-    const y = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
+  if (needsReset) {
+    const axisColor = getColorVariable('--border-color', '#e0e0e0');
+    const labelColor = getColorVariable('--muted-text', '#6b7280');
+    ctx.strokeStyle = axisColor;
     ctx.beginPath();
-    ctx.moveTo(leftMargin - 4, y);
-    ctx.lineTo(width, y);
+    ctx.moveTo(leftMargin, 0);
+    ctx.lineTo(leftMargin, drawableHeight);
+    ctx.lineTo(width, drawableHeight);
     ctx.stroke();
-    ctx.fillText(`${Math.round(freq)}Hz`, leftMargin - 6, y);
+
+    ctx.strokeStyle = getColorVariable('--canvas-grid', 'rgba(0,0,0,0.06)');
+    ctx.fillStyle = labelColor;
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    const logMax = Math.log10(Math.max(maxFreq, minLogFreq));
+    const logMin = Math.log10(Math.max(minLogFreq, 1));
+    for (let freq = 0; freq <= maxFreq + 1; freq += 500) {
+      const normalized = scale === 'log'
+        ? (freq <= 0 ? 0 : (Math.log10(Math.max(freq, minLogFreq)) - logMin) / Math.max(logMax - logMin, 1))
+        : freq / maxFreq;
+      const y = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
+      ctx.beginPath();
+      ctx.moveTo(leftMargin - 4, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+      ctx.fillText(`${Math.round(freq)}Hz`, leftMargin - 6, y);
+    }
   }
 
   return cappedTargetX;
@@ -539,8 +562,11 @@ function initializeVisualizationCanvases() {
         1,
         -1,
         Tone.getContext().sampleRate ?? 48000,
-        spectrogramScale
+        spectrogramScale,
+        true
       );
+      spectrogramNeedsReset = false;
+      lastSpectrogramScale = spectrogramScale;
     } else {
       ctx.beginPath();
       ctx.moveTo(0, height / 2);
@@ -995,6 +1021,7 @@ async function playAudio(
   let spectrogramCeiling = fftAnalyser ? fftAnalyser.size : 0;
   const playbackDurationMs = Math.max(decodedBuffer.duration * 1000, 1);
   const sampleRate = Math.max(decodedBuffer.sampleRate, 1);
+  spectrogramNeedsReset = true;
   const startTime = performance.now();
 
   const render = () => {
@@ -1008,6 +1035,7 @@ async function playAudio(
       spectrogramCeiling = determineSpectrogramCeiling(values, spectrogramCeiling || values.length - 1);
       const elapsed = performance.now() - startTime;
       const progress = Math.min(elapsed / playbackDurationMs, 1);
+      const needsReset = spectrogramNeedsReset || lastSpectrogramScale !== spectrogramScale;
       spectrogramX = drawSpectrogram(
         values,
         spectrogramCanvas,
@@ -1015,8 +1043,13 @@ async function playAudio(
         spectrogramCeiling,
         spectrogramX,
         sampleRate,
-        spectrogramScale
+        spectrogramScale,
+        needsReset
       );
+      if (needsReset) {
+        spectrogramNeedsReset = false;
+        lastSpectrogramScale = spectrogramScale;
+      }
     }
 
     animationId = requestAnimationFrame(render);
@@ -1204,6 +1237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     spectrogramScaleToggle.addEventListener('click', () => {
       spectrogramScale = spectrogramScale === 'linear' ? 'log' : 'linear';
       initializeVisualizationCanvases();
+      spectrogramNeedsReset = true;
       updateSpectrogramScaleLabel();
     });
   }
