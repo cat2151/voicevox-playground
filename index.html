@@ -228,6 +228,44 @@
         opacity: 1;
         text-decoration: underline;
       }
+      .intonation-area {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .intonation-canvas-wrapper {
+        position: relative;
+      }
+      .intonation-controls {
+        position: absolute;
+        left: 8px;
+        display: flex;
+        gap: 6px;
+      }
+      .intonation-controls--top {
+        top: 8px;
+      }
+      .intonation-controls--bottom {
+        bottom: 8px;
+      }
+      .intonation-controls__button {
+        padding: 6px 10px;
+        font-size: 13px;
+        margin-top: 0;
+      }
+      .intonation-labels {
+        position: relative;
+        min-height: 24px;
+        font-weight: 600;
+        color: var(--muted-text);
+      }
+      .intonation-label {
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        font-size: 14px;
+      }
     </style>
   </head>
   <body>
@@ -281,9 +319,20 @@
 
     <div class="container">
       <div class="visualizer__title">イントネーション</div>
-      <canvas id="intonationCanvas" width="760" height="180" aria-label="イントネーションの折れ線グラフ" tabindex="0"></canvas>
-      <div class="info" id="intonationTiming" role="status" aria-live="polite">イントネーション未取得</div>
-      <p class="info">グラフ上の点をドラッグ、またはフォーカスして矢印キーで変更できます。変更後は自動で再生されます。</p>
+      <div class="intonation-area">
+        <div class="intonation-canvas-wrapper">
+          <div class="intonation-controls intonation-controls--top">
+            <button id="intonationExpandTop" class="secondary-button intonation-controls__button" aria-label="上方向の幅を2倍">2x</button>
+            <button id="intonationShrinkTop" class="secondary-button intonation-controls__button" aria-label="上方向の幅を1/2">0.5x</button>
+          </div>
+          <div class="intonation-controls intonation-controls--bottom">
+            <button id="intonationShrinkBottom" class="secondary-button intonation-controls__button" aria-label="下方向の幅を1/2">0.5x</button>
+            <button id="intonationExpandBottom" class="secondary-button intonation-controls__button" aria-label="下方向の幅を2倍">2x</button>
+          </div>
+          <canvas id="intonationCanvas" width="760" height="180" aria-label="イントネーションの折れ線グラフ" tabindex="0"></canvas>
+        </div>
+        <div id="intonationLabels" class="intonation-labels" aria-hidden="true"></div>
+      </div>
     </div>
 
     <a class="repo-link" href="https://github.com/cat2151/voicevox-playground" target="_blank" rel="noopener noreferrer" aria-label="GitHub: cat2151/voicevox-playground（新しいタブで開きます）">GitHub: cat2151/voicevox-playground</a>

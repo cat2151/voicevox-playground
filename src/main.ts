@@ -11,6 +11,7 @@ const AUDIO_CACHE_LIMIT = 10;
 const INTONATION_DEBOUNCE_MS = 700;
 const MIN_LOG_FREQUENCY = 20;
 const MIN_TICK_SPACING_PX = 60;
+const MONOKAI_COLORS = ['#f92672', '#a6e22e', '#66d9ef', '#fd971f', '#ae81ff', '#e6db74'];
 type FrequencyScale = 'linear' | 'log';
 
 // VOICEVOX API types (minimal interface based on API documentation)
@@ -84,6 +85,7 @@ let lastSynthesizedBuffer: ArrayBuffer | null = null;
 const audioCache = new Map<string, ArrayBuffer>();
 let intonationCanvas: HTMLCanvasElement | null = null;
 let intonationTimingEl: HTMLElement | null = null;
+let intonationLabelsEl: HTMLElement | null = null;
 let spectrogramScale: FrequencyScale = 'linear';
 let spectrogramNeedsReset = false;
 let lastSpectrogramScale: FrequencyScale = 'linear';
@@ -95,6 +97,11 @@ let intonationDebounceTimer: number | null = null;
 let intonationDragIndex: number | null = null;
 let intonationActivePointerId: number | null = null;
 let intonationChartRange: IntonationChartRange | null = null;
+let intonationBaseMin: number | null = null;
+let intonationBaseMax: number | null = null;
+let intonationBasePadding: number | null = null;
+let intonationTopScale = 1;
+let intonationBottomScale = 1;
 
 function invalidateColorVariableCache() {
   cachedRootComputedStyle = null;
@@ -593,6 +600,28 @@ function initializeIntonationCanvas() {
   ctx.strokeRect(0, 0, width, height);
 }
 
+function updateIntonationBaseRange(points: IntonationPoint[]) {
+  if (points.length === 0) {
+    intonationBaseMin = null;
+    intonationBaseMax = null;
+    intonationBasePadding = null;
+    intonationTopScale = 1;
+    intonationBottomScale = 1;
+    return;
+  }
+
+  const pitches = points.map((point) => point.pitch);
+  const min = Math.min(...pitches);
+  const max = Math.max(...pitches);
+  const padding = Math.max(5, (max - min) * 0.2);
+
+  intonationBaseMin = min;
+  intonationBaseMax = max;
+  intonationBasePadding = padding;
+  intonationTopScale = 1;
+  intonationBottomScale = 1;
+}
+
 function buildIntonationPointsFromQuery(query: AudioQuery) {
   const points: IntonationPoint[] = [];
   query.accent_phrases.forEach((phrase, phraseIndex) => {
@@ -606,6 +635,29 @@ function buildIntonationPointsFromQuery(query: AudioQuery) {
     });
   });
   return points;
+}
+
+function renderIntonationLabels(points: IntonationPoint[]) {
+  if (!intonationLabelsEl) return;
+  const labelsEl = intonationLabelsEl;
+  labelsEl.textContent = '';
+  if (!intonationCanvas || points.length === 0 || intonationPointPositions.length === 0) {
+    return;
+  }
+
+  const rect = intonationCanvas.getBoundingClientRect();
+  labelsEl.style.width = `${rect.width}px`;
+
+  points.forEach((point, index) => {
+    if (!point.label) return;
+    const pos = intonationPointPositions[index];
+    if (!pos) return;
+    const labelEl = document.createElement('span');
+    labelEl.className = 'intonation-label';
+    labelEl.textContent = point.label;
+    labelEl.style.left = `${pos.x}px`;
+    labelsEl.appendChild(labelEl);
+  });
 }
 
 function drawIntonationChart(points: IntonationPoint[]) {
@@ -622,6 +674,9 @@ function drawIntonationChart(points: IntonationPoint[]) {
     ctx.fillText('イントネーション未取得', 12, height / 2);
     intonationPointPositions = [];
     intonationChartRange = null;
+    if (intonationLabelsEl) {
+      intonationLabelsEl.textContent = '';
+    }
     return;
   }
 
@@ -634,9 +689,11 @@ function drawIntonationChart(points: IntonationPoint[]) {
   const margin = 24;
   const rawMin = points.reduce((min, point) => Math.min(min, point.pitch), points[0].pitch);
   const rawMax = points.reduce((max, point) => Math.max(max, point.pitch), points[0].pitch);
-  const padding = Math.max(5, (rawMax - rawMin) * 0.2);
-  const minPitch = rawMin - padding;
-  const maxPitch = rawMax + padding;
+  const basePadding = intonationBasePadding ?? Math.max(5, (rawMax - rawMin) * 0.2);
+  const topPadding = basePadding * intonationTopScale;
+  const bottomPadding = basePadding * intonationBottomScale;
+  const minPitch = (intonationBaseMin ?? rawMin) - bottomPadding;
+  const maxPitch = (intonationBaseMax ?? rawMax) + topPadding;
   const innerWidth = Math.max(1, width - margin * 2);
   const innerHeight = Math.max(1, height - margin * 2);
   const step = points.length > 1 ? innerWidth / (points.length - 1) : 0;
@@ -648,19 +705,30 @@ function drawIntonationChart(points: IntonationPoint[]) {
   ctx.lineTo(width - margin, height - margin);
   ctx.stroke();
 
-  intonationPointPositions = [];
-  ctx.strokeStyle = getColorVariable('--accent-color', '#4caf50');
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  points.forEach((point, index) => {
+  intonationPointPositions = points.map((point, index) => {
     const x = margin + step * index;
     const normalized = (point.pitch - minPitch) / Math.max(maxPitch - minPitch, 1);
     const y = height - margin - normalized * innerHeight;
-    intonationPointPositions.push({ x, y });
+    return { x, y };
+  });
+
+  ctx.lineWidth = 1;
+  intonationPointPositions.forEach((pos, index) => {
+    ctx.strokeStyle = MONOKAI_COLORS[index % MONOKAI_COLORS.length];
+    ctx.beginPath();
+    ctx.moveTo(margin, pos.y);
+    ctx.lineTo(width - margin, pos.y);
+    ctx.stroke();
+  });
+
+  ctx.strokeStyle = getColorVariable('--accent-color', '#4caf50');
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  intonationPointPositions.forEach((pos, index) => {
     if (index === 0) {
-      ctx.moveTo(x, y);
+      ctx.moveTo(pos.x, pos.y);
     } else {
-      ctx.lineTo(x, y);
+      ctx.lineTo(pos.x, pos.y);
     }
   });
   ctx.stroke();
@@ -692,6 +760,19 @@ function drawIntonationChart(points: IntonationPoint[]) {
     ctx.font = '12px sans-serif';
     ctx.fillText('全モーラ同一ピッチ（フラット）', margin, margin - 6);
   }
+
+  renderIntonationLabels(points);
+}
+
+function adjustIntonationScale(direction: 'top' | 'bottom', factor: number) {
+  if (intonationPoints.length === 0) return;
+  const minScale = 0.25;
+  if (direction === 'top') {
+    intonationTopScale = Math.max(minScale, intonationTopScale * factor);
+  } else {
+    intonationBottomScale = Math.max(minScale, intonationBottomScale * factor);
+  }
+  drawIntonationChart(intonationPoints);
 }
 
 function pitchFromY(y: number) {
@@ -801,6 +882,7 @@ async function fetchAndRenderIntonation(text: string) {
     const elapsed = performance.now() - start;
     currentIntonationQuery = query;
     intonationPoints = buildIntonationPointsFromQuery(query);
+    updateIntonationBaseRange(intonationPoints);
     intonationSelectedIndex = intonationPoints.length > 0 ? 0 : null;
     drawIntonationChart(intonationPoints);
     updateIntonationTiming(`イントネーション取得: ${Math.round(elapsed)} ms`);
@@ -877,8 +959,11 @@ function handleIntonationKeyDown(event: KeyboardEvent) {
     const targetIndex = intonationSelectedIndex ?? 0;
     const adjustment = event.key === 'ArrowUp' ? delta : -delta;
     const newPitch = intonationPoints[targetIndex].pitch + adjustment;
-    intonationPoints[targetIndex].pitch = newPitch;
-    applyPitchToQuery(targetIndex, newPitch);
+    const clampedPitch = intonationChartRange
+      ? Math.min(intonationChartRange.max, Math.max(intonationChartRange.min, newPitch))
+      : newPitch;
+    intonationPoints[targetIndex].pitch = clampedPitch;
+    applyPitchToQuery(targetIndex, clampedPitch);
     drawIntonationChart(intonationPoints);
     scheduleIntonationPlayback();
   }
@@ -1199,6 +1284,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const spectrogramScaleToggle = document.getElementById('spectrogramScaleToggle') as HTMLButtonElement | null;
   intonationCanvas = document.getElementById('intonationCanvas') as HTMLCanvasElement | null;
   intonationTimingEl = document.getElementById('intonationTiming');
+  intonationLabelsEl = document.getElementById('intonationLabels');
+  const intonationExpandTop = document.getElementById('intonationExpandTop') as HTMLButtonElement | null;
+  const intonationShrinkTop = document.getElementById('intonationShrinkTop') as HTMLButtonElement | null;
+  const intonationShrinkBottom = document.getElementById('intonationShrinkBottom') as HTMLButtonElement | null;
+  const intonationExpandBottom = document.getElementById('intonationExpandBottom') as HTMLButtonElement | null;
   
   if (playButton) {
     playButton.addEventListener('click', handlePlay);
@@ -1240,6 +1330,19 @@ document.addEventListener('DOMContentLoaded', () => {
       spectrogramNeedsReset = true;
       updateSpectrogramScaleLabel();
     });
+  }
+
+  if (intonationExpandTop) {
+    intonationExpandTop.addEventListener('click', () => adjustIntonationScale('top', 2));
+  }
+  if (intonationShrinkTop) {
+    intonationShrinkTop.addEventListener('click', () => adjustIntonationScale('top', 0.5));
+  }
+  if (intonationShrinkBottom) {
+    intonationShrinkBottom.addEventListener('click', () => adjustIntonationScale('bottom', 0.5));
+  }
+  if (intonationExpandBottom) {
+    intonationExpandBottom.addEventListener('click', () => adjustIntonationScale('bottom', 2));
   }
 
   if (intonationCanvas) {
