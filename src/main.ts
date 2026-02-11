@@ -80,9 +80,14 @@ interface IntonationChartRange {
 function showStatus(message: string, type: 'info' | 'error' | 'success') {
   const statusDiv = document.getElementById('status');
   if (statusDiv) {
+    if (statusHideTimer !== null) {
+      clearTimeout(statusHideTimer);
+      statusHideTimer = null;
+    }
     statusDiv.textContent = message;
     statusDiv.className = `status ${type}`;
     statusDiv.style.display = 'block';
+    statusDiv.style.visibility = 'visible';
     // Use assertive for errors so screen readers interrupt to announce them
     statusDiv.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
   }
@@ -91,12 +96,30 @@ function showStatus(message: string, type: 'info' | 'error' | 'success') {
 function hideStatus() {
   const statusDiv = document.getElementById('status');
   if (statusDiv) {
-    statusDiv.style.display = 'none';
+    statusDiv.textContent = '';
+    statusDiv.className = 'status';
+    statusDiv.style.visibility = 'hidden';
+    statusDiv.setAttribute('aria-live', 'polite');
   }
+  if (statusHideTimer !== null) {
+    clearTimeout(statusHideTimer);
+    statusHideTimer = null;
+  }
+}
+
+function scheduleHideStatus(delayMs: number) {
+  if (statusHideTimer !== null) {
+    clearTimeout(statusHideTimer);
+  }
+  statusHideTimer = window.setTimeout(() => {
+    statusHideTimer = null;
+    hideStatus();
+  }, delayMs);
 }
 
 let cachedRootComputedStyle: CSSStyleDeclaration | null = null;
 const colorVariableCache: Record<string, string> = {};
+let statusHideTimer: number | null = null;
 let isProcessing = false;
 let autoPlayTimer: number | null = null;
 let lastSynthesizedBuffer: ArrayBuffer | null = null;
@@ -916,9 +939,21 @@ function drawSpectrogram(
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
+    const labelMetrics = ctx.measureText('0000Hz');
+    const calculatedHeight = (labelMetrics.actualBoundingBoxAscent ?? 0) + (labelMetrics.actualBoundingBoxDescent ?? 0);
+    const labelHeight = Math.max(1, Math.ceil(calculatedHeight || 11));
+    const minLabelGap = labelHeight + 2;
+    let lastLabelY: number | null = null;
     const logMax = Math.log10(Math.max(maxFreq, minLogFreq));
     const logMin = Math.log10(Math.max(minLogFreq, 1));
-    for (let freq = 0; freq <= maxFreq + 1; freq += 500) {
+    const ticks: number[] = [];
+    for (let freq = 0; freq <= maxFreq; freq += 500) {
+      ticks.push(freq);
+    }
+    if (ticks.length === 0 || ticks[ticks.length - 1] !== maxFreq) {
+      ticks.push(maxFreq);
+    }
+    for (const freq of ticks) {
       const normalized = scale === 'log'
         ? (freq <= 0 ? 0 : (Math.log10(Math.max(freq, minLogFreq)) - logMin) / Math.max(logMax - logMin, 1))
         : freq / maxFreq;
@@ -927,7 +962,14 @@ function drawSpectrogram(
       ctx.moveTo(leftMargin - 4, y);
       ctx.lineTo(width, y);
       ctx.stroke();
-      ctx.fillText(`${Math.round(freq)}Hz`, leftMargin - 6, y);
+      const shouldDrawLabel = lastLabelY === null
+        || Math.abs(y - lastLabelY) >= minLabelGap
+        || freq === 0
+        || freq === maxFreq;
+      if (shouldDrawLabel) {
+        ctx.fillText(`${Math.round(freq)}Hz`, leftMargin - 6, y);
+        lastLabelY = y;
+      }
     }
   }
 
@@ -1264,7 +1306,7 @@ async function playUpdatedIntonation() {
     await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas);
 
     showStatus('更新したイントネーションで再生しました', 'success');
-    setTimeout(hideStatus, 2500);
+    scheduleHideStatus(2500);
   } catch (error) {
     console.error('Intonation playback error:', error);
     showStatus(
@@ -1719,7 +1761,7 @@ async function handlePlay() {
     addToHistory(text);
     
     showStatus('再生完了！', 'success');
-    setTimeout(hideStatus, 3000);
+    scheduleHideStatus(3000);
 
     if (loopCheckbox?.checked) {
       setTimeout(() => {
