@@ -8,6 +8,7 @@ const AUTO_PLAY_DEBOUNCE_MS = 700;
 const WAVEFORM_TARGET_RATIO = 0.8;
 const SPECTROGRAM_MAX_COLUMNS_PER_FRAME = 12;
 const AUDIO_CACHE_LIMIT = 10;
+const INTONATION_DEBOUNCE_MS = 700;
 
 // VOICEVOX API types (minimal interface based on API documentation)
 interface AudioQuery {
@@ -37,6 +38,22 @@ interface AudioQuery {
   kana?: string;
 }
 
+interface IntonationPoint {
+  phraseIndex: number;
+  moraIndex: number;
+  label: string;
+  pitch: number;
+}
+
+interface IntonationChartRange {
+  min: number;
+  max: number;
+  margin: number;
+  height: number;
+  innerHeight: number;
+  width: number;
+}
+
 // Status display helper
 function showStatus(message: string, type: 'info' | 'error' | 'success') {
   const statusDiv = document.getElementById('status');
@@ -62,6 +79,14 @@ let isProcessing = false;
 let autoPlayTimer: number | null = null;
 let lastSynthesizedBuffer: ArrayBuffer | null = null;
 const audioCache = new Map<string, ArrayBuffer>();
+let intonationCanvas: HTMLCanvasElement | null = null;
+let intonationTimingEl: HTMLElement | null = null;
+let currentIntonationQuery: AudioQuery | null = null;
+let intonationPoints: IntonationPoint[] = [];
+let intonationPointPositions: Array<{ x: number; y: number }> = [];
+let intonationDebounceTimer: number | null = null;
+let intonationDragIndex: number | null = null;
+let intonationChartRange: IntonationChartRange | null = null;
 
 function invalidateColorVariableCache() {
   cachedRootComputedStyle = null;
@@ -271,6 +296,260 @@ function initializeVisualizationCanvases() {
       ctx.stroke();
     }
   });
+}
+
+function updateIntonationTiming(message: string) {
+  if (intonationTimingEl) {
+    intonationTimingEl.textContent = message;
+  }
+}
+
+function initializeIntonationCanvas() {
+  if (!intonationCanvas) return;
+  const { ctx, width, height } = prepareCanvas(intonationCanvas);
+  if (!ctx) return;
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
+  ctx.strokeRect(0, 0, width, height);
+}
+
+function buildIntonationPointsFromQuery(query: AudioQuery) {
+  const points: IntonationPoint[] = [];
+  query.accent_phrases.forEach((phrase, phraseIndex) => {
+    phrase.moras.forEach((mora, moraIndex) => {
+      points.push({
+        phraseIndex,
+        moraIndex,
+        label: mora.text,
+        pitch: mora.pitch,
+      });
+    });
+  });
+  return points;
+}
+
+function drawIntonationChart(points: IntonationPoint[]) {
+  if (!intonationCanvas) return;
+  const { ctx, width, height } = prepareCanvas(intonationCanvas);
+  if (!ctx) return;
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
+  ctx.fillRect(0, 0, width, height);
+
+  if (points.length === 0) {
+    ctx.fillStyle = getColorVariable('--muted-text', '#6b7280');
+    ctx.font = '14px sans-serif';
+    ctx.fillText('イントネーション未取得', 12, height / 2);
+    intonationPointPositions = [];
+    intonationChartRange = null;
+    return;
+  }
+
+  const margin = 24;
+  const rawMin = points.reduce((min, point) => Math.min(min, point.pitch), points[0].pitch);
+  const rawMax = points.reduce((max, point) => Math.max(max, point.pitch), points[0].pitch);
+  const padding = Math.max(5, (rawMax - rawMin) * 0.2);
+  const minPitch = rawMin - padding;
+  const maxPitch = rawMax + padding;
+  const innerWidth = Math.max(1, width - margin * 2);
+  const innerHeight = Math.max(1, height - margin * 2);
+  const step = points.length > 1 ? innerWidth / (points.length - 1) : 0;
+
+  ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
+  ctx.beginPath();
+  ctx.moveTo(margin, height - margin);
+  ctx.lineTo(width - margin, height - margin);
+  ctx.stroke();
+
+  intonationPointPositions = [];
+  ctx.strokeStyle = getColorVariable('--accent-color', '#4caf50');
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  points.forEach((point, index) => {
+    const x = margin + step * index;
+    const normalized = (point.pitch - minPitch) / Math.max(maxPitch - minPitch, 1);
+    const y = height - margin - normalized * innerHeight;
+    intonationPointPositions.push({ x, y });
+    if (index === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+
+  const accent = getColorVariable('--accent-color', '#4caf50');
+  points.forEach((_, index) => {
+    const pos = intonationPointPositions[index];
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = accent;
+    ctx.fill();
+    ctx.strokeStyle = getColorVariable('--bg-color', '#ffffff');
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  intonationChartRange = {
+    min: minPitch,
+    max: maxPitch,
+    margin,
+    height,
+    innerHeight,
+    width,
+  };
+}
+
+function pitchFromY(y: number) {
+  if (!intonationChartRange) return null;
+  const { min, max, margin, height, innerHeight } = intonationChartRange;
+  const clampedY = Math.min(height - margin, Math.max(margin, y));
+  const ratio = (height - margin - clampedY) / Math.max(innerHeight, 1);
+  return min + ratio * (max - min);
+}
+
+function findNearestIntonationPoint(x: number, y: number) {
+  let nearestIndex = -1;
+  let minDistance = 14;
+  intonationPointPositions.forEach((pos, index) => {
+    const distance = Math.hypot(pos.x - x, pos.y - y);
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestIndex = index;
+    }
+  });
+  return nearestIndex;
+}
+
+function applyPitchToQuery(pointIndex: number, pitch: number) {
+  if (!currentIntonationQuery) return;
+  let cursor = 0;
+  for (const phrase of currentIntonationQuery.accent_phrases) {
+    for (const mora of phrase.moras) {
+      if (cursor === pointIndex) {
+        mora.pitch = pitch;
+        return;
+      }
+      cursor += 1;
+    }
+  }
+}
+
+function scheduleIntonationPlayback() {
+  if (intonationDebounceTimer !== null) {
+    window.clearTimeout(intonationDebounceTimer);
+  }
+  intonationDebounceTimer = window.setTimeout(() => {
+    intonationDebounceTimer = null;
+    if (isProcessing) {
+      scheduleIntonationPlayback();
+      return;
+    }
+    void playUpdatedIntonation();
+  }, INTONATION_DEBOUNCE_MS);
+}
+
+async function playUpdatedIntonation() {
+  if (!currentIntonationQuery) return;
+  if (isProcessing) return;
+
+  const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
+  const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
+  const renderedCanvas = document.getElementById('renderedWaveform') as HTMLCanvasElement | null;
+  const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
+  const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
+  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
+
+  isProcessing = true;
+  if (playButton) playButton.disabled = true;
+  updateExportButtonState(exportButton);
+  initializeVisualizationCanvases();
+
+  try {
+    showStatus('イントネーションを適用中...', 'info');
+    const synthesisStart = performance.now();
+    const audioBuffer = await synthesize(currentIntonationQuery, ZUNDAMON_SPEAKER_ID);
+    const synthesisElapsed = performance.now() - synthesisStart;
+    updateIntonationTiming(`イントネーション反映: ${Math.round(synthesisElapsed)} ms`);
+
+    lastSynthesizedBuffer = audioBuffer;
+    const audioContext = Tone.getContext().rawContext as BaseAudioContext;
+    const decodedBuffer = await audioContext.decodeAudioData(audioBuffer.slice(0));
+
+    if (renderedCanvas) {
+      drawRenderedWaveform(decodedBuffer, renderedCanvas);
+    }
+
+    await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas);
+    if (textArea) {
+      const text = textArea.value.trim();
+      if (text) {
+        audioCache.set(text, audioBuffer);
+      }
+    }
+
+    showStatus('更新したイントネーションで再生しました', 'success');
+    setTimeout(hideStatus, 2500);
+  } catch (error) {
+    console.error('Intonation playback error:', error);
+    showStatus(
+      `イントネーション適用中にエラーが発生しました: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      'error'
+    );
+  } finally {
+    isProcessing = false;
+    if (playButton) playButton.disabled = false;
+    updateExportButtonState(exportButton);
+  }
+}
+
+async function fetchAndRenderIntonation(text: string) {
+  if (!intonationCanvas) return;
+  updateIntonationTiming('イントネーション取得中...');
+  const start = performance.now();
+  try {
+    const query = await getAudioQuery(text, ZUNDAMON_SPEAKER_ID);
+    const elapsed = performance.now() - start;
+    currentIntonationQuery = query;
+    intonationPoints = buildIntonationPointsFromQuery(query);
+    drawIntonationChart(intonationPoints);
+    updateIntonationTiming(`イントネーション取得: ${Math.round(elapsed)} ms`);
+  } catch (error) {
+    console.error('Failed to fetch intonation:', error);
+    updateIntonationTiming('イントネーションの取得に失敗しました');
+  }
+}
+
+function handleIntonationPointerDown(event: MouseEvent) {
+  if (!intonationCanvas || intonationPointPositions.length === 0) return;
+  const rect = intonationCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const targetIndex = findNearestIntonationPoint(x, y);
+  if (targetIndex !== -1) {
+    intonationDragIndex = targetIndex;
+  }
+}
+
+function handleIntonationPointerMove(event: MouseEvent) {
+  if (intonationDragIndex === null || !intonationCanvas || intonationPointPositions.length === 0) {
+    return;
+  }
+  const rect = intonationCanvas.getBoundingClientRect();
+  const pitch = pitchFromY(event.clientY - rect.top);
+  if (pitch === null) return;
+  intonationPoints[intonationDragIndex].pitch = pitch;
+  applyPitchToQuery(intonationDragIndex, pitch);
+  drawIntonationChart(intonationPoints);
+  scheduleIntonationPlayback();
+}
+
+function handleIntonationPointerUp() {
+  intonationDragIndex = null;
 }
 
 function updateExportButtonState(exportButton?: HTMLButtonElement | null) {
@@ -537,6 +816,7 @@ async function handlePlay() {
       showStatus('音声を再生中（キャッシュ）...', 'info');
     }
     await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas);
+    await fetchAndRenderIntonation(text);
     
     showStatus('再生完了！', 'success');
     setTimeout(hideStatus, 3000);
@@ -568,6 +848,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
   const usageToggleButton = document.getElementById('usageToggleButton') as HTMLButtonElement | null;
   const usagePanel = document.getElementById('usagePanel');
+  intonationCanvas = document.getElementById('intonationCanvas') as HTMLCanvasElement | null;
+  intonationTimingEl = document.getElementById('intonationTiming');
   
   if (playButton) {
     playButton.addEventListener('click', handlePlay);
@@ -595,6 +877,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (intonationCanvas) {
+    intonationCanvas.addEventListener('mousedown', handleIntonationPointerDown);
+    intonationCanvas.addEventListener('mousemove', handleIntonationPointerMove);
+    intonationCanvas.addEventListener('mouseleave', handleIntonationPointerUp);
+  }
+  window.addEventListener('mouseup', handleIntonationPointerUp);
+
   initializeVisualizationCanvases();
-  window.addEventListener('resize', initializeVisualizationCanvases);
+  initializeIntonationCanvas();
+  window.addEventListener('resize', () => {
+    initializeVisualizationCanvases();
+    initializeIntonationCanvas();
+    if (intonationPoints.length > 0) {
+      drawIntonationChart(intonationPoints);
+    }
+  });
 });
