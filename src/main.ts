@@ -12,7 +12,22 @@ const INTONATION_DEBOUNCE_MS = 700;
 const MIN_LOG_FREQUENCY = 20;
 const MIN_TICK_SPACING_PX = 60;
 const MONOKAI_COLORS = ['#f92672', '#a6e22e', '#66d9ef', '#fd971f', '#ae81ff', '#e6db74'];
+const DELIMITER_STORAGE_KEY = 'voicevox-delimiter-pair';
 type FrequencyScale = 'linear' | 'log';
+
+interface VoiceStyleOption {
+  id: number;
+  name: string;
+  speakerName: string;
+}
+
+interface VoiceVoxSpeaker {
+  name: string;
+  styles: Array<{
+    id: number;
+    name: string;
+  }>;
+}
 
 // VOICEVOX API types (minimal interface based on API documentation)
 interface AudioQuery {
@@ -83,6 +98,9 @@ let isProcessing = false;
 let autoPlayTimer: number | null = null;
 let lastSynthesizedBuffer: ArrayBuffer | null = null;
 const audioCache = new Map<string, ArrayBuffer>();
+let availableStyles: VoiceStyleOption[] = [];
+let selectedStyleId = ZUNDAMON_SPEAKER_ID;
+let delimiterSaveTimer: number | null = null;
 let intonationCanvas: HTMLCanvasElement | null = null;
 let intonationTimingEl: HTMLElement | null = null;
 let intonationLabelsEl: HTMLElement | null = null;
@@ -102,6 +120,7 @@ let intonationChartRange: IntonationChartRange | null = null;
 let intonationTopScale = 1;
 let intonationBottomScale = 1;
 let intonationKeyboardEnabled = false;
+let currentIntonationStyleId = ZUNDAMON_SPEAKER_ID;
 
 function invalidateColorVariableCache() {
   cachedRootComputedStyle = null;
@@ -121,6 +140,209 @@ function getColorVariable(name: string, fallback: string) {
   const value = cachedRootComputedStyle.getPropertyValue(name).trim() || fallback;
   colorVariableCache[name] = value;
   return value;
+}
+
+function getStyleLabel(style: VoiceStyleOption) {
+  return `${style.speakerName} - ${style.name} (ID: ${style.id})`;
+}
+
+function parseDelimiterConfig(rawValue: string): { start: string; end: string } | null {
+  const trimmed = rawValue.trim();
+  if (trimmed.length < 2) return null;
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return { start: parts[0], end: parts[1] };
+  }
+  return { start: trimmed[0], end: trimmed[trimmed.length - 1] };
+}
+
+function getStyleByName(name: string) {
+  const target = name.trim();
+  return availableStyles.find((style) => style.name === target) ?? null;
+}
+
+function getAudioCacheKey(text: string, styleId: number) {
+  return `${styleId}::${text}`;
+}
+
+function addSegment(
+  segments: Array<{ text: string; styleId: number }>,
+  text: string,
+  styleId: number
+) {
+  if (!text) return;
+  const last = segments[segments.length - 1];
+  if (last && last.styleId === styleId) {
+    last.text += text;
+  } else {
+    segments.push({ text, styleId });
+  }
+}
+
+function buildTextSegments(
+  text: string,
+  delimiter: { start: string; end: string } | null,
+  initialStyleId: number
+) {
+  if (!delimiter) {
+    return text ? [{ text, styleId: initialStyleId }] : [];
+  }
+
+  const segments: Array<{ text: string; styleId: number }> = [];
+  let cursor = 0;
+  let currentStyleId = initialStyleId;
+
+  while (cursor < text.length) {
+    const startIndex = text.indexOf(delimiter.start, cursor);
+    if (startIndex === -1) {
+      addSegment(segments, text.slice(cursor), currentStyleId);
+      break;
+    }
+
+    if (startIndex > cursor) {
+      addSegment(segments, text.slice(cursor, startIndex), currentStyleId);
+    }
+
+    const endIndex = text.indexOf(delimiter.end, startIndex + delimiter.start.length);
+    if (endIndex === -1) {
+      addSegment(segments, text.slice(startIndex), currentStyleId);
+      break;
+    }
+
+    const markerContent = text.slice(startIndex + delimiter.start.length, endIndex);
+    const matchedStyle = getStyleByName(markerContent);
+    if (matchedStyle) {
+      currentStyleId = matchedStyle.id;
+    } else {
+      const fullMarker = text.slice(startIndex, endIndex + delimiter.end.length);
+      addSegment(segments, fullMarker, currentStyleId);
+    }
+    cursor = endIndex + delimiter.end.length;
+  }
+
+  return segments;
+}
+
+function combineAudioBuffers(buffers: AudioBuffer[], audioContext: BaseAudioContext) {
+  if (buffers.length === 0) return null;
+  const sampleRate = buffers[0].sampleRate;
+  const channelCount = Math.max(...buffers.map((buffer) => buffer.numberOfChannels));
+  const totalLength = buffers.reduce((acc, buffer) => acc + buffer.length, 0);
+  const combined = audioContext.createBuffer(channelCount, totalLength, sampleRate);
+
+  let offset = 0;
+  for (const buffer of buffers) {
+    if (buffer.sampleRate !== sampleRate) {
+      throw new Error('音声のサンプルレートが一致しませんでした。');
+    }
+    for (let channel = 0; channel < channelCount; channel += 1) {
+      const target = combined.getChannelData(channel);
+      const source = buffer.getChannelData(Math.min(channel, buffer.numberOfChannels - 1));
+      target.set(source, offset);
+    }
+    offset += buffer.length;
+  }
+
+  return combined;
+}
+
+function encodeAudioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
+  const channelCount = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const sampleBits = 16;
+  const dataLength = buffer.length * channelCount * (sampleBits / 8);
+  const totalLength = 44 + dataLength;
+  const arrayBuffer = new ArrayBuffer(totalLength);
+  const view = new DataView(arrayBuffer);
+
+  const writeString = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i += 1) {
+      view.setUint8(offset + i, str.charCodeAt(i));
+    }
+  };
+
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + dataLength, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, channelCount, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * channelCount * (sampleBits / 8), true);
+  view.setUint16(32, channelCount * (sampleBits / 8), true);
+  view.setUint16(34, sampleBits, true);
+  writeString(36, 'data');
+  view.setUint32(40, dataLength, true);
+
+  let offset = 44;
+  const clamp = (value: number) => Math.max(-1, Math.min(1, value));
+  for (let i = 0; i < buffer.length; i += 1) {
+    for (let channel = 0; channel < channelCount; channel += 1) {
+      const sample = clamp(buffer.getChannelData(channel)[i]);
+      const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+      view.setInt16(offset, intSample, true);
+      offset += 2;
+    }
+  }
+
+  return arrayBuffer;
+}
+
+function populateStyleSelect(styleSelect: HTMLSelectElement | null) {
+  if (!styleSelect) return;
+  styleSelect.innerHTML = '';
+
+  if (availableStyles.length === 0) {
+    const fallback = document.createElement('option');
+    fallback.value = String(ZUNDAMON_SPEAKER_ID);
+    fallback.textContent = `スタイルID ${ZUNDAMON_SPEAKER_ID}`;
+    styleSelect.appendChild(fallback);
+    selectedStyleId = ZUNDAMON_SPEAKER_ID;
+    return;
+  }
+
+  availableStyles.forEach((style) => {
+    const option = document.createElement('option');
+    option.value = String(style.id);
+    option.textContent = getStyleLabel(style);
+    styleSelect.appendChild(option);
+  });
+
+  const defaultStyle =
+    availableStyles.find((style) => style.id === selectedStyleId) ?? availableStyles[0];
+  selectedStyleId = defaultStyle.id;
+  styleSelect.value = String(selectedStyleId);
+}
+
+async function fetchVoiceStyles(styleSelect: HTMLSelectElement | null) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${VOICEVOX_API_BASE}/speakers`, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch styles: ${response.status} ${response.statusText}`);
+    }
+    const speakers = (await response.json()) as VoiceVoxSpeaker[];
+    availableStyles = speakers.flatMap((speaker) =>
+      speaker.styles.map((style) => ({
+        id: style.id,
+        name: style.name,
+        speakerName: speaker.name,
+      }))
+    );
+  } catch (error) {
+    console.error('Failed to fetch speaker styles:', error);
+    if (availableStyles.length === 0) {
+      availableStyles = [
+        { id: ZUNDAMON_SPEAKER_ID, name: 'スタイル未取得', speakerName: 'デフォルト' },
+      ];
+    }
+  } finally {
+    clearTimeout(timeoutId);
+    populateStyleSelect(styleSelect);
+  }
 }
 
 function prepareCanvas(canvas: HTMLCanvasElement) {
@@ -862,7 +1084,7 @@ async function playUpdatedIntonation() {
   try {
     showStatus('イントネーションを適用中...', 'info');
     const synthesisStart = performance.now();
-    const audioBuffer = await synthesize(currentIntonationQuery, ZUNDAMON_SPEAKER_ID);
+    const audioBuffer = await synthesize(currentIntonationQuery, currentIntonationStyleId);
     const synthesisElapsed = performance.now() - synthesisStart;
     updateIntonationTiming(`イントネーション反映: ${Math.round(synthesisElapsed)} ms`);
 
@@ -893,13 +1115,14 @@ async function playUpdatedIntonation() {
   }
 }
 
-async function fetchAndRenderIntonation(text: string) {
+async function fetchAndRenderIntonation(text: string, styleId: number) {
   if (!intonationCanvas) return;
   const start = performance.now();
   try {
-    const query = await getAudioQuery(text, ZUNDAMON_SPEAKER_ID);
+    const query = await getAudioQuery(text, styleId);
     const elapsed = performance.now() - start;
     currentIntonationQuery = query;
+    currentIntonationStyleId = styleId;
     intonationPoints = buildIntonationPointsFromQuery(query);
     intonationTopScale = 1;
     intonationBottomScale = 1;
@@ -1243,6 +1466,8 @@ async function handlePlay() {
   const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
   const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
   const loopCheckbox = document.getElementById('loopCheckbox') as HTMLInputElement | null;
+  const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
+  const delimiterInput = document.getElementById('delimiterInput') as HTMLTextAreaElement | null;
   
   if (!textArea || !playButton) {
     console.error('Required UI elements not found');
@@ -1252,6 +1477,20 @@ async function handlePlay() {
   const text = textArea.value.trim();
   
   if (!text) {
+    showStatus('テキストを入力してください', 'error');
+    return;
+  }
+
+  if (styleSelect && styleSelect.value) {
+    const parsed = Number(styleSelect.value);
+    if (!Number.isNaN(parsed)) {
+      selectedStyleId = parsed;
+    }
+  }
+
+  const delimiter = parseDelimiterConfig(delimiterInput?.value ?? '');
+  const segments = buildTextSegments(text, delimiter, selectedStyleId);
+  if (segments.length === 0) {
     showStatus('テキストを入力してください', 'error');
     return;
   }
@@ -1266,36 +1505,40 @@ async function handlePlay() {
   initializeVisualizationCanvases();
   
   try {
-    let audioBuffer: ArrayBuffer;
+    const audioContext = Tone.getContext().rawContext as BaseAudioContext;
+    const decodedBuffers: AudioBuffer[] = [];
     let usedCache = false;
-
-    if (audioCache.has(text)) {
-      audioBuffer = audioCache.get(text) as ArrayBuffer;
-      usedCache = true;
-      showStatus('キャッシュから再生します...', 'info');
-    } else {
-      // Step 1: Get audio query
-      showStatus('音声クエリを作成中...', 'info');
-      const audioQuery = await getAudioQuery(text, ZUNDAMON_SPEAKER_ID);
-      
-      // Step 2: Synthesize audio
-      showStatus('音声を生成中...', 'info');
-      audioBuffer = await synthesize(audioQuery, ZUNDAMON_SPEAKER_ID);
-      if (audioCache.size >= AUDIO_CACHE_LIMIT) {
-        const oldest = audioCache.keys().next().value;
-        if (oldest !== undefined) {
-          audioCache.delete(oldest);
+    for (const segment of segments) {
+      const cacheKey = getAudioCacheKey(segment.text, segment.styleId);
+      let audioBuffer = audioCache.get(cacheKey) ?? null;
+      if (audioBuffer) {
+        usedCache = true;
+      } else {
+        showStatus('音声クエリを作成中...', 'info');
+        const audioQuery = await getAudioQuery(segment.text, segment.styleId);
+        showStatus('音声を生成中...', 'info');
+        audioBuffer = await synthesize(audioQuery, segment.styleId);
+        if (audioCache.size >= AUDIO_CACHE_LIMIT) {
+          const oldest = audioCache.keys().next().value;
+          if (oldest !== undefined) {
+            audioCache.delete(oldest);
+          }
         }
+        audioCache.set(cacheKey, audioBuffer);
       }
-      audioCache.set(text, audioBuffer);
+      const decodedBuffer = await audioContext.decodeAudioData(audioBuffer.slice(0));
+      decodedBuffers.push(decodedBuffer);
     }
 
-    lastSynthesizedBuffer = audioBuffer;
-    const audioContext = Tone.getContext().rawContext as BaseAudioContext;
-    const decodedBuffer = await audioContext.decodeAudioData(audioBuffer.slice(0));
+    const combinedBuffer = combineAudioBuffers(decodedBuffers, audioContext);
+    if (!combinedBuffer) {
+      throw new Error('音声の結合に失敗しました。');
+    }
+
+    lastSynthesizedBuffer = encodeAudioBufferToWav(combinedBuffer);
 
     if (renderedCanvas) {
-      drawRenderedWaveform(decodedBuffer, renderedCanvas);
+      drawRenderedWaveform(combinedBuffer, renderedCanvas);
     }
     
     // Step 3: Play audio
@@ -1304,8 +1547,10 @@ async function handlePlay() {
     } else {
       showStatus('音声を再生中（キャッシュ）...', 'info');
     }
-    await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas);
-    await fetchAndRenderIntonation(text);
+    await playAudio(combinedBuffer, realtimeCanvas, spectrogramCanvas);
+    const spokenText = segments.map((segment) => segment.text).join('');
+    const intonationStyleId = segments[0]?.styleId ?? selectedStyleId;
+    await fetchAndRenderIntonation(spokenText, intonationStyleId);
     
     showStatus('再生完了！', 'success');
     setTimeout(hideStatus, 3000);
@@ -1338,6 +1583,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const usageToggleButton = document.getElementById('usageToggleButton') as HTMLButtonElement | null;
   const usagePanel = document.getElementById('usagePanel');
   const spectrogramScaleToggle = document.getElementById('spectrogramScaleToggle') as HTMLButtonElement | null;
+  const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
+  const delimiterInput = document.getElementById('delimiterInput') as HTMLTextAreaElement | null;
   intonationCanvas = document.getElementById('intonationCanvas') as HTMLCanvasElement | null;
   intonationTimingEl = null;
   intonationLabelsEl = document.getElementById('intonationLabels');
@@ -1361,6 +1608,43 @@ document.addEventListener('DOMContentLoaded', () => {
   if (exportButton) {
     exportButton.addEventListener('click', downloadLastAudio);
     updateExportButtonState(exportButton);
+  }
+
+  if (styleSelect) {
+    populateStyleSelect(styleSelect);
+    styleSelect.addEventListener('change', () => {
+      const parsed = Number(styleSelect.value);
+      if (!Number.isNaN(parsed)) {
+        selectedStyleId = parsed;
+      }
+    });
+  }
+  void fetchVoiceStyles(styleSelect ?? null);
+
+  if (delimiterInput) {
+    try {
+      const savedDelimiter = localStorage.getItem(DELIMITER_STORAGE_KEY);
+      if (savedDelimiter !== null) {
+        delimiterInput.value = savedDelimiter;
+      }
+    } catch (error) {
+      console.warn('Failed to restore delimiter config:', error);
+    }
+
+    const saveDelimiter = () => {
+      try {
+        localStorage.setItem(DELIMITER_STORAGE_KEY, delimiterInput.value);
+      } catch (error) {
+        console.warn('Failed to save delimiter config:', error);
+      }
+    };
+    const scheduleSaveDelimiter = () => {
+      if (delimiterSaveTimer !== null) {
+        window.clearTimeout(delimiterSaveTimer);
+      }
+      delimiterSaveTimer = window.setTimeout(saveDelimiter, AUTO_PLAY_DEBOUNCE_MS);
+    };
+    delimiterInput.addEventListener('input', scheduleSaveDelimiter);
   }
 
   if (usageToggleButton && usagePanel) {

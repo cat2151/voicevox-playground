@@ -85,6 +85,20 @@
         outline: none;
         border-color: var(--accent-color);
       }
+      select {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 16px;
+        font-family: inherit;
+        box-sizing: border-box;
+        background: var(--bg-color);
+      }
+      select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+      }
       button {
         background-color: var(--accent-color);
         color: #0b1a10;
@@ -155,6 +169,11 @@
         background-color: var(--status-success-bg);
         color: var(--status-success-text);
         border: 1px solid var(--border-color);
+      }
+      .helper-text {
+        margin: 0 0 6px;
+        color: var(--muted-text);
+        font-size: 13px;
       }
       .code-block {
         background: var(--bg-color);
@@ -336,6 +355,13 @@
     <div class="container">
       <div class="input-row">
         <div class="input-column">
+          <label for="styleSelect">スタイル</label>
+          <select id="styleSelect" aria-label="スタイル選択"></select>
+
+          <label for="delimiterInput">スタイル切替の区切り文字（例: []）</label>
+          <textarea id="delimiterInput" rows="2" aria-label="スタイル切替の区切り文字" placeholder="例: []"></textarea>
+          <p class="helper-text">空欄なら切り替えません。囲まれた語がスタイル名に一致した場合にのみ切り替えます。</p>
+
           <textarea id="text" aria-label="テキスト入力">ずんだもんなのだ</textarea>
           
           <div class="controls">
