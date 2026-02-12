@@ -283,7 +283,9 @@ export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElem
 
   const frequencies = estimateFrequencySeries(channelData, buffer.sampleRate, width / 6);
   if (frequencies.length > 0) {
-    ctx.strokeStyle = getColorVariable('--highlight-color', '#ff9800');
+    const highlightColor = getColorVariable('--highlight-color', '#ff9800');
+    ctx.strokeStyle = highlightColor;
+    ctx.fillStyle = highlightColor;
     ctx.beginPath();
     frequencies.forEach((freq, index) => {
       const x = (freq.time / buffer.duration) * width;
@@ -293,14 +295,9 @@ export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElem
       } else {
         ctx.lineTo(x, y);
       }
+      ctx.fillRect(x - 1, y - 1, 2, 2);
     });
     ctx.stroke();
-    ctx.fillStyle = getColorVariable('--highlight-color', '#ff9800');
-    for (const freq of frequencies) {
-      const x = (freq.time / buffer.duration) * width;
-      const y = height - (Math.log10(freq.freq + 1) / Math.log10(buffer.sampleRate / 2 + 1)) * height;
-      ctx.fillRect(x - 1, y - 1, 2, 2);
-    }
   }
 
   ctx.strokeStyle = getColorVariable('--grid-color', 'rgba(0,0,0,0.1)');

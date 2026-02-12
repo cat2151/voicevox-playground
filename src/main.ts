@@ -431,12 +431,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (usageToggleButton && usagePanel) {
     usageToggleButton.addEventListener('click', () => {
-      const isHidden = usagePanel.hasAttribute('hidden');
-      if (isHidden) {
-        usagePanel.removeAttribute('hidden');
-      } else {
-        usagePanel.setAttribute('hidden', 'true');
-      }
+      const isHidden = usagePanel.hidden;
+      usagePanel.hidden = !isHidden;
       usageToggleButton.setAttribute('aria-expanded', String(isHidden));
     });
   }
