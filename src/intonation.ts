@@ -364,7 +364,7 @@ function findNearestIntonationPoint(x: number, y: number) {
       closestIndex = index;
     }
   });
-  return closestDistance <= 16 ? closestIndex : -1;
+  return closestIndex;
 }
 
 function applyPitchToQuery(pointIndex: number, pitch: number) {
@@ -466,6 +466,7 @@ export async function fetchAndRenderIntonation(text: string, styleId: number) {
 }
 
 export function handleIntonationPointerDown(event: MouseEvent | PointerEvent) {
+  if ('button' in event && event.button !== 0) return;
   if (!intonationCanvas || intonationPointPositions.length === 0) return;
   const rect = intonationCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
@@ -476,11 +477,11 @@ export function handleIntonationPointerDown(event: MouseEvent | PointerEvent) {
     intonationSelectedIndex = targetIndex;
     disableLoopOnIntonationEdit();
     intonationCanvas.focus();
-    drawIntonationChart(intonationPoints);
     if ('pointerId' in event) {
       intonationActivePointerId = event.pointerId;
       intonationCanvas.setPointerCapture(event.pointerId);
     }
+    handleIntonationPointerMove(event);
     event.preventDefault();
   }
 }
