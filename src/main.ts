@@ -15,6 +15,7 @@ const MONOKAI_COLORS = ['#f92672', '#a6e22e', '#66d9ef', '#fd971f', '#ae81ff', '
 const DELIMITER_STORAGE_KEY = 'voicevox-delimiter-pair';
 const FAVORITES_STORAGE_KEY = 'voicevox-favorites';
 const HISTORY_STORAGE_KEY = 'voicevox-history';
+const INTONATION_FAVORITES_STORAGE_KEY = 'voicevox-intonation-favorites';
 const TEXT_LIST_LIMIT = 20;
 type FrequencyScale = 'linear' | 'log';
 
@@ -74,6 +75,12 @@ interface IntonationChartRange {
   height: number;
   innerHeight: number;
   width: number;
+}
+
+interface IntonationFavorite {
+  text: string;
+  styleId: number;
+  query: AudioQuery;
 }
 
 // Status display helper
@@ -156,6 +163,10 @@ let favoriteTexts: string[] = [];
 let historyTexts: string[] = [];
 let favoritesListEl: HTMLUListElement | null = null;
 let historyListEl: HTMLUListElement | null = null;
+let intonationFavoritesListEl: HTMLUListElement | null = null;
+let loopCheckboxEl: HTMLInputElement | null = null;
+let intonationDirty = false;
+let intonationFavorites: IntonationFavorite[] = [];
 
 function invalidateColorVariableCache() {
   cachedRootComputedStyle = null;
@@ -263,9 +274,52 @@ function dedupeAndLimit(list: string[]) {
   return result;
 }
 
+function dedupeIntonationFavorites(list: IntonationFavorite[]) {
+  const seen = new Set<string>();
+  const result: IntonationFavorite[] = [];
+  for (const item of list) {
+    if (!item || !item.text || !item.query || typeof item.styleId !== 'number') continue;
+    const key = `${item.styleId}::${item.text.trim()}`;
+    if (!item.text.trim() || seen.has(key)) continue;
+    seen.add(key);
+    result.push(item);
+    if (result.length >= TEXT_LIST_LIMIT) break;
+  }
+  return result;
+}
+
 function persistLists() {
   persistList(FAVORITES_STORAGE_KEY, favoriteTexts);
   persistList(HISTORY_STORAGE_KEY, historyTexts);
+}
+
+function loadIntonationFavorites() {
+  try {
+    const raw = localStorage.getItem(INTONATION_FAVORITES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return dedupeIntonationFavorites(
+        parsed.map((item) => {
+          if (!item || typeof item !== 'object') return null;
+          const { text, styleId, query } = item as Partial<IntonationFavorite>;
+          if (typeof text !== 'string' || typeof styleId !== 'number' || !query) return null;
+          return { text: text.trim(), styleId, query } as IntonationFavorite;
+        }).filter((item): item is IntonationFavorite => item !== null)
+      );
+    }
+  } catch (error) {
+    console.warn('Failed to load intonation favorites:', error);
+  }
+  return [];
+}
+
+function persistIntonationFavorites() {
+  try {
+    localStorage.setItem(INTONATION_FAVORITES_STORAGE_KEY, JSON.stringify(intonationFavorites));
+  } catch (error) {
+    console.warn('Failed to save intonation favorites:', error);
+  }
 }
 
 function setTextAndPlay(text: string) {
@@ -321,6 +375,42 @@ function renderTextLists() {
   renderList(historyListEl, historyTexts, 'history');
 }
 
+function renderIntonationFavoritesList() {
+  const listEl = intonationFavoritesListEl;
+  if (!listEl) return;
+  listEl.textContent = '';
+  intonationFavorites.forEach((item, index) => {
+    const listItem = document.createElement('li');
+    listItem.className = 'text-list__item';
+
+    const playButton = document.createElement('button');
+    playButton.type = 'button';
+    playButton.className = 'text-list__text';
+
+    const pill = document.createElement('span');
+    pill.className = 'text-list__pill';
+    pill.textContent = 'イントネーション付き';
+    playButton.appendChild(pill);
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = item.text;
+    playButton.appendChild(textSpan);
+
+    playButton.addEventListener('click', () => applyIntonationFavorite(item));
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'text-list__action text-list__action--remove';
+    removeButton.textContent = '－';
+    removeButton.setAttribute('aria-label', 'イントネーション付きお気に入りから削除する');
+    removeButton.addEventListener('click', () => removeIntonationFavorite(index));
+
+    listItem.appendChild(playButton);
+    listItem.appendChild(removeButton);
+    listEl.appendChild(listItem);
+  });
+}
+
 function moveToFavorites(text: string) {
   const target = text.trim();
   if (!target) return;
@@ -356,8 +446,67 @@ function addToHistory(text: string) {
 function initializeTextLists() {
   favoriteTexts = dedupeAndLimit(loadStoredList(FAVORITES_STORAGE_KEY));
   historyTexts = dedupeAndLimit(loadStoredList(HISTORY_STORAGE_KEY));
+  intonationFavorites = loadIntonationFavorites();
   persistLists();
+  persistIntonationFavorites();
   renderTextLists();
+  renderIntonationFavoritesList();
+}
+
+function cloneAudioQuery(query: AudioQuery): AudioQuery {
+  return JSON.parse(JSON.stringify(query)) as AudioQuery;
+}
+
+function removeIntonationFavorite(index: number) {
+  if (index < 0 || index >= intonationFavorites.length) return;
+  intonationFavorites = [...intonationFavorites.slice(0, index), ...intonationFavorites.slice(index + 1)];
+  persistIntonationFavorites();
+  renderIntonationFavoritesList();
+}
+
+function applyIntonationFavorite(item: IntonationFavorite) {
+  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
+  const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
+  if (textArea) {
+    textArea.value = item.text;
+  }
+  if (styleSelect) {
+    styleSelect.value = String(item.styleId);
+  }
+  selectedStyleId = item.styleId;
+  currentIntonationStyleId = item.styleId;
+  currentIntonationQuery = cloneAudioQuery(item.query);
+  intonationPoints = buildIntonationPointsFromQuery(currentIntonationQuery);
+  intonationTopScale = 1;
+  intonationBottomScale = 1;
+  intonationSelectedIndex = intonationPoints.length > 0 ? 0 : null;
+  intonationDirty = false;
+  drawIntonationChart(intonationPoints);
+  void playUpdatedIntonation();
+}
+
+function saveCurrentIntonationFavorite() {
+  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
+  if (!textArea) return;
+  const text = textArea.value.trim();
+  if (!text) {
+    showStatus('テキストを入力してください', 'error');
+    return;
+  }
+  if (!currentIntonationQuery) {
+    showStatus('イントネーション取得後に登録してください', 'error');
+    return;
+  }
+  const entry: IntonationFavorite = {
+    text,
+    styleId: currentIntonationStyleId,
+    query: cloneAudioQuery(currentIntonationQuery),
+  };
+  intonationFavorites = dedupeIntonationFavorites([entry, ...intonationFavorites]);
+  persistIntonationFavorites();
+  renderIntonationFavoritesList();
+  showStatus('イントネーション付きのお気に入りを保存しました', 'success');
+  scheduleHideStatus(2000);
 }
 
 function addSegment(
@@ -1204,6 +1353,23 @@ function updateIntonationTiming(message: string) {
   }
 }
 
+function disableLoopOnIntonationEdit() {
+  if (loopCheckboxEl && loopCheckboxEl.checked) {
+    loopCheckboxEl.checked = false;
+  }
+}
+
+function resetIntonationState() {
+  currentIntonationQuery = null;
+  intonationPoints = [];
+  intonationPointPositions = [];
+  intonationSelectedIndex = null;
+  intonationTopScale = 1;
+  intonationBottomScale = 1;
+  intonationDirty = false;
+  drawIntonationChart(intonationPoints);
+}
+
 function initializeIntonationCanvas() {
   if (!intonationCanvas) return;
   const { ctx, width, height } = prepareCanvas(intonationCanvas);
@@ -1251,10 +1417,23 @@ function renderIntonationLabels(points: IntonationPoint[]) {
       labelEl = document.createElement('span');
       labelEl.className = 'intonation-label';
       labelEl.dataset.idx = String(index);
-      labelEl.textContent = point.label;
+      const keySpan = document.createElement('span');
+      keySpan.className = 'intonation-label__key';
+      const textSpan = document.createElement('span');
+      textSpan.className = 'intonation-label__text';
+      labelEl.appendChild(keySpan);
+      labelEl.appendChild(textSpan);
       labelsEl.appendChild(labelEl);
-    } else if (labelEl.textContent !== point.label) {
-      labelEl.textContent = point.label;
+    }
+    const keySpan = labelEl.querySelector('.intonation-label__key') as HTMLSpanElement;
+    const textSpan = labelEl.querySelector('.intonation-label__text') as HTMLSpanElement;
+    const shortcut = intonationKeyboardEnabled ? String.fromCharCode(65 + index) : '';
+    if (keySpan) {
+      keySpan.textContent = shortcut;
+      keySpan.style.display = shortcut ? 'inline-block' : 'none';
+    }
+    if (textSpan && textSpan.textContent !== point.label) {
+      textSpan.textContent = point.label;
     }
     labelEl.style.left = `${pos.x}px`;
     seen.add(index);
@@ -1413,9 +1592,10 @@ function adjustIntonationScale(direction: 'top' | 'bottom', factor: number) {
 function pitchFromY(y: number) {
   if (!intonationChartRange) return null;
   const { min, max, margin, height, innerHeight } = intonationChartRange;
-  const clampedY = Math.min(height - margin, Math.max(margin, y));
-  const ratio = (height - margin - clampedY) / Math.max(innerHeight, 1);
-  return min + ratio * (max - min);
+  const ratio = (height - margin - y) / Math.max(innerHeight, 1);
+  const extraRange = 1;
+  const extendedRatio = Math.min(1 + extraRange, Math.max(-extraRange, ratio));
+  return min + extendedRatio * (max - min);
 }
 
 function findNearestIntonationPoint(x: number, y: number) {
@@ -1521,6 +1701,7 @@ async function fetchAndRenderIntonation(text: string, styleId: number) {
     intonationBottomScale = 1;
     intonationSelectedIndex = intonationPoints.length > 0 ? 0 : null;
     drawIntonationChart(intonationPoints);
+    intonationDirty = false;
     updateIntonationTiming(`イントネーション取得: ${Math.round(elapsed)} ms`);
   } catch (error) {
     console.error('Failed to fetch intonation:', error);
@@ -1538,6 +1719,8 @@ function handleIntonationPointerDown(event: MouseEvent | PointerEvent) {
   if (targetIndex !== -1) {
     intonationDragIndex = targetIndex;
     intonationSelectedIndex = targetIndex;
+    disableLoopOnIntonationEdit();
+    intonationCanvas.focus();
     drawIntonationChart(intonationPoints);
     if ('pointerId' in event) {
       intonationActivePointerId = event.pointerId;
@@ -1559,6 +1742,8 @@ function handleIntonationPointerMove(event: MouseEvent | PointerEvent) {
   if (pitch === null) return;
   intonationPoints[intonationDragIndex].pitch = pitch;
   applyPitchToQuery(intonationDragIndex, pitch);
+  disableLoopOnIntonationEdit();
+  intonationDirty = true;
   drawIntonationChart(intonationPoints);
   scheduleIntonationPlayback();
   event.preventDefault();
@@ -1574,6 +1759,12 @@ function handleIntonationPointerUp() {
 
 function handleIntonationKeyDown(event: KeyboardEvent) {
   if (!intonationCanvas || intonationPoints.length === 0) return;
+  if (intonationKeyboardEnabled && (event.key === ' ' || event.key === 'Enter')) {
+    event.preventDefault();
+    disableLoopOnIntonationEdit();
+    void playUpdatedIntonation();
+    return;
+  }
   if (intonationSelectedIndex === null) {
     intonationSelectedIndex = 0;
   }
@@ -1595,17 +1786,15 @@ function handleIntonationKeyDown(event: KeyboardEvent) {
           }
           rangeSpan = max - min;
         }
-        const step = rangeSpan / 10;
-        if (step <= 0) return;
+        const step = rangeSpan > 0 ? rangeSpan / 10 : 10;
         event.preventDefault();
         const adjustment = event.shiftKey ? -step : step;
         const newPitch = intonationPoints[targetIndex].pitch + adjustment;
-        const clampedPitch = intonationChartRange
-          ? Math.min(intonationChartRange.max, Math.max(intonationChartRange.min, newPitch))
-          : newPitch;
-        intonationPoints[targetIndex].pitch = clampedPitch;
+        intonationPoints[targetIndex].pitch = newPitch;
         intonationSelectedIndex = targetIndex;
-        applyPitchToQuery(targetIndex, clampedPitch);
+        applyPitchToQuery(targetIndex, newPitch);
+        disableLoopOnIntonationEdit();
+        intonationDirty = true;
         drawIntonationChart(intonationPoints);
         scheduleIntonationPlayback();
         return;
@@ -1631,11 +1820,10 @@ function handleIntonationKeyDown(event: KeyboardEvent) {
     const targetIndex = intonationSelectedIndex ?? 0;
     const adjustment = event.key === 'ArrowUp' ? delta : -delta;
     const newPitch = intonationPoints[targetIndex].pitch + adjustment;
-    const clampedPitch = intonationChartRange
-      ? Math.min(intonationChartRange.max, Math.max(intonationChartRange.min, newPitch))
-      : newPitch;
-    intonationPoints[targetIndex].pitch = clampedPitch;
-    applyPitchToQuery(targetIndex, clampedPitch);
+    intonationPoints[targetIndex].pitch = newPitch;
+    applyPitchToQuery(targetIndex, newPitch);
+    disableLoopOnIntonationEdit();
+    intonationDirty = true;
     drawIntonationChart(intonationPoints);
     scheduleIntonationPlayback();
   }
@@ -1877,6 +2065,31 @@ async function playAudio(
   });
 }
 
+async function confirmResetIntonationBeforePlay() {
+  const dialog = document.getElementById('playConfirmDialog');
+  const resetButton = document.getElementById('playConfirmReset');
+  const cancelButton = document.getElementById('playConfirmCancel');
+  if (!dialog || !resetButton || !cancelButton) {
+    return true;
+  }
+  dialog.removeAttribute('hidden');
+  const cleanup = () => {
+    dialog.setAttribute('hidden', 'true');
+  };
+  return new Promise<boolean>((resolve) => {
+    const handleReset = () => {
+      cleanup();
+      resolve(true);
+    };
+    const handleCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+    resetButton.addEventListener('click', handleReset, { once: true });
+    cancelButton.addEventListener('click', handleCancel, { once: true });
+  });
+}
+
 // Main play function
 async function handlePlay() {
   const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
@@ -1913,6 +2126,14 @@ async function handlePlay() {
   if (segments.length === 0) {
     showStatus('テキストを入力してください', 'error');
     return;
+  }
+  
+  if (intonationDirty) {
+    const shouldReset = await confirmResetIntonationBeforePlay();
+    if (!shouldReset) {
+      return;
+    }
+    resetIntonationState();
   }
   
   if (isProcessing) {
@@ -2017,6 +2238,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const favoritesPanel = document.getElementById('favoritesPanel');
   favoritesListEl = document.getElementById('favoritesList') as HTMLUListElement | null;
   historyListEl = document.getElementById('historyList') as HTMLUListElement | null;
+  intonationFavoritesListEl = document.getElementById('intonationFavoritesList') as HTMLUListElement | null;
   intonationCanvas = document.getElementById('intonationCanvas') as HTMLCanvasElement | null;
   intonationTimingEl = null;
   intonationLabelsEl = document.getElementById('intonationLabels');
@@ -2027,6 +2249,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const intonationShrinkBottom = document.getElementById('intonationShrinkBottom') as HTMLButtonElement | null;
   const intonationExpandBottom = document.getElementById('intonationExpandBottom') as HTMLButtonElement | null;
   const intonationKeyboardToggle = document.getElementById('intonationKeyboardToggle') as HTMLButtonElement | null;
+  const intonationFavoriteButton = document.getElementById('intonationFavoriteButton') as HTMLButtonElement | null;
+  loopCheckboxEl = document.getElementById('loopCheckbox') as HTMLInputElement | null;
   
   if (playButton) {
     playButton.addEventListener('click', handlePlay);
@@ -2144,7 +2368,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (intonationKeyboardEnabled && intonationCanvas) {
         intonationCanvas.focus();
       }
+      if (intonationPoints.length > 0) {
+        drawIntonationChart(intonationPoints);
+      }
     });
+  }
+
+  if (intonationFavoriteButton) {
+    intonationFavoriteButton.addEventListener('click', saveCurrentIntonationFavorite);
   }
 
   if (intonationExpandTop) {
