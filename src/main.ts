@@ -52,27 +52,33 @@ let favoritesListEl: HTMLUListElement | null = null;
 let historyListEl: HTMLUListElement | null = null;
 let intonationFavoritesListEl: HTMLUListElement | null = null;
 let loopCheckboxEl: HTMLInputElement | null = null;
+let playRequestPending = false;
+let stopInProgress = false;
 
 function setPlayButtonAppearance(mode: 'play' | 'stop') {
   const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
   if (!playButton) return;
   if (mode === 'play') {
-    playButton.textContent = '▶';
+    playButton.innerHTML = '<span aria-hidden="true">▶️</span>';
     playButton.setAttribute('aria-label', 'Play');
     playButton.title = 'Play';
   } else {
-    playButton.textContent = '■';
+    playButton.innerHTML = '<span aria-hidden="true">⏹️</span>';
     playButton.setAttribute('aria-label', 'Stop');
     playButton.title = 'Stop';
   }
 }
 
 function stopPlaybackAndResetLoop() {
+  stopInProgress = true;
   stopActivePlayback();
   if (loopCheckboxEl) {
     loopCheckboxEl.checked = false;
   }
   setPlayButtonAppearance('play');
+  setTimeout(() => {
+    stopInProgress = false;
+  }, 0);
 }
 
 function getStyleLabel(style: VoiceStyleOption) {
@@ -335,6 +341,9 @@ async function confirmResetIntonationBeforePlay() {
 }
 
 function handlePlayButtonClick() {
+  if (stopInProgress || playRequestPending) {
+    return;
+  }
   if (isPlaybackActive()) {
     stopPlaybackAndResetLoop();
     return;
@@ -382,7 +391,7 @@ async function handlePlay() {
     return;
   }
 
-  if (appState.isProcessing) {
+  if (appState.isProcessing || playRequestPending) {
     return;
   }
 
@@ -394,6 +403,7 @@ async function handlePlay() {
     resetIntonationState();
   }
 
+  playRequestPending = true;
   appState.isProcessing = true;
   playButton.disabled = true;
   updateExportButtonState(exportButton);
@@ -480,6 +490,7 @@ async function handlePlay() {
   } finally {
     setPlayButtonAppearance('play');
     playButton.disabled = false;
+    playRequestPending = false;
     appState.isProcessing = false;
     updateExportButtonState(exportButton);
   }
@@ -514,7 +525,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (loopCheckboxEl) {
     loopCheckboxEl.addEventListener('change', () => {
-      if (loopCheckboxEl?.checked && !appState.isProcessing && !isPlaybackActive()) {
+      if (
+        loopCheckboxEl?.checked &&
+        !appState.isProcessing &&
+        !isPlaybackActive() &&
+        !playRequestPending
+      ) {
         void handlePlay();
       }
     });

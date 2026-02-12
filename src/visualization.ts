@@ -748,7 +748,11 @@ export async function playAudio(
       resolve({ stopped: stoppedByUser });
     };
 
+    const previousStopper = activePlaybackStopper;
     activePlaybackStopper = stopPlayback;
+    if (previousStopper && previousStopper !== stopPlayback) {
+      previousStopper();
+    }
 
     player.onstop = () => {
       if (!resolved) {
