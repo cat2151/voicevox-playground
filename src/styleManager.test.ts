@@ -1,13 +1,9 @@
-/// <reference types="vitest" />
-
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ZUNDAMON_SPEAKER_ID } from './config';
 import { buildTextSegments, fetchVoiceStyles, parseDelimiterConfig } from './styleManager';
 
-const originalFetch = globalThis.fetch;
-
 afterEach(() => {
-  globalThis.fetch = originalFetch;
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -53,7 +49,7 @@ describe('buildTextSegments', () => {
       ok: true,
       json: async () => fakeResponse,
     });
-    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    vi.stubGlobal('fetch', fetchMock);
 
     await fetchVoiceStyles(null);
 
