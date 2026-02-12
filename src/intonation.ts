@@ -584,6 +584,17 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
     }
     return;
   }
+  const letterIndex =
+    event.key.length === 1 ? event.key.toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0) : -1;
+  if (letterIndex >= 0 && letterIndex < 26) {
+    const targetIndex = intonationPoints.findIndex((_, idx) => idx % 26 === letterIndex);
+    if (targetIndex !== -1) {
+      intonationSelectedIndex = targetIndex;
+      drawIntonationChart(intonationPoints);
+      event.preventDefault();
+    }
+    return;
+  }
   if (event.key === 'ArrowLeft') {
     event.preventDefault();
     intonationSelectedIndex = Math.max(0, (intonationSelectedIndex ?? 0) - 1);
