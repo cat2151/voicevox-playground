@@ -4,6 +4,8 @@ import {
   AUTO_PLAY_DEBOUNCE_MS,
   DELIMITER_STORAGE_KEY,
   FrequencyScale,
+  REQUEST_TIMEOUT_MS,
+  VOICEVOX_API_BASE,
   VoiceStyleOption,
   VoiceVoxSpeaker,
   ZUNDAMON_SPEAKER_ID,
@@ -197,10 +199,10 @@ function populateStyleSelect(styleSelect: HTMLSelectElement | null) {
 
 async function fetchVoiceStyles(styleSelect: HTMLSelectElement | null) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch('http://localhost:50021/speakers', { signal: controller.signal });
+    const response = await fetch(`${VOICEVOX_API_BASE}/speakers`, { signal: controller.signal });
     if (!response.ok) {
       throw new Error(`Failed to fetch styles: ${response.status} ${response.statusText}`);
     }

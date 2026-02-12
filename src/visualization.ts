@@ -296,14 +296,29 @@ function drawRealtimeWaveform(
 }
 
 function determineSpectrogramCeiling(values: Float32Array, previousCeiling: number) {
-  let maxIndex = 0;
-  for (let i = 0; i < values.length; i++) {
-    if (values[i] > values[maxIndex]) {
-      maxIndex = i;
+  if (values.length === 0) {
+    return 1;
+  }
+
+  let peak = values[0];
+  for (let i = 1; i < values.length; i++) {
+    if (values[i] > peak) {
+      peak = values[i];
     }
   }
-  const ceiling = Math.max(maxIndex, previousCeiling * 0.98);
-  return Math.max(1, Math.min(values.length - 1, Math.floor(ceiling)));
+
+  const threshold = peak - 40;
+  let highestIndexAboveThreshold = 0;
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (values[i] >= threshold) {
+      highestIndexAboveThreshold = i;
+      break;
+    }
+  }
+
+  const rawCeiling = Math.max(highestIndexAboveThreshold, previousCeiling * 0.98);
+  const clampedCeiling = Math.max(1, Math.min(values.length - 1, Math.floor(rawCeiling)));
+  return clampedCeiling;
 }
 
 function estimateFundamentalFrequency(values: Float32Array, sampleRate: number) {
@@ -426,7 +441,6 @@ function drawSpectrogram(
   const { ctx, width, height } = prepareCanvas(canvas);
   if (!ctx) return previousX;
 
-  const dpr = window.devicePixelRatio || 1;
   const drawableWidth = width - 40;
   const drawableHeight = height;
   const leftMargin = 40;
@@ -454,17 +468,45 @@ function drawSpectrogram(
     ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
   }
 
+  const MIN_DB = -100;
+  const MAX_DB = 0;
+  ctx.save();
   for (let x = resetX; x <= targetX; x++) {
-    const index = Math.floor((x / drawableWidth) * values.length);
-    const clampedIndex = Math.min(Math.max(index, 0), values.length - 1);
-    const freq = (clampedIndex / ceilingIndex) * maxFreq;
-    const normalized = scale === 'log'
-      ? (freq <= 0 ? 0 : (Math.log10(Math.max(freq, minLogFreq)) - Math.log10(minLogFreq)) / Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
-      : freq / maxFreq;
-    const y = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(leftMargin + x, y, 1 * dpr, 2);
+    const columnX = leftMargin + x;
+    for (let bin = 0; bin < values.length; bin++) {
+      const magnitudeDb = values[bin];
+      const clampedDb = Math.max(MIN_DB, Math.min(MAX_DB, magnitudeDb));
+      const intensity = (clampedDb - MIN_DB) / (MAX_DB - MIN_DB);
+      if (intensity <= 0) continue;
+
+      const freq = (bin / ceilingIndex) * maxFreq;
+      const normalized = scale === 'log'
+        ? (freq <= 0
+            ? 0
+            : (Math.log10(Math.max(freq, minLogFreq)) - Math.log10(minLogFreq)) /
+              Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
+        : freq / maxFreq;
+
+      const nextBin = bin + 1;
+      const nextFreq = nextBin > ceilingIndex ? maxFreq : (nextBin / ceilingIndex) * maxFreq;
+      const nextNormalized = scale === 'log'
+        ? (nextFreq <= 0
+            ? 0
+            : (Math.log10(Math.max(nextFreq, minLogFreq)) - Math.log10(minLogFreq)) /
+              Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
+        : nextFreq / maxFreq;
+
+      const yTop = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
+      const yBottom = drawableHeight - Math.min(nextNormalized * drawableHeight, drawableHeight);
+      const rectY = Math.min(yTop, yBottom);
+      const rectHeight = Math.max(1, Math.abs(yBottom - yTop));
+
+      ctx.globalAlpha = intensity;
+      ctx.fillStyle = gradient;
+      ctx.fillRect(columnX, rectY, 1, rectHeight);
+    }
   }
+  ctx.restore();
 
   ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
   ctx.lineWidth = 1;

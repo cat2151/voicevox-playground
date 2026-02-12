@@ -7,6 +7,7 @@ import {
   IntonationFavorite,
   IntonationPoint,
   MONOKAI_COLORS,
+  TEXT_LIST_LIMIT,
   ZUNDAMON_SPEAKER_ID,
 } from './config';
 import { getAudioQuery, synthesize } from './audio';
@@ -59,7 +60,7 @@ function dedupeIntonationFavorites(list: IntonationFavorite[]) {
     if (!item.text.trim() || seen.has(key)) continue;
     seen.add(key);
     result.push(item);
-    if (result.length >= 20) break;
+    if (result.length >= TEXT_LIST_LIMIT) break;
   }
   return result;
 }
@@ -225,8 +226,18 @@ function renderIntonationLabels(points: IntonationPoint[]) {
   const labelsEl = intonationLabelsEl;
   if (!labelsEl) return;
   labelsEl.textContent = '';
-  points.forEach((point) => {
+  const width = intonationChartRange?.width ?? 1;
+  points.forEach((point, index) => {
+    const pos = intonationPointPositions[index];
     const span = document.createElement('span');
+    span.classList.add('intonation-label');
+    if (point.label && point.label.length === 1) {
+      span.classList.add('intonation-label__key');
+    }
+    if (pos) {
+      const clamped = Math.min(1, Math.max(0, pos.x / Math.max(width, 1)));
+      span.style.left = `${clamped * 100}%`;
+    }
     span.textContent = point.label;
     labelsEl.appendChild(span);
   });
@@ -264,6 +275,10 @@ export function drawIntonationChart(points: IntonationPoint[]) {
   const rangeMax = Math.ceil(max + topPadding);
   const rangeSpan = Math.max(rangeMax - rangeMin, 1);
 
+  if (intonationChartRange) {
+    intonationChartRange.min = rangeMin;
+    intonationChartRange.max = rangeMax;
+  }
   if (intonationMaxValueEl) intonationMaxValueEl.textContent = `${Math.round(rangeMax)}`;
   if (intonationMinValueEl) intonationMinValueEl.textContent = `${Math.round(rangeMin)}`;
 
@@ -556,38 +571,6 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
       event.preventDefault();
     }
     return;
-  }
-  if (event.key === 'Enter' && intonationSelectedIndex !== null) {
-    const targetIndex = intonationSelectedIndex;
-    if (targetIndex >= 0 && targetIndex < intonationPointPositions.length) {
-      const stepRange =
-        intonationPoints.length > 1
-          ? Math.abs(intonationPoints[intonationPoints.length - 1].pitch - intonationPoints[0].pitch)
-          : 10;
-      let rangeSpan = stepRange;
-      if (intonationPoints.length > 1) {
-        let min = intonationPoints[0].pitch;
-        let max = intonationPoints[0].pitch;
-        for (let i = 1; i < intonationPoints.length; i += 1) {
-          const pitch = intonationPoints[i].pitch;
-          if (pitch < min) min = pitch;
-          if (pitch > max) max = pitch;
-        }
-        rangeSpan = max - min;
-      }
-      const step = rangeSpan > 0 ? rangeSpan / 10 : 10;
-      event.preventDefault();
-      const adjustment = event.shiftKey ? -step : step;
-      const newPitch = intonationPoints[targetIndex].pitch + adjustment;
-      intonationPoints[targetIndex].pitch = newPitch;
-      intonationSelectedIndex = targetIndex;
-      applyPitchToQuery(targetIndex, newPitch);
-      disableLoopOnIntonationEdit();
-      intonationDirty = true;
-      drawIntonationChart(intonationPoints);
-      scheduleIntonationPlayback();
-      return;
-    }
   }
   if (event.key === 'ArrowLeft') {
     event.preventDefault();
