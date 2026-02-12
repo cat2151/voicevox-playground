@@ -466,7 +466,7 @@ export async function fetchAndRenderIntonation(text: string, styleId: number) {
 }
 
 export function handleIntonationPointerDown(event: MouseEvent | PointerEvent) {
-  if ('button' in event && event.button !== 0) return;
+  if (event.button !== 0) return;
   if (!intonationCanvas || intonationPointPositions.length === 0) return;
   const rect = intonationCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
