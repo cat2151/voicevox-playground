@@ -29,6 +29,7 @@ let intonationSelectedIndex: number | null = null;
 let intonationDebounceTimer: number | null = null;
 let intonationDragIndex: number | null = null;
 let intonationActivePointerId: number | null = null;
+let intonationPlaybackPending = false;
 let intonationChartRange: IntonationChartRange | null = null;
 let intonationTopScale = 1;
 let intonationBottomScale = 1;
@@ -362,14 +363,12 @@ function pitchFromY(y: number) {
   return min + normalized * (max - min);
 }
 
-function findNearestIntonationPoint(x: number, y: number) {
+function findNearestIntonationPoint(x: number) {
   if (!intonationPointPositions.length) return -1;
   let closestIndex = 0;
   let closestDistance = Infinity;
   intonationPointPositions.forEach((pos, index) => {
-    const dx = pos.x - x;
-    const dy = pos.y - y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const distance = Math.abs(pos.x - x);
     if (distance < closestDistance) {
       closestDistance = distance;
       closestIndex = index;
@@ -481,8 +480,7 @@ export function handleIntonationPointerDown(event: MouseEvent | PointerEvent) {
   if (!intonationCanvas || intonationPointPositions.length === 0) return;
   const rect = intonationCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  const targetIndex = findNearestIntonationPoint(x, y);
+  const targetIndex = findNearestIntonationPoint(x);
   if (targetIndex !== -1) {
     intonationDragIndex = targetIndex;
     intonationSelectedIndex = targetIndex;
@@ -505,15 +503,19 @@ export function handleIntonationPointerMove(event: MouseEvent | PointerEvent) {
     return;
   }
   const rect = intonationCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const targetIndex = findNearestIntonationPoint(x);
+  if (targetIndex === -1) return;
+  intonationDragIndex = targetIndex;
   const y = event.clientY - rect.top;
   const newPitch = pitchFromY(y);
-  intonationPoints[intonationDragIndex].pitch = newPitch;
-  intonationSelectedIndex = intonationDragIndex;
-  applyPitchToQuery(intonationDragIndex, newPitch);
+  intonationPoints[targetIndex].pitch = newPitch;
+  intonationSelectedIndex = targetIndex;
+  applyPitchToQuery(targetIndex, newPitch);
   disableLoopOnIntonationEdit();
   intonationDirty = true;
   drawIntonationChart(intonationPoints);
-  scheduleIntonationPlayback();
+  intonationPlaybackPending = true;
 }
 
 export function handleIntonationPointerUp() {
@@ -523,6 +525,10 @@ export function handleIntonationPointerUp() {
   if (intonationActivePointerId !== null && intonationCanvas) {
     intonationCanvas.releasePointerCapture(intonationActivePointerId);
     intonationActivePointerId = null;
+  }
+  if (intonationPlaybackPending) {
+    intonationPlaybackPending = false;
+    scheduleIntonationPlayback();
   }
 }
 
