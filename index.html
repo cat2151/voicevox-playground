@@ -256,6 +256,22 @@
         color: var(--text-color);
         border-radius: 6px;
       }
+      .playback-progress {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--accent-color);
+        pointer-events: none;
+        opacity: 0;
+        transform: translateX(-50%);
+        transition: opacity 0.15s ease;
+        border-radius: 999px;
+        z-index: 2;
+      }
+      .playback-progress.is-active {
+        opacity: 1;
+      }
       .sr-only {
         position: absolute;
         width: 1px;
@@ -523,9 +539,11 @@
       <div class="visualizer-grid">
         <div class="visualizer__frame">
           <canvas id="renderedWaveform" width="760" height="144" aria-label="レンダリング後の波形"></canvas>
+          <div id="renderedWaveformProgress" class="playback-progress" aria-hidden="true"></div>
         </div>
         <div class="visualizer__frame">
           <canvas id="spectrogram" width="760" height="144" aria-label="スペクトログラム"></canvas>
+          <div id="spectrogramProgress" class="playback-progress" aria-hidden="true"></div>
           <button id="spectrogramScaleToggle" class="visualizer__action" type="button">対数にする</button>
         </div>
       </div>
