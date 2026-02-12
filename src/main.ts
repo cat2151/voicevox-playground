@@ -444,11 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (favoritesToggleButton && favoritesPanel) {
     favoritesToggleButton.addEventListener('click', () => {
       const isHidden = favoritesPanel.hasAttribute('hidden');
-      if (isHidden) {
-        favoritesPanel.removeAttribute('hidden');
-      } else {
-        favoritesPanel.setAttribute('hidden', 'true');
-      }
+      favoritesPanel.hidden = !isHidden;
       favoritesToggleButton.setAttribute('aria-expanded', String(isHidden));
     });
   }
