@@ -303,7 +303,7 @@ function loadIntonationFavorites() {
         parsed.map((item) => {
           if (!item || typeof item !== 'object') return null;
           const { text, styleId, query } = item as Partial<IntonationFavorite>;
-          if (typeof text !== 'string' || typeof styleId !== 'number' || !query) return null;
+          if (typeof text !== 'string' || typeof styleId !== 'number' || !isValidAudioQueryShape(query)) return null;
           return { text: text.trim(), styleId, query } as IntonationFavorite;
         }).filter((item): item is IntonationFavorite => item !== null)
       );
@@ -453,6 +453,14 @@ function initializeTextLists() {
   renderIntonationFavoritesList();
 }
 
+function isValidAudioQueryShape(query: unknown): query is AudioQuery {
+  return (
+    query !== null &&
+    typeof query === 'object' &&
+    Array.isArray((query as { accent_phrases?: unknown }).accent_phrases)
+  );
+}
+
 function cloneAudioQuery(query: AudioQuery): AudioQuery {
   return JSON.parse(JSON.stringify(query)) as AudioQuery;
 }
@@ -465,6 +473,16 @@ function removeIntonationFavorite(index: number) {
 }
 
 function applyIntonationFavorite(item: IntonationFavorite) {
+  if (!isValidAudioQueryShape(item.query)) {
+    showStatus('保存したイントネーションデータが破損しています。削除しました。', 'error');
+    const idx = intonationFavorites.findIndex(
+      (fav) => fav.text === item.text && fav.styleId === item.styleId
+    );
+    if (idx !== -1) {
+      removeIntonationFavorite(idx);
+    }
+    return;
+  }
   const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
   const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
   if (textArea) {
@@ -1427,7 +1445,8 @@ function renderIntonationLabels(points: IntonationPoint[]) {
     }
     const keySpan = labelEl.querySelector('.intonation-label__key') as HTMLSpanElement;
     const textSpan = labelEl.querySelector('.intonation-label__text') as HTMLSpanElement;
-    const shortcut = intonationKeyboardEnabled ? String.fromCharCode(65 + index) : '';
+    const shortcut =
+      intonationKeyboardEnabled && index < 26 ? String.fromCharCode(65 + index) : '';
     if (keySpan) {
       keySpan.textContent = shortcut;
       keySpan.style.display = shortcut ? 'inline-block' : 'none';
@@ -2070,12 +2089,24 @@ async function confirmResetIntonationBeforePlay() {
   const resetButton = document.getElementById('playConfirmReset');
   const cancelButton = document.getElementById('playConfirmCancel');
   if (!dialog || !resetButton || !cancelButton) {
-    return true;
+    return window.confirm('イントネーションの編集内容が破棄されます。再生してよろしいですか？');
   }
+  const previousActiveElement = document.activeElement as HTMLElement | null;
   dialog.removeAttribute('hidden');
+  let settled = false;
+  let keydownHandler: ((event: KeyboardEvent) => void) | null = null;
   const cleanup = () => {
+    if (settled) return;
+    settled = true;
     dialog.setAttribute('hidden', 'true');
+    if (keydownHandler) {
+      dialog.removeEventListener('keydown', keydownHandler);
+    }
+    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+      previousActiveElement.focus();
+    }
   };
+  (resetButton as HTMLElement).focus();
   return new Promise<boolean>((resolve) => {
     const handleReset = () => {
       cleanup();
@@ -2085,6 +2116,13 @@ async function confirmResetIntonationBeforePlay() {
       cleanup();
       resolve(false);
     };
+    keydownHandler = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' || event.key === 'Esc') {
+        event.preventDefault();
+        handleCancel();
+      }
+    };
+    dialog.addEventListener('keydown', keydownHandler);
     resetButton.addEventListener('click', handleReset, { once: true });
     cancelButton.addEventListener('click', handleCancel, { once: true });
   });
@@ -2127,7 +2165,11 @@ async function handlePlay() {
     showStatus('テキストを入力してください', 'error');
     return;
   }
-  
+
+  if (isProcessing) {
+    return;
+  }
+
   if (intonationDirty) {
     const shouldReset = await confirmResetIntonationBeforePlay();
     if (!shouldReset) {
@@ -2136,10 +2178,6 @@ async function handlePlay() {
     resetIntonationState();
   }
   
-  if (isProcessing) {
-    return;
-  }
-
   isProcessing = true;
   playButton.disabled = true;
   updateExportButtonState(exportButton);
