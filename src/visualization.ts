@@ -16,6 +16,13 @@ let realtimeSegmentBuffer: Float32Array | null = null;
 let fftMagnitudeBuffer: Float32Array | null = null;
 let fftHpsBuffer: Float32Array | null = null;
 let activePlaybackStopper: (() => void) | null = null;
+const SPECTROGRAM_COLOR_STOPS = [
+  { stop: 0, color: [0, 0, 0] }, // black
+  { stop: 0.25, color: [0, 64, 192] }, // blue
+  { stop: 0.5, color: [210, 40, 40] }, // red
+  { stop: 0.75, color: [255, 165, 0] }, // orange
+  { stop: 1, color: [255, 255, 255] }, // white
+];
 
 export function getSpectrogramScale() {
   return spectrogramScale;
@@ -119,6 +126,29 @@ function getHannWindow(size: number) {
   return window;
 }
 
+function lerpColor(a: number[], b: number[], t: number) {
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * t),
+    Math.round(a[1] + (b[1] - a[1]) * t),
+    Math.round(a[2] + (b[2] - a[2]) * t),
+  ];
+}
+
+function mapIntensityToSpectrogramColor(intensity: number) {
+  const clamped = Math.max(0, Math.min(1, intensity));
+  for (let i = 0; i < SPECTROGRAM_COLOR_STOPS.length - 1; i++) {
+    const current = SPECTROGRAM_COLOR_STOPS[i];
+    const next = SPECTROGRAM_COLOR_STOPS[i + 1];
+    if (clamped >= current.stop && clamped <= next.stop) {
+      const localT = (clamped - current.stop) / Math.max(next.stop - current.stop, 1e-6);
+      const [r, g, b] = lerpColor(current.color, next.color, localT);
+      return `rgb(${r},${g},${b})`;
+    }
+  }
+  const [r, g, b] = SPECTROGRAM_COLOR_STOPS[SPECTROGRAM_COLOR_STOPS.length - 1].color;
+  return `rgb(${r},${g},${b})`;
+}
+
 function estimateFrequencySeries(
   channelData: Float32Array,
   sampleRate: number,
@@ -190,8 +220,47 @@ export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElem
 
   const channelData = buffer.getChannelData(0);
   const totalSamples = channelData.length;
+  let maxAbs = 0;
+  for (let i = 0; i < totalSamples; i++) {
+    const abs = Math.abs(channelData[i]);
+    if (abs > maxAbs) {
+      maxAbs = abs;
+    }
+  }
   const samplesPerPixel = Math.max(1, Math.floor(totalSamples / width));
-  const halfHeight = (height * WAVEFORM_TARGET_RATIO) / 2;
+  const baseHalfHeight = (height * WAVEFORM_TARGET_RATIO) / 2;
+  const amplitudeScale = baseHalfHeight / Math.max(maxAbs, 1e-4);
+  const centerY = height / 2;
+
+  ctx.save();
+  ctx.strokeStyle = getColorVariable('--grid-color', 'rgba(0,0,0,0.08)');
+  ctx.fillStyle = getColorVariable('--axis-label', '#666666');
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const labelMetrics = ctx.measureText('-00 dB');
+  const labelHeight = (labelMetrics.actualBoundingBoxAscent ?? 0) + (labelMetrics.actualBoundingBoxDescent ?? 0);
+  const minLabelGap = Math.max(11, Math.ceil(labelHeight || 0)) + 2;
+  let lastLabelY: number | null = null;
+  for (let db = 0; db >= -60; db -= 6) {
+    const amplitudeRatio = 10 ** (db / 20);
+    const offset = amplitudeRatio * baseHalfHeight;
+    if (offset > height) break;
+    const positions = [centerY - offset, centerY + offset];
+    const label = `${db} dB`;
+    for (const y of positions) {
+      if (y < 0 || y > height) continue;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+      if (lastLabelY === null || Math.abs(y - lastLabelY) >= minLabelGap) {
+        ctx.fillText(label, 6, y);
+        lastLabelY = y;
+      }
+    }
+  }
+  ctx.restore();
 
   ctx.strokeStyle = getColorVariable('--primary-color', '#4CAF50');
   ctx.beginPath();
@@ -205,19 +274,30 @@ export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElem
       if (value < min) min = value;
       if (value > max) max = value;
     }
-    const yMin = height / 2 - min * halfHeight;
-    const yMax = height / 2 - max * halfHeight;
+    const yMin = centerY - min * amplitudeScale;
+    const yMax = centerY - max * amplitudeScale;
     ctx.moveTo(x, yMin);
     ctx.lineTo(x, yMax);
   }
   ctx.stroke();
 
   const frequencies = estimateFrequencySeries(channelData, buffer.sampleRate, width / 6);
-  ctx.fillStyle = getColorVariable('--highlight-color', '#ff9800');
-  for (const freq of frequencies) {
-    const x = (freq.time / buffer.duration) * width;
-    const y = height - (Math.log10(freq.freq + 1) / Math.log10(buffer.sampleRate / 2 + 1)) * height;
-    ctx.fillRect(x - 1, y - 1, 2, 2);
+  if (frequencies.length > 0) {
+    const highlightColor = getColorVariable('--highlight-color', '#ff9800');
+    ctx.strokeStyle = highlightColor;
+    ctx.fillStyle = highlightColor;
+    ctx.beginPath();
+    frequencies.forEach((freq, index) => {
+      const x = (freq.time / buffer.duration) * width;
+      const y = height - (Math.log10(freq.freq + 1) / Math.log10(buffer.sampleRate / 2 + 1)) * height;
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+      ctx.fillRect(x - 1, y - 1, 2, 2);
+    });
+    ctx.stroke();
   }
 
   ctx.strokeStyle = getColorVariable('--grid-color', 'rgba(0,0,0,0.1)');
@@ -281,8 +361,16 @@ function drawRealtimeWaveform(
   const segmentLength = Math.max(1, Math.min(targetSamples, windowSize));
 
   const segment = extractAlignedRealtimeSegment(windowed, segmentLength);
+  let segmentMaxAbs = 0;
+  for (let i = 0; i < segment.length; i++) {
+    const abs = Math.abs(segment[i]);
+    if (abs > segmentMaxAbs) {
+      segmentMaxAbs = abs;
+    }
+  }
   const samplesPerPixel = Math.max(1, segment.length / width);
-  const halfHeight = (height * WAVEFORM_TARGET_RATIO) / 2;
+  const baseHalfHeight = (height * WAVEFORM_TARGET_RATIO) / 2;
+  const amplitudeScale = baseHalfHeight / Math.max(segmentMaxAbs, 1e-4);
 
   ctx.strokeStyle = getColorVariable('--primary-color', '#4CAF50');
   ctx.beginPath();
@@ -296,8 +384,8 @@ function drawRealtimeWaveform(
       if (value < min) min = value;
       if (value > max) max = value;
     }
-    const yMin = height / 2 - min * halfHeight;
-    const yMax = height / 2 - max * halfHeight;
+    const yMin = height / 2 - min * amplitudeScale;
+    const yMax = height / 2 - max * amplitudeScale;
     ctx.moveTo(x, yMin);
     ctx.lineTo(x, yMax);
   }
@@ -459,16 +547,6 @@ function drawSpectrogram(
   const targetX = cappedTargetX;
   const startX = reset || targetX <= previousX ? 0 : previousX;
 
-  const gradient = ctx.createLinearGradient(0, 0, 0, drawableHeight);
-  const colorStops = [
-    { stop: 0, color: getColorVariable('--spectrogram-high', '#ff2a6d') },
-    { stop: 0.25, color: getColorVariable('--spectrogram-mid-high', '#f8c102') },
-    { stop: 0.5, color: getColorVariable('--spectrogram-mid', '#7fff7f') },
-    { stop: 0.75, color: getColorVariable('--spectrogram-mid-low', '#2a93d5') },
-    { stop: 1, color: getColorVariable('--spectrogram-low', '#3e1bdb') },
-  ];
-  colorStops.forEach(({ stop, color }) => gradient.addColorStop(stop, color));
-
   const resetX = reset ? 0 : startX;
   if (reset) {
     ctx.clearRect(0, 0, width, height);
@@ -480,6 +558,7 @@ function drawSpectrogram(
   const MIN_DB = -100;
   const MAX_DB = 0;
   ctx.save();
+  ctx.globalAlpha = 1;
   for (let x = resetX; x <= targetX; x++) {
     const columnX = leftMargin + x;
     for (let bin = 0; bin < values.length; bin++) {
@@ -510,8 +589,7 @@ function drawSpectrogram(
       const rectY = Math.min(yTop, yBottom);
       const rectHeight = Math.max(1, Math.abs(yBottom - yTop));
 
-      ctx.globalAlpha = intensity;
-      ctx.fillStyle = gradient;
+      ctx.fillStyle = mapIntensityToSpectrogramColor(intensity);
       ctx.fillRect(columnX, rectY, 1, rectHeight);
     }
   }
@@ -685,21 +763,27 @@ export async function playAudio(
     if (fftAnalyser && spectrogramCanvas) {
       const values = fftAnalyser.getValue() as Float32Array;
       currentEstimatedFrequency = estimateFundamentalFrequency(values, sampleRate);
-      spectrogramCeiling = determineSpectrogramCeiling(values, spectrogramCeiling || values.length - 1);
       const needsReset = spectrogramNeedsReset || lastSpectrogramScale !== spectrogramScale;
-      spectrogramX = drawSpectrogram(
-        values,
-        spectrogramCanvas,
-        progress,
-        spectrogramCeiling,
-        spectrogramX,
-        sampleRate,
-        spectrogramScale,
-        needsReset
-      );
-      if (needsReset) {
-        spectrogramNeedsReset = false;
-        lastSpectrogramScale = spectrogramScale;
+      const shouldDrawSpectrogram = shouldResetSpectrogram || needsReset;
+      if (shouldDrawSpectrogram) {
+        spectrogramCeiling = determineSpectrogramCeiling(
+          values,
+          spectrogramCeiling || values.length - 1
+        );
+        spectrogramX = drawSpectrogram(
+          values,
+          spectrogramCanvas,
+          progress,
+          spectrogramCeiling,
+          spectrogramX,
+          sampleRate,
+          spectrogramScale,
+          needsReset
+        );
+        if (needsReset) {
+          spectrogramNeedsReset = false;
+          lastSpectrogramScale = spectrogramScale;
+        }
       }
     }
 

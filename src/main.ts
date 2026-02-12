@@ -431,12 +431,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (usageToggleButton && usagePanel) {
     usageToggleButton.addEventListener('click', () => {
-      const isHidden = usagePanel.hasAttribute('hidden');
-      if (isHidden) {
-        usagePanel.removeAttribute('hidden');
-      } else {
-        usagePanel.setAttribute('hidden', 'true');
-      }
+      const isHidden = usagePanel.hidden;
+      usagePanel.hidden = !isHidden;
       usageToggleButton.setAttribute('aria-expanded', String(isHidden));
     });
   }
@@ -444,11 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (favoritesToggleButton && favoritesPanel) {
     favoritesToggleButton.addEventListener('click', () => {
       const isHidden = favoritesPanel.hasAttribute('hidden');
-      if (isHidden) {
-        favoritesPanel.removeAttribute('hidden');
-      } else {
-        favoritesPanel.setAttribute('hidden', 'true');
-      }
+      favoritesPanel.hidden = !isHidden;
       favoritesToggleButton.setAttribute('aria-expanded', String(isHidden));
     });
   }
