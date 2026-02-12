@@ -1928,7 +1928,7 @@ async function handlePlay() {
     const decodedBuffers: AudioBuffer[] = [];
     let usedCache = false;
     let allSegmentsCached = true;
-    const currentSignature = segments.map((segment) => `${segment.styleId}:${segment.text}`).join('|');
+    const currentSignature = segments.map((segment) => getAudioCacheKey(segment.text, segment.styleId)).join('|');
     for (const segment of segments) {
       const cacheKey = getAudioCacheKey(segment.text, segment.styleId);
       let audioBuffer = audioCache.get(cacheKey) ?? null;
