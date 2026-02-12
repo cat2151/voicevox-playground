@@ -15,6 +15,7 @@ let realtimePreviousSegment: Float32Array | null = null;
 let realtimeSegmentBuffer: Float32Array | null = null;
 let fftMagnitudeBuffer: Float32Array | null = null;
 let fftHpsBuffer: Float32Array | null = null;
+let activePlaybackStopper: (() => void) | null = null;
 
 export function getSpectrogramScale() {
   return spectrogramScale;
@@ -27,6 +28,14 @@ export function setSpectrogramScale(scale: FrequencyScale) {
 
 export function requestSpectrogramReset() {
   spectrogramNeedsReset = true;
+}
+
+export function isPlaybackActive() {
+  return activePlaybackStopper !== null;
+}
+
+export function stopActivePlayback() {
+  activePlaybackStopper?.();
 }
 
 function prepareCanvas(canvas: HTMLCanvasElement) {
@@ -621,7 +630,7 @@ export async function playAudio(
   realtimeCanvas?: HTMLCanvasElement | null,
   spectrogramCanvas?: HTMLCanvasElement | null,
   options?: { resetSpectrogram?: boolean }
-) {
+): Promise<{ stopped: boolean }> {
   await Tone.start();
 
   const player = new Tone.Player(decodedBuffer);
@@ -707,8 +716,9 @@ export async function playAudio(
     render();
   }
 
-  return new Promise<void>((resolve) => {
+  return new Promise<{ stopped: boolean }>((resolve) => {
     let resolved = false;
+    let stoppedByUser = false;
 
     const cleanup = () => {
       if (animationId !== null) {
@@ -720,11 +730,35 @@ export async function playAudio(
       player.dispose();
     };
 
+    const finalize = () => {
+      cleanup();
+      if (activePlaybackStopper === stopPlayback) {
+        activePlaybackStopper = null;
+      }
+    };
+
+    const stopPlayback = () => {
+      if (resolved) return;
+      resolved = true;
+      stoppedByUser = true;
+      if (player.state === 'started') {
+        player.stop();
+      }
+      finalize();
+      resolve({ stopped: stoppedByUser });
+    };
+
+    const previousStopper = activePlaybackStopper;
+    activePlaybackStopper = stopPlayback;
+    if (previousStopper && previousStopper !== stopPlayback) {
+      previousStopper();
+    }
+
     player.onstop = () => {
       if (!resolved) {
         resolved = true;
-        cleanup();
-        resolve();
+        finalize();
+        resolve({ stopped: stoppedByUser });
       }
     };
 
@@ -734,8 +768,8 @@ export async function playAudio(
         if (player.state === 'started') {
           player.stop();
         }
-        cleanup();
-        resolve();
+        finalize();
+        resolve({ stopped: stoppedByUser });
       }
     }, decodedBuffer.duration * 1000 + 100);
   });

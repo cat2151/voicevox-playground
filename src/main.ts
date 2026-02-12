@@ -36,8 +36,10 @@ import {
   drawRenderedWaveform,
   getSpectrogramScale,
   initializeVisualizationCanvases,
+  isPlaybackActive,
   playAudio,
   requestSpectrogramReset,
+  stopActivePlayback,
   setSpectrogramScale,
 } from './visualization';
 
@@ -50,6 +52,34 @@ let favoritesListEl: HTMLUListElement | null = null;
 let historyListEl: HTMLUListElement | null = null;
 let intonationFavoritesListEl: HTMLUListElement | null = null;
 let loopCheckboxEl: HTMLInputElement | null = null;
+let playRequestPending = false;
+let stopInProgress = false;
+
+function setPlayButtonAppearance(mode: 'play' | 'stop') {
+  const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
+  if (!playButton) return;
+  if (mode === 'play') {
+    playButton.innerHTML = '<span aria-hidden="true">▶️</span>';
+    playButton.setAttribute('aria-label', 'Play');
+    playButton.title = 'Play';
+  } else {
+    playButton.innerHTML = '<span aria-hidden="true">⏹️</span>';
+    playButton.setAttribute('aria-label', 'Stop');
+    playButton.title = 'Stop';
+  }
+}
+
+function stopPlaybackAndResetLoop() {
+  stopInProgress = true;
+  stopActivePlayback();
+  if (loopCheckboxEl) {
+    loopCheckboxEl.checked = false;
+  }
+  setPlayButtonAppearance('play');
+  setTimeout(() => {
+    stopInProgress = false;
+  }, 0);
+}
 
 function getStyleLabel(style: VoiceStyleOption) {
   return `${style.speakerName} - ${style.name} (ID: ${style.id})`;
@@ -310,6 +340,20 @@ async function confirmResetIntonationBeforePlay() {
   });
 }
 
+function handlePlayButtonClick() {
+  if (stopInProgress || playRequestPending) {
+    return;
+  }
+  if (isPlaybackActive()) {
+    stopPlaybackAndResetLoop();
+    return;
+  }
+  if (appState.isProcessing) {
+    return;
+  }
+  void handlePlay();
+}
+
 async function handlePlay() {
   const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
   const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
@@ -347,7 +391,7 @@ async function handlePlay() {
     return;
   }
 
-  if (appState.isProcessing) {
+  if (appState.isProcessing || playRequestPending) {
     return;
   }
 
@@ -359,6 +403,7 @@ async function handlePlay() {
     resetIntonationState();
   }
 
+  playRequestPending = true;
   appState.isProcessing = true;
   playButton.disabled = true;
   updateExportButtonState(exportButton);
@@ -410,9 +455,16 @@ async function handlePlay() {
     } else {
       showStatus('音声を再生中（キャッシュ）...', 'info');
     }
-    await playAudio(combinedBuffer, realtimeCanvas, spectrogramCanvas, {
+    setPlayButtonAppearance('stop');
+    playButton.disabled = false;
+    const playbackResult = await playAudio(combinedBuffer, realtimeCanvas, spectrogramCanvas, {
       resetSpectrogram: !shouldPreserveSpectrogram,
     });
+    if (playbackResult.stopped) {
+      showStatus('再生を停止しました', 'info');
+      scheduleHideStatus(1500);
+      return;
+    }
     appState.lastSpectrogramSignature = currentSignature;
     const spokenText = segments.map((segment) => segment.text).join('');
     const intonationStyleId = segments[0]?.styleId ?? selectedStyleId;
@@ -436,7 +488,9 @@ async function handlePlay() {
       'error'
     );
   } finally {
+    setPlayButtonAppearance('play');
     playButton.disabled = false;
+    playRequestPending = false;
     appState.isProcessing = false;
     updateExportButtonState(exportButton);
   }
@@ -469,12 +523,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const intonationFavoriteButton = document.getElementById('intonationFavoriteButton') as HTMLButtonElement | null;
   loopCheckboxEl = document.getElementById('loopCheckbox') as HTMLInputElement | null;
 
+  if (loopCheckboxEl) {
+    loopCheckboxEl.addEventListener('change', () => {
+      if (
+        loopCheckboxEl?.checked &&
+        !appState.isProcessing &&
+        !isPlaybackActive() &&
+        !playRequestPending
+      ) {
+        void handlePlay();
+      }
+    });
+  }
+
   setStyleChangeHandler((styleId) => {
     selectedStyleId = styleId;
   });
 
   if (playButton) {
-    playButton.addEventListener('click', handlePlay);
+    playButton.addEventListener('click', handlePlayButtonClick);
+    setPlayButtonAppearance('play');
     playButton.focus();
   }
 
