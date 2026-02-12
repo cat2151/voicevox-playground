@@ -136,6 +136,9 @@ let spectrogramScale: FrequencyScale = 'linear';
 let spectrogramNeedsReset = false;
 let lastSpectrogramScale: FrequencyScale = 'linear';
 let realtimePreviousSegment: Float32Array | null = null;
+let realtimeSegmentBuffer: Float32Array | null = null;
+let fftMagnitudeBuffer: Float32Array | null = null;
+let fftHpsBuffer: Float32Array | null = null;
 let currentIntonationQuery: AudioQuery | null = null;
 let intonationPoints: IntonationPoint[] = [];
 let intonationPointPositions: Array<{ x: number; y: number }> = [];
@@ -880,43 +883,89 @@ function estimateFundamentalFrequency(values: Float32Array, sampleRate: number) 
   if (values.length === 0 || sampleRate <= 0) {
     return null;
   }
-  let maxIndex = 1;
-  let maxMagnitude = -Infinity;
+  const binWidth = (sampleRate / 2) / Math.max(values.length - 1, 1);
+  fftMagnitudeBuffer =
+    fftMagnitudeBuffer && fftMagnitudeBuffer.length === values.length
+      ? fftMagnitudeBuffer
+      : new Float32Array(values.length);
+  fftHpsBuffer =
+    fftHpsBuffer && fftHpsBuffer.length === values.length
+      ? fftHpsBuffer
+      : new Float32Array(values.length);
+
+  let peakLinear = 0;
   for (let i = 1; i < values.length; i++) {
-    const magnitude = Number.isFinite(values[i]) ? values[i] : -120;
-    if (magnitude > maxMagnitude) {
-      maxMagnitude = magnitude;
-      maxIndex = i;
+    const db = Number.isFinite(values[i]) ? values[i] : -120;
+    const linear = Math.pow(10, db / 20);
+    fftMagnitudeBuffer[i] = linear;
+    if (linear > peakLinear) {
+      peakLinear = linear;
     }
   }
-  const binWidth = (sampleRate / 2) / Math.max(values.length - 1, 1);
-  const frequency = maxIndex * binWidth;
+  if (peakLinear <= 0) {
+    return null;
+  }
+
+  fftHpsBuffer.fill(0);
+  for (let i = 1; i < values.length; i++) {
+    fftHpsBuffer[i] = fftMagnitudeBuffer[i];
+  }
+  const maxHarmonic = 4;
+  for (let harmonic = 2; harmonic <= maxHarmonic; harmonic++) {
+    for (let bin = 1; bin * harmonic < values.length; bin++) {
+      fftHpsBuffer[bin] *= fftMagnitudeBuffer[bin * harmonic];
+    }
+  }
+
+  let bestBin = 1;
+  let bestScore = -Infinity;
+  for (let bin = 1; bin < values.length; bin++) {
+    if (fftMagnitudeBuffer[bin] < peakLinear * 0.1) continue;
+    const score = fftHpsBuffer[bin];
+    if (score > bestScore) {
+      bestScore = score;
+      bestBin = bin;
+    }
+  }
+
+  const frequency = bestScore > 0 ? bestBin * binWidth : 0;
   return Number.isFinite(frequency) && frequency > 0 ? frequency : null;
+}
+
+function computeSegmentStats(buffer: Float32Array, offset: number, length: number) {
+  let sum = 0;
+  for (let i = 0; i < length; i++) {
+    sum += buffer[offset + i];
+  }
+  const mean = sum / length;
+  let power = 0;
+  for (let i = 0; i < length; i++) {
+    const centered = buffer[offset + i] - mean;
+    power += centered * centered;
+  }
+  return { mean, power };
 }
 
 function computeSegmentCorrelation(
   template: Float32Array,
+  templateMean: number,
+  templatePower: number,
   target: Float32Array,
   offset: number,
   length: number
 ) {
-  let templateSum = 0;
   let targetSum = 0;
   for (let i = 0; i < length; i++) {
-    templateSum += template[i];
     targetSum += target[offset + i];
   }
-  const templateMean = templateSum / length;
   const targetMean = targetSum / length;
 
   let numerator = 0;
-  let templatePower = 0;
   let targetPower = 0;
   for (let i = 0; i < length; i++) {
     const templateCentered = template[i] - templateMean;
     const targetCentered = target[offset + i] - targetMean;
     numerator += templateCentered * targetCentered;
-    templatePower += templateCentered * templateCentered;
     targetPower += targetCentered * targetCentered;
   }
   const denominator = Math.sqrt(templatePower * targetPower);
@@ -940,14 +989,27 @@ function extractAlignedRealtimeSegment(
     return values;
   }
 
-  if (!realtimePreviousSegment || realtimePreviousSegment.length !== segmentLength) {
+  const workingSegment =
+    realtimeSegmentBuffer && realtimeSegmentBuffer.length === segmentLength
+      ? realtimeSegmentBuffer
+      : new Float32Array(segmentLength);
+  realtimeSegmentBuffer = workingSegment;
+  const previousSegment =
+    realtimePreviousSegment && realtimePreviousSegment.length === segmentLength
+      ? realtimePreviousSegment
+      : new Float32Array(segmentLength);
+  const previousWasNew = realtimePreviousSegment !== previousSegment;
+  realtimePreviousSegment = previousSegment;
+
+  if (previousWasNew) {
     const start = Math.max(0, values.length - segmentLength);
-    const freshSegment = values.slice(start, start + segmentLength);
-    realtimePreviousSegment = freshSegment;
-    return freshSegment;
+    workingSegment.set(values.subarray(start, start + segmentLength));
+    realtimePreviousSegment.set(workingSegment);
+    return workingSegment;
   }
 
   const slideStep = Math.max(1, Math.floor(segmentLength / Math.max(displayWidth, 1)));
+  const stride = Math.max(1, slideStep * 2);
   const searchSpan = Math.min(segmentLength, values.length - segmentLength);
   const baseStart = Math.max(0, values.length - segmentLength);
   const minOffset = Math.max(0, baseStart - Math.floor(searchSpan / 2));
@@ -955,17 +1017,25 @@ function extractAlignedRealtimeSegment(
 
   let bestOffset = baseStart;
   let bestScore = -Infinity;
-  for (let offset = minOffset; offset <= maxOffset; offset += slideStep) {
-    const score = computeSegmentCorrelation(realtimePreviousSegment, values, offset, segmentLength);
+  const templateStats = computeSegmentStats(realtimePreviousSegment, 0, segmentLength);
+  for (let offset = minOffset; offset <= maxOffset; offset += stride) {
+    const score = computeSegmentCorrelation(
+      realtimePreviousSegment,
+      templateStats.mean,
+      templateStats.power,
+      values,
+      offset,
+      segmentLength
+    );
     if (score > bestScore) {
       bestScore = score;
       bestOffset = offset;
     }
   }
 
-  const alignedSegment = values.slice(bestOffset, bestOffset + segmentLength);
-  realtimePreviousSegment = alignedSegment;
-  return alignedSegment;
+  workingSegment.set(values.subarray(bestOffset, bestOffset + segmentLength));
+  realtimePreviousSegment.set(workingSegment);
+  return workingSegment;
 }
 
 function drawSpectrogram(
