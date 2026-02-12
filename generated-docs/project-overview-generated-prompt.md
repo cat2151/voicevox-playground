@@ -1,4 +1,4 @@
-Last updated: 2026-02-12
+Last updated: 2026-02-13
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -158,7 +158,6 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
 📁 generated-docs/
 🌐 index.html
 📁 issue-notes/
-  📖 18.md
   📖 22.md
   📖 23.md
   📖 24.md
@@ -166,42 +165,98 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
   📖 26.md
   📖 27.md
   📖 30.md
+  📖 44.md
+  📖 45.md
+  📖 50.md
+  📖 51.md
+  📖 54.md
+  📖 56.md
 📊 package-lock.json
 📊 package.json
 📁 src/
+  📘 audio.ts
+  📘 config.ts
+  📘 intonation.ts
   📘 main.ts
+  📘 state.ts
+  📘 status.ts
+  📘 styleManager.ts
+  📘 textLists.ts
+  📘 uiControls.ts
+  📘 visualization.ts
 📊 tsconfig.json
 📘 vite.config.ts
 
 ## ファイル詳細分析
-**index.html** (402行, 12495バイト)
+**index.html** (655行, 20037バイト)
   - 関数: なし
   - インポート: なし
 
-**src/main.ts** (1458行, 48638バイト)
-  - 関数: showStatus, hideStatus, invalidateColorVariableCache, getColorVariable, prepareCanvas, fftRadix2, getHannWindow, estimateFrequencySeries, drawRenderedWaveform, drawRealtimeWaveform, determineSpectrogramCeiling, drawSpectrogram, initializeVisualizationCanvases, updateIntonationTiming, initializeIntonationCanvas, buildIntonationPointsFromQuery, renderIntonationLabels, drawIntonationChart, adjustIntonationScale, pitchFromY, findNearestIntonationPoint, applyPitchToQuery, scheduleIntonationPlayback, playUpdatedIntonation, fetchAndRenderIntonation, handleIntonationPointerDown, handleIntonationPointerMove, handleIntonationPointerUp, handleIntonationKeyDown, updateExportButtonState, downloadLastAudio, scheduleAutoPlay, getAudioQuery, synthesize, playAudio, handlePlay, drawTick, yToBin, triggerPlay, render, cleanup, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, for, catch
-  - インポート: tone
+**src/audio.ts** (125行, 4172バイト)
+  - 関数: getAudioQuery, synthesize, combineAudioBuffers, encodeAudioBufferToWav, writeString, clamp, if, catch, for
+  - インポート: ./config
+
+**src/config.ts** (82行, 2016バイト)
+  - 関数: なし
+  - インポート: なし
+
+**src/intonation.ts** (727行, 24480バイト)
+  - 関数: isValidAudioQueryShape, cloneAudioQuery, dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, updateIntonationTiming, disableLoopOnIntonationEdit, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, initializeIntonationCanvas, buildIntonationPointsFromQuery, renderIntonationLabels, drawIntonationChart, adjustIntonationScale, pitchFromY, findNearestIntonationPoint, applyPitchToQuery, scheduleIntonationPlayback, playUpdatedIntonation, fetchAndRenderIntonation, handleIntonationPointerDown, handleIntonationPointerMove, handleIntonationPointerUp, handleIntonationKeyDown, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, for, catch, if
+  - インポート: tone, ./audio, ./status
+
+**src/main.ts** (557行, 19248バイト)
+  - 関数: setPlayButtonAppearance, stopPlaybackAndResetLoop, getAudioCacheKey, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, confirmResetIntonationBeforePlay, handlePlayButtonClick, handlePlay, triggerPlay, cleanup, handleReset, handleCancel, saveDelimiter, scheduleSaveDelimiter, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, for, catch
+  - インポート: tone, ./config, ./textLists
+
+**src/state.ts** (6行, 156バイト)
+  - 関数: なし
+  - インポート: なし
+
+**src/status.ts** (63行, 1896バイト)
+  - 関数: showStatus, hideStatus, scheduleHideStatus, invalidateColorVariableCache, getColorVariable, if
+  - インポート: なし
+
+**src/styleManager.ts** (177行, 5351バイト)
+  - 関数: getSelectedStyleId, setSelectedStyleId, getStyleLabel, getStyleById, resolveStyleMarker, parseDelimiterConfig, addSegment, buildTextSegments, populateStyleSelect, fetchVoiceStyles, if, while, catch
+  - インポート: なし
+
+**src/textLists.ts** (136行, 4254バイト)
+  - 関数: loadStoredList, persistList, persistLists, dedupeAndLimit, renderList, renderTextLists, moveToFavorites, moveToHistory, addToHistory, initializeTextLists, catch, for, if
+  - インポート: ./config
+
+**src/uiControls.ts** (8行, 234バイト)
+  - 関数: updateExportButtonState, if
+  - インポート: ./state
+
+**src/visualization.ts** (777行, 25197バイト)
+  - 関数: getSpectrogramScale, setSpectrogramScale, requestSpectrogramReset, isPlaybackActive, stopActivePlayback, prepareCanvas, fftRadix2, getHannWindow, estimateFrequencySeries, drawRenderedWaveform, drawRealtimeWaveform, determineSpectrogramCeiling, estimateFundamentalFrequency, computeSegmentStats, computeSegmentCorrelation, extractAlignedRealtimeSegment, drawSpectrogram, initializeVisualizationCanvases, playAudio, updateProgressLines, clearProgressLines, render, cleanup, finalize, stopPlayback, if, for
+  - インポート: tone, ./status
 
 **vite.config.ts** (9行, 137バイト)
   - 関数: なし
   - インポート: vite
 
 ## 関数呼び出し階層
-- triggerPlay (src/main.ts)
-  - showStatus (src/main.ts)
-    - hideStatus ()
-      - invalidateColorVariableCache ()
-      - getColorVariable ()
-      - prepareCanvas ()
-      - fftRadix2 ()
-      - getHannWindow ()
-      - estimateFrequencySeries ()
-      - drawRenderedWaveform ()
-      - drawRealtimeWaveform ()
-      - determineSpectrogramCeiling ()
-      - drawSpectrogram ()
-      - initializeVisualizationCanvases ()
+- if (src/audio.ts)
+  - getAudioQuery (src/audio.ts)
+    - synthesize ()
+      - combineAudioBuffers ()
+      - encodeAudioBufferToWav ()
+      - writeString ()
+      - clamp ()
+  - isValidAudioQueryShape (src/intonation.ts)
+    - cloneAudioQuery ()
+      - dedupeIntonationFavorites ()
+      - loadIntonationFavorites ()
+      - persistIntonationFavorites ()
       - updateIntonationTiming ()
+      - disableLoopOnIntonationEdit ()
+      - resetIntonationState ()
+      - setStyleChangeHandler ()
+      - initializeIntonationElements ()
+      - isIntonationDirty ()
+      - setIntonationKeyboardEnabled ()
+      - getIntonationKeyboardEnabled ()
       - initializeIntonationCanvas ()
       - buildIntonationPointsFromQuery ()
       - renderIntonationLabels ()
@@ -217,29 +272,87 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
       - handleIntonationPointerMove ()
       - handleIntonationPointerUp ()
       - handleIntonationKeyDown ()
+      - renderIntonationFavoritesList ()
+      - removeIntonationFavorite ()
+      - applyIntonationFavorite ()
+      - saveCurrentIntonationFavorite ()
+      - refreshIntonationChart ()
+      - showStatus ()
+      - scheduleHideStatus ()
+      - getColorVariable ()
       - updateExportButtonState ()
+      - drawRenderedWaveform ()
+      - initializeVisualizationCanvases ()
+      - playAudio ()
+  - setPlayButtonAppearance (src/main.ts)
+    - stopPlaybackAndResetLoop ()
+      - getAudioCacheKey ()
+      - setTextAndPlay ()
       - downloadLastAudio ()
       - scheduleAutoPlay ()
-      - getAudioQuery ()
-      - synthesize ()
-      - playAudio ()
+      - confirmResetIntonationBeforePlay ()
+      - handlePlayButtonClick ()
       - handlePlay ()
-      - drawTick ()
-      - yToBin ()
-      - render ()
       - cleanup ()
+      - handleCancel ()
       - updateSpectrogramScaleLabel ()
       - updateIntonationKeyboardToggle ()
-- if (src/main.ts)
-- for (src/main.ts)
-- catch (src/main.ts)
+      - getSelectedStyleId ()
+      - setSelectedStyleId ()
+      - parseDelimiterConfig ()
+      - buildTextSegments ()
+      - populateStyleSelect ()
+      - fetchVoiceStyles ()
+      - addToHistory ()
+      - initializeTextLists ()
+      - getSpectrogramScale ()
+      - setSpectrogramScale ()
+      - requestSpectrogramReset ()
+      - isPlaybackActive ()
+      - stopActivePlayback ()
+  - hideStatus ()
+    - invalidateColorVariableCache ()
+  - getStyleLabel ()
+    - getStyleById ()
+      - resolveStyleMarker ()
+      - addSegment ()
+  - loadStoredList (src/textLists.ts)
+    - persistList ()
+      - persistLists ()
+      - dedupeAndLimit ()
+      - renderList ()
+      - renderTextLists ()
+      - moveToFavorites ()
+      - moveToHistory ()
+  - prepareCanvas ()
+    - fftRadix2 ()
+      - getHannWindow ()
+      - estimateFrequencySeries ()
+      - drawRealtimeWaveform ()
+      - determineSpectrogramCeiling ()
+      - estimateFundamentalFrequency ()
+      - computeSegmentStats ()
+      - computeSegmentCorrelation ()
+      - extractAlignedRealtimeSegment ()
+      - drawSpectrogram ()
+      - updateProgressLines ()
+      - clearProgressLines ()
+      - render ()
+      - finalize ()
+- catch (src/audio.ts)
+- for (src/audio.ts)
+- triggerPlay (src/main.ts)
+- handleReset (src/main.ts)
+- saveDelimiter (src/main.ts)
+- scheduleSaveDelimiter (src/main.ts)
+- while (src/styleManager.ts)
+- stopPlayback (src/visualization.ts)
 
 
 ## プロジェクト構造（ファイル一覧）
 README.ja.md
 README.md
 index.html
-issue-notes/18.md
 issue-notes/22.md
 issue-notes/23.md
 issue-notes/24.md
@@ -247,9 +360,24 @@ issue-notes/25.md
 issue-notes/26.md
 issue-notes/27.md
 issue-notes/30.md
+issue-notes/44.md
+issue-notes/45.md
+issue-notes/50.md
+issue-notes/51.md
+issue-notes/54.md
+issue-notes/56.md
 package-lock.json
 package.json
+src/audio.ts
+src/config.ts
+src/intonation.ts
 src/main.ts
+src/state.ts
+src/status.ts
+src/styleManager.ts
+src/textLists.ts
+src/uiControls.ts
+src/visualization.ts
 tsconfig.json
 vite.config.ts
 
@@ -263,4 +391,4 @@ vite.config.ts
 
 
 ---
-Generated at: 2026-02-12 07:05:14 JST
+Generated at: 2026-02-13 07:05:12 JST
