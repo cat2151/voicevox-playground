@@ -227,18 +227,24 @@ function renderIntonationLabels(points: IntonationPoint[]) {
   if (!labelsEl) return;
   labelsEl.textContent = '';
   const width = intonationChartRange?.width ?? 1;
+  labelsEl.style.width = `${width}px`;
+  labelsEl.style.marginLeft = 'auto';
   points.forEach((point, index) => {
     const pos = intonationPointPositions[index];
     const span = document.createElement('span');
     span.classList.add('intonation-label');
-    if (point.label && point.label.length === 1) {
-      span.classList.add('intonation-label__key');
-    }
     if (pos) {
       const clamped = Math.min(1, Math.max(0, pos.x / Math.max(width, 1)));
       span.style.left = `${clamped * 100}%`;
     }
-    span.textContent = point.label;
+    const keySpan = document.createElement('span');
+    keySpan.classList.add('intonation-label__key');
+    keySpan.textContent = String.fromCharCode('a'.charCodeAt(0) + (index % 26));
+    span.appendChild(keySpan);
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = point.label;
+    span.appendChild(textSpan);
     labelsEl.appendChild(span);
   });
 }
@@ -269,31 +275,23 @@ export function drawIntonationChart(points: IntonationPoint[]) {
     if (pitch > max) max = pitch;
   }
 
-  const topPadding = Math.max(1, (max - min) * (intonationTopScale - 1));
-  const bottomPadding = Math.max(1, (max - min) * (intonationBottomScale - 1));
-  const rangeMin = Math.floor(min - bottomPadding);
-  const rangeMax = Math.ceil(max + topPadding);
-  const rangeSpan = Math.max(rangeMax - rangeMin, 1);
+  const span = Math.max(max - min, 0);
+  const basePadding = span === 0 ? 0.1 : span * 0.1;
+  const topPadding = basePadding * intonationTopScale;
+  const bottomPadding = basePadding * intonationBottomScale;
+  const rangeMin = min - bottomPadding;
+  const rangeMax = max + topPadding;
+  const rangeSpan = Math.max(rangeMax - rangeMin, 0.0001);
 
   if (intonationChartRange) {
     intonationChartRange.min = rangeMin;
     intonationChartRange.max = rangeMax;
   }
-  if (intonationMaxValueEl) intonationMaxValueEl.textContent = `${Math.round(rangeMax)}`;
-  if (intonationMinValueEl) intonationMinValueEl.textContent = `${Math.round(rangeMin)}`;
+  if (intonationMaxValueEl) intonationMaxValueEl.textContent = `${rangeMax.toFixed(1)}`;
+  if (intonationMinValueEl) intonationMinValueEl.textContent = `${rangeMin.toFixed(1)}`;
 
   ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
   ctx.fillRect(0, 0, width, height);
-
-  ctx.strokeStyle = getColorVariable('--canvas-grid', '#e0e0e0');
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let i = 0; i <= 5; i += 1) {
-    const y = margin + (innerHeight * i) / 5;
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-  }
-  ctx.stroke();
 
   const pointSpacing = Math.max(1, (width - margin * 2) / Math.max(points.length - 1, 1));
   intonationPointPositions = points.map((point, index) => {
@@ -302,6 +300,19 @@ export function drawIntonationChart(points: IntonationPoint[]) {
     const y = height - margin - normalized * innerHeight;
     return { x, y };
   });
+
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.25;
+  intonationPointPositions.forEach((pos, index) => {
+    const color = MONOKAI_COLORS[index % MONOKAI_COLORS.length];
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, pos.y);
+    ctx.lineTo(width, pos.y);
+    ctx.stroke();
+  });
+  ctx.restore();
 
   ctx.strokeStyle = getColorVariable('--accent-color', '#4CAF50');
   ctx.lineWidth = 2;
@@ -336,9 +347,9 @@ export function drawIntonationChart(points: IntonationPoint[]) {
 
 export function adjustIntonationScale(direction: 'top' | 'bottom', factor: number) {
   if (direction === 'top') {
-    intonationTopScale = Math.max(1, intonationTopScale * factor);
+    intonationTopScale = Math.max(0.05, intonationTopScale * factor);
   } else {
-    intonationBottomScale = Math.max(1, intonationBottomScale * factor);
+    intonationBottomScale = Math.max(0.05, intonationBottomScale * factor);
   }
   drawIntonationChart(intonationPoints);
 }
@@ -569,6 +580,17 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
         cancelable: true,
       });
       intonationCanvas.dispatchEvent(syntheticEvent);
+      event.preventDefault();
+    }
+    return;
+  }
+  const letterIndex =
+    event.key.length === 1 ? event.key.toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0) : -1;
+  if (letterIndex >= 0 && letterIndex < 26) {
+    const targetIndex = intonationPoints.findIndex((_, idx) => idx % 26 === letterIndex);
+    if (targetIndex !== -1) {
+      intonationSelectedIndex = targetIndex;
+      drawIntonationChart(intonationPoints);
       event.preventDefault();
     }
     return;

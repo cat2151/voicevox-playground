@@ -213,7 +213,7 @@ export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElem
   ctx.stroke();
 
   const frequencies = estimateFrequencySeries(channelData, buffer.sampleRate, width / 6);
-  ctx.fillStyle = getColorVariable('--accent-color', '#9C27B0');
+  ctx.fillStyle = getColorVariable('--highlight-color', '#ff9800');
   for (const freq of frequencies) {
     const x = (freq.time / buffer.duration) * width;
     const y = height - (Math.log10(freq.freq + 1) / Math.log10(buffer.sampleRate / 2 + 1)) * height;
@@ -550,7 +550,7 @@ function drawSpectrogram(
   ctx.textBaseline = 'middle';
   const labelMetrics = ctx.measureText('0000Hz');
   const calculatedHeight = (labelMetrics.actualBoundingBoxAscent ?? 0) + (labelMetrics.actualBoundingBoxDescent ?? 0);
-  const labelHeight = Math.max(1, Math.ceil(calculatedHeight || 11));
+  const labelHeight = Math.max(11, Math.ceil(calculatedHeight || 0));
   const minLabelGap = labelHeight + 2;
   let lastLabelY: number | null = null;
   const logMax = Math.log10(Math.max(maxFreq, minLogFreq));
@@ -569,7 +569,7 @@ function drawSpectrogram(
     const y = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
     ctx.beginPath();
     ctx.moveTo(leftMargin - 4, y);
-    ctx.lineTo(width, y);
+    ctx.lineTo(leftMargin + 6, y);
     ctx.stroke();
     const shouldDrawLabel = lastLabelY === null
       || Math.abs(y - lastLabelY) >= minLabelGap
