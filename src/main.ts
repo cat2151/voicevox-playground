@@ -135,6 +135,7 @@ let intonationMinValueEl: HTMLElement | null = null;
 let spectrogramScale: FrequencyScale = 'linear';
 let spectrogramNeedsReset = false;
 let lastSpectrogramScale: FrequencyScale = 'linear';
+let realtimePreviousSegment: Float32Array | null = null;
 let currentIntonationQuery: AudioQuery | null = null;
 let intonationPoints: IntonationPoint[] = [];
 let intonationPointPositions: Array<{ x: number; y: number }> = [];
@@ -797,9 +798,26 @@ function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
   }
 }
 
-function drawRealtimeWaveform(values: Float32Array, canvas: HTMLCanvasElement) {
+function drawRealtimeWaveform(
+  values: Float32Array,
+  canvas: HTMLCanvasElement,
+  sampleRate: number,
+  estimatedFrequency: number | null
+) {
   const { ctx, width, height } = prepareCanvas(canvas);
   if (!ctx) return;
+  const shouldAlign =
+    estimatedFrequency !== null &&
+    Number.isFinite(estimatedFrequency) &&
+    estimatedFrequency > 0 &&
+    sampleRate > 0;
+  const segment = shouldAlign
+    ? extractAlignedRealtimeSegment(values, sampleRate, estimatedFrequency, width)
+    : values;
+  if (!shouldAlign) {
+    realtimePreviousSegment = null;
+  }
+
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
   ctx.fillRect(0, 0, width, height);
@@ -810,8 +828,8 @@ function drawRealtimeWaveform(values: Float32Array, canvas: HTMLCanvasElement) {
   ctx.stroke();
 
   let maxAbs = 0;
-  for (let i = 0; i < values.length; i++) {
-    const v = Math.abs(values[i]);
+  for (let i = 0; i < segment.length; i++) {
+    const v = Math.abs(segment[i]);
     if (Number.isFinite(v) && v > maxAbs) {
       maxAbs = v;
     }
@@ -819,12 +837,12 @@ function drawRealtimeWaveform(values: Float32Array, canvas: HTMLCanvasElement) {
   const amplitudeScale =
     (height * 0.5 * WAVEFORM_TARGET_RATIO) / (maxAbs > 0 ? maxAbs : 1);
 
-  const step = values.length / width;
+  const step = segment.length / width;
   ctx.strokeStyle = getColorVariable('--accent-color', '#4caf50');
   ctx.beginPath();
   for (let x = 0; x < width; x++) {
     const index = Math.floor(x * step);
-    const v = Number.isFinite(values[index]) ? values[index] : 0;
+    const v = Number.isFinite(segment[index]) ? segment[index] : 0;
     const y = height / 2 - v * amplitudeScale;
     if (x === 0) {
       ctx.moveTo(x, y);
@@ -856,6 +874,98 @@ function determineSpectrogramCeiling(values: Float32Array, previousCeiling: numb
     ? Math.max(target, Math.floor(previousCeiling * 0.85))
     : target;
   return Math.min(values.length - 1, Math.max(smoothed, 1));
+}
+
+function estimateFundamentalFrequency(values: Float32Array, sampleRate: number) {
+  if (values.length === 0 || sampleRate <= 0) {
+    return null;
+  }
+  let maxIndex = 1;
+  let maxMagnitude = -Infinity;
+  for (let i = 1; i < values.length; i++) {
+    const magnitude = Number.isFinite(values[i]) ? values[i] : -120;
+    if (magnitude > maxMagnitude) {
+      maxMagnitude = magnitude;
+      maxIndex = i;
+    }
+  }
+  const binWidth = (sampleRate / 2) / Math.max(values.length - 1, 1);
+  const frequency = maxIndex * binWidth;
+  return Number.isFinite(frequency) && frequency > 0 ? frequency : null;
+}
+
+function computeSegmentCorrelation(
+  template: Float32Array,
+  target: Float32Array,
+  offset: number,
+  length: number
+) {
+  let templateSum = 0;
+  let targetSum = 0;
+  for (let i = 0; i < length; i++) {
+    templateSum += template[i];
+    targetSum += target[offset + i];
+  }
+  const templateMean = templateSum / length;
+  const targetMean = targetSum / length;
+
+  let numerator = 0;
+  let templatePower = 0;
+  let targetPower = 0;
+  for (let i = 0; i < length; i++) {
+    const templateCentered = template[i] - templateMean;
+    const targetCentered = target[offset + i] - targetMean;
+    numerator += templateCentered * targetCentered;
+    templatePower += templateCentered * templateCentered;
+    targetPower += targetCentered * targetCentered;
+  }
+  const denominator = Math.sqrt(templatePower * targetPower);
+  if (!Number.isFinite(denominator) || denominator === 0) {
+    return -Infinity;
+  }
+  return numerator / denominator;
+}
+
+function extractAlignedRealtimeSegment(
+  values: Float32Array,
+  sampleRate: number,
+  frequency: number,
+  displayWidth: number
+) {
+  const samplesPerPeriod = sampleRate / Math.max(frequency, 1e-6);
+  const targetLength = Math.max(1, Math.round(samplesPerPeriod * 4));
+  const segmentLength = Math.min(targetLength, values.length);
+  if (segmentLength <= 1) {
+    realtimePreviousSegment = null;
+    return values;
+  }
+
+  if (!realtimePreviousSegment || realtimePreviousSegment.length !== segmentLength) {
+    const start = Math.max(0, values.length - segmentLength);
+    const freshSegment = values.slice(start, start + segmentLength);
+    realtimePreviousSegment = freshSegment;
+    return freshSegment;
+  }
+
+  const slideStep = Math.max(1, Math.floor(segmentLength / Math.max(displayWidth, 1)));
+  const searchSpan = Math.min(segmentLength, values.length - segmentLength);
+  const baseStart = Math.max(0, values.length - segmentLength);
+  const minOffset = Math.max(0, baseStart - Math.floor(searchSpan / 2));
+  const maxOffset = Math.min(values.length - segmentLength, minOffset + searchSpan);
+
+  let bestOffset = baseStart;
+  let bestScore = -Infinity;
+  for (let offset = minOffset; offset <= maxOffset; offset += slideStep) {
+    const score = computeSegmentCorrelation(realtimePreviousSegment, values, offset, segmentLength);
+    if (score > bestScore) {
+      bestScore = score;
+      bestOffset = offset;
+    }
+  }
+
+  const alignedSegment = values.slice(bestOffset, bestOffset + segmentLength);
+  realtimePreviousSegment = alignedSegment;
+  return alignedSegment;
 }
 
 function drawSpectrogram(
@@ -1573,7 +1683,7 @@ async function playAudio(
   await Tone.start();
 
   const player = new Tone.Player(decodedBuffer);
-  const waveformAnalyser = realtimeCanvas ? new Tone.Analyser('waveform', 1024) : null;
+  const waveformAnalyser = realtimeCanvas ? new Tone.Analyser('waveform', 4096) : null;
   const fftAnalyser = spectrogramCanvas ? new Tone.Analyser('fft', 1024) : null;
 
   if (waveformAnalyser) {
@@ -1594,15 +1704,13 @@ async function playAudio(
   const sampleRate = Math.max(decodedBuffer.sampleRate, 1);
   spectrogramNeedsReset = true;
   const startTime = performance.now();
+  realtimePreviousSegment = null;
+  let currentEstimatedFrequency: number | null = null;
 
   const render = () => {
-    if (waveformAnalyser && realtimeCanvas) {
-      const values = waveformAnalyser.getValue() as Float32Array;
-      drawRealtimeWaveform(values, realtimeCanvas);
-    }
-
     if (fftAnalyser && spectrogramCanvas) {
       const values = fftAnalyser.getValue() as Float32Array;
+      currentEstimatedFrequency = estimateFundamentalFrequency(values, sampleRate);
       spectrogramCeiling = determineSpectrogramCeiling(values, spectrogramCeiling || values.length - 1);
       const elapsed = performance.now() - startTime;
       const progress = Math.min(elapsed / playbackDurationMs, 1);
@@ -1621,6 +1729,11 @@ async function playAudio(
         spectrogramNeedsReset = false;
         lastSpectrogramScale = spectrogramScale;
       }
+    }
+
+    if (waveformAnalyser && realtimeCanvas) {
+      const values = waveformAnalyser.getValue() as Float32Array;
+      drawRealtimeWaveform(values, realtimeCanvas, sampleRate, currentEstimatedFrequency);
     }
 
     animationId = requestAnimationFrame(render);
