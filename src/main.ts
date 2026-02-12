@@ -1,15 +1,5 @@
 import * as Tone from 'tone';
-import {
-  AUDIO_CACHE_LIMIT,
-  AUTO_PLAY_DEBOUNCE_MS,
-  DELIMITER_STORAGE_KEY,
-  FrequencyScale,
-  REQUEST_TIMEOUT_MS,
-  VOICEVOX_API_BASE,
-  VoiceStyleOption,
-  VoiceVoxSpeaker,
-  ZUNDAMON_SPEAKER_ID,
-} from './config';
+import { AUDIO_CACHE_LIMIT, AUTO_PLAY_DEBOUNCE_MS, DELIMITER_STORAGE_KEY, FrequencyScale } from './config';
 import { addToHistory, initializeTextLists } from './textLists';
 import {
   adjustIntonationScale,
@@ -33,6 +23,14 @@ import { updateExportButtonState } from './uiControls';
 import { showStatus, scheduleHideStatus } from './status';
 import { combineAudioBuffers, encodeAudioBufferToWav, getAudioQuery, synthesize } from './audio';
 import {
+  buildTextSegments,
+  fetchVoiceStyles,
+  getSelectedStyleId,
+  parseDelimiterConfig,
+  populateStyleSelect,
+  setSelectedStyleId,
+} from './styleManager';
+import {
   drawRenderedWaveform,
   getSpectrogramScale,
   initializeVisualizationCanvases,
@@ -44,8 +42,6 @@ import {
 } from './visualization';
 
 const audioCache = new Map<string, ArrayBuffer>();
-let availableStyles: VoiceStyleOption[] = [];
-let selectedStyleId = ZUNDAMON_SPEAKER_ID;
 let autoPlayTimer: number | null = null;
 let delimiterSaveTimer: number | null = null;
 let favoritesListEl: HTMLUListElement | null = null;
@@ -81,113 +77,8 @@ function stopPlaybackAndResetLoop() {
   }, 0);
 }
 
-function getStyleLabel(style: VoiceStyleOption) {
-  return `${style.speakerName} - ${style.name} (ID: ${style.id})`;
-}
-
-function getStyleById(id: number) {
-  return availableStyles.find((style) => style.id === id) ?? null;
-}
-
-function resolveStyleMarker(marker: string, currentStyleId: number) {
-  const trimmed = marker.trim();
-  if (!trimmed) return null;
-
-  const currentStyle = getStyleById(currentStyleId);
-  const currentSpeaker = currentStyle?.speakerName ?? null;
-
-  const speakerStyles = availableStyles.filter((style) => style.speakerName === trimmed);
-  if (speakerStyles.length > 0) {
-    const normalStyle = speakerStyles.find((style) => style.name === 'ノーマル');
-    return normalStyle ?? speakerStyles[0];
-  }
-
-  if (currentSpeaker) {
-    const sameSpeakerStyle = availableStyles.find(
-      (style) => style.speakerName === currentSpeaker && style.name === trimmed
-    );
-    if (sameSpeakerStyle) return sameSpeakerStyle;
-  }
-
-  if (/^\d+$/.test(trimmed)) {
-    const numericId = Number(trimmed);
-    const byId = getStyleById(numericId);
-    if (byId) return byId;
-  }
-
-  return null;
-}
-
-function parseDelimiterConfig(rawValue: string): { start: string; end: string } | null {
-  const trimmed = rawValue.trim();
-  if (trimmed.length < 2) return null;
-  const parts = trimmed.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return { start: parts[0], end: parts[1] };
-  }
-  return { start: trimmed[0], end: trimmed[trimmed.length - 1] };
-}
-
 function getAudioCacheKey(text: string, styleId: number) {
   return `${styleId}::${text}`;
-}
-
-function addSegment(
-  segments: Array<{ text: string; styleId: number }>,
-  text: string,
-  styleId: number
-) {
-  if (!text) return;
-  const last = segments[segments.length - 1];
-  if (last && last.styleId === styleId) {
-    last.text += text;
-  } else {
-    segments.push({ text, styleId });
-  }
-}
-
-function buildTextSegments(
-  text: string,
-  delimiter: { start: string; end: string } | null,
-  initialStyleId: number
-) {
-  if (!delimiter) {
-    return text ? [{ text, styleId: initialStyleId }] : [];
-  }
-
-  const segments: Array<{ text: string; styleId: number }> = [];
-  let cursor = 0;
-  let currentStyleId = initialStyleId;
-
-  while (cursor < text.length) {
-    const startIndex = text.indexOf(delimiter.start, cursor);
-    if (startIndex === -1) {
-      addSegment(segments, text.slice(cursor), currentStyleId);
-      break;
-    }
-
-    if (startIndex > cursor) {
-      addSegment(segments, text.slice(cursor, startIndex), currentStyleId);
-    }
-
-    const endIndex = text.indexOf(delimiter.end, startIndex + delimiter.start.length);
-    if (endIndex === -1) {
-      addSegment(segments, text.slice(startIndex), currentStyleId);
-      break;
-    }
-
-    const markerContent = text.slice(startIndex + delimiter.start.length, endIndex);
-    const matchedStyle = resolveStyleMarker(markerContent, currentStyleId);
-    if (matchedStyle) {
-      currentStyleId = matchedStyle.id;
-    } else {
-      const fullMarker = text.slice(startIndex, endIndex + delimiter.end.length);
-      addSegment(segments, fullMarker, currentStyleId);
-    }
-    cursor = endIndex + delimiter.end.length;
-  }
-
-  return segments;
 }
 
 function setTextAndPlay(text: string) {
@@ -199,60 +90,6 @@ function setTextAndPlay(text: string) {
     autoPlayTimer = null;
   }
   scheduleAutoPlay();
-}
-
-function populateStyleSelect(styleSelect: HTMLSelectElement | null) {
-  if (!styleSelect) return;
-  styleSelect.innerHTML = '';
-
-  if (availableStyles.length === 0) {
-    const fallback = document.createElement('option');
-    fallback.value = String(ZUNDAMON_SPEAKER_ID);
-    fallback.textContent = `ID ${ZUNDAMON_SPEAKER_ID}`;
-    styleSelect.appendChild(fallback);
-    selectedStyleId = ZUNDAMON_SPEAKER_ID;
-    return;
-  }
-
-  availableStyles.forEach((style) => {
-    const option = document.createElement('option');
-    option.value = String(style.id);
-    option.textContent = getStyleLabel(style);
-    styleSelect.appendChild(option);
-  });
-
-  const defaultStyle =
-    availableStyles.find((style) => style.id === selectedStyleId) ?? availableStyles[0];
-  selectedStyleId = defaultStyle.id;
-  styleSelect.value = String(selectedStyleId);
-}
-
-async function fetchVoiceStyles(styleSelect: HTMLSelectElement | null) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(`${VOICEVOX_API_BASE}/speakers`, { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch styles: ${response.status} ${response.statusText}`);
-    }
-    const speakers = (await response.json()) as VoiceVoxSpeaker[];
-    availableStyles = speakers.flatMap((speaker) =>
-      speaker.styles.map((style) => ({
-        id: style.id,
-        name: style.name,
-        speakerName: speaker.name,
-      }))
-    );
-  } catch (error) {
-    console.error('Failed to fetch speaker styles:', error);
-    if (availableStyles.length === 0) {
-      availableStyles = [{ id: ZUNDAMON_SPEAKER_ID, name: '未取得', speakerName: 'デフォルト' }];
-    }
-  } finally {
-    clearTimeout(timeoutId);
-    populateStyleSelect(styleSelect);
-  }
 }
 
 function downloadLastAudio() {
@@ -380,12 +217,12 @@ async function handlePlay() {
   if (styleSelect && styleSelect.value) {
     const parsed = Number(styleSelect.value);
     if (!Number.isNaN(parsed)) {
-      selectedStyleId = parsed;
+      setSelectedStyleId(parsed);
     }
   }
 
   const delimiter = parseDelimiterConfig(delimiterInput?.value ?? '');
-  const segments = buildTextSegments(text, delimiter, selectedStyleId);
+  const segments = buildTextSegments(text, delimiter, getSelectedStyleId());
   if (segments.length === 0) {
     showStatus('テキストを入力してください', 'error');
     return;
@@ -467,7 +304,7 @@ async function handlePlay() {
     }
     appState.lastSpectrogramSignature = currentSignature;
     const spokenText = segments.map((segment) => segment.text).join('');
-    const intonationStyleId = segments[0]?.styleId ?? selectedStyleId;
+    const intonationStyleId = segments[0]?.styleId ?? getSelectedStyleId();
     await fetchAndRenderIntonation(spokenText, intonationStyleId);
     addToHistory(text);
 
@@ -537,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   setStyleChangeHandler((styleId) => {
-    selectedStyleId = styleId;
+    setSelectedStyleId(styleId);
   });
 
   if (playButton) {
@@ -560,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
     styleSelect.addEventListener('change', () => {
       const parsed = Number(styleSelect.value);
       if (!Number.isNaN(parsed)) {
-        selectedStyleId = parsed;
+        setSelectedStyleId(parsed);
       }
     });
   }
@@ -679,7 +516,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (intonationFavoriteButton) {
-    intonationFavoriteButton.addEventListener('click', () => saveCurrentIntonationFavorite(selectedStyleId));
+    intonationFavoriteButton.addEventListener('click', () =>
+      saveCurrentIntonationFavorite(getSelectedStyleId())
+    );
   }
 
   if (intonationExpandTop) {
