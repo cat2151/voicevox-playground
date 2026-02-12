@@ -382,16 +382,31 @@
       .intonation-area {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
       }
       .intonation-canvas-wrapper {
-        position: relative;
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        column-gap: 12px;
+        align-items: stretch;
+        touch-action: none;
+        overscroll-behavior: contain;
+      }
+      .intonation-side {
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        gap: 10px;
+        align-content: stretch;
+      }
+      .intonation-canvas-area {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
       }
       .intonation-range-value {
-        position: absolute;
-        left: 10px;
-        padding: 2px 6px;
-        font-size: 12px;
+        position: relative;
+        padding: 6px 8px;
+        font-size: 13px;
         color: var(--muted-text);
         background: var(--panel-bg);
         border-radius: 4px;
@@ -399,27 +414,28 @@
         z-index: 1;
       }
       .intonation-range-value--max {
-        top: 8px;
+        align-self: flex-start;
       }
       .intonation-range-value--min {
-        bottom: 8px;
+        align-self: flex-end;
       }
       .intonation-controls {
-        position: absolute;
-        left: 8px;
+        position: relative;
+        left: auto;
         display: flex;
-        gap: 6px;
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
       }
       .intonation-controls--top {
-        top: 8px;
       }
       .intonation-controls--bottom {
-        bottom: 8px;
       }
       .intonation-controls__button {
-        padding: 6px 10px;
+        padding: 6px 8px;
         font-size: 13px;
         margin-top: 0;
+        width: 100%;
       }
       .intonation-labels {
         position: relative;
@@ -433,6 +449,62 @@
         transform: translateX(-50%);
         white-space: nowrap;
         font-size: 14px;
+      }
+      .intonation-label__key {
+        margin-right: 6px;
+        color: var(--muted-text);
+        opacity: 0.6;
+        font-weight: 700;
+      }
+      #intonationCanvas {
+        width: 95%;
+        height: 200px;
+        touch-action: none;
+      }
+      .text-list__pill {
+        display: inline-block;
+        padding: 2px 6px;
+        margin-right: 6px;
+        border-radius: 999px;
+        background: var(--border-color);
+        color: var(--muted-text);
+        font-size: 12px;
+        vertical-align: middle;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.35);
+        z-index: 50;
+      }
+      .modal[hidden] {
+        display: none;
+      }
+      .modal__content {
+        background: var(--panel-bg);
+        color: var(--text-color);
+        padding: 16px;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        min-width: 280px;
+        max-width: 420px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      }
+      .modal__title {
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .modal__body {
+        margin: 0 0 12px;
+        color: var(--muted-text);
+      }
+      .modal__actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
       }
     </style>
   </head>
@@ -498,6 +570,10 @@
       </div>
       <div id="favoritesPanel" class="favorites-panel" hidden>
         <div class="favorites-section">
+          <div class="favorites-section__title">イントネーション付きお気に入り</div>
+          <ul id="intonationFavoritesList" class="text-list" aria-label="イントネーション付きお気に入り"></ul>
+        </div>
+        <div class="favorites-section">
           <div class="favorites-section__title">現在のお気に入り</div>
           <ul id="favoritesList" class="text-list" aria-label="現在のお気に入りのテキスト"></ul>
         </div>
@@ -517,19 +593,28 @@
             aria-pressed="false"
             aria-label="キーボード操作を有効/無効にする"
           >キーボード操作: OFF</button>
+          <button
+            id="intonationFavoriteButton"
+            class="secondary-button"
+            type="button"
+          >お気に入りに登録</button>
         </div>
         <div class="intonation-canvas-wrapper">
-          <div class="intonation-controls intonation-controls--top">
-            <button id="intonationExpandTop" class="secondary-button intonation-controls__button" aria-label="上方向の幅を2倍">2x</button>
-            <button id="intonationShrinkTop" class="secondary-button intonation-controls__button" aria-label="上方向の幅を1/2">0.5x</button>
+          <div class="intonation-side">
+            <div class="intonation-controls intonation-controls--top">
+              <button id="intonationExpandTop" class="secondary-button intonation-controls__button" aria-label="上方向の幅を2倍">2x</button>
+              <button id="intonationShrinkTop" class="secondary-button intonation-controls__button" aria-label="上方向の幅を1/2">0.5x</button>
+            </div>
+            <div class="intonation-range-value intonation-range-value--max" id="intonationMaxValue" aria-hidden="true"></div>
+            <div class="intonation-range-value intonation-range-value--min" id="intonationMinValue" aria-hidden="true"></div>
+            <div class="intonation-controls intonation-controls--bottom">
+              <button id="intonationShrinkBottom" class="secondary-button intonation-controls__button" aria-label="下方向の幅を1/2">0.5x</button>
+              <button id="intonationExpandBottom" class="secondary-button intonation-controls__button" aria-label="下方向の幅を2倍">2x</button>
+            </div>
           </div>
-          <div class="intonation-controls intonation-controls--bottom">
-            <button id="intonationShrinkBottom" class="secondary-button intonation-controls__button" aria-label="下方向の幅を1/2">0.5x</button>
-            <button id="intonationExpandBottom" class="secondary-button intonation-controls__button" aria-label="下方向の幅を2倍">2x</button>
+          <div class="intonation-canvas-area">
+            <canvas id="intonationCanvas" width="760" height="180" aria-label="イントネーションの折れ線グラフ" tabindex="0"></canvas>
           </div>
-          <div class="intonation-range-value intonation-range-value--max" id="intonationMaxValue" aria-hidden="true"></div>
-          <div class="intonation-range-value intonation-range-value--min" id="intonationMinValue" aria-hidden="true"></div>
-          <canvas id="intonationCanvas" width="760" height="180" aria-label="イントネーションの折れ線グラフ" tabindex="0"></canvas>
         </div>
         <div id="intonationLabels" class="intonation-labels" aria-hidden="true"></div>
       </div>
@@ -545,6 +630,17 @@
           <canvas id="spectrogram" width="760" height="144" aria-label="スペクトログラム"></canvas>
           <div id="spectrogramProgress" class="playback-progress" aria-hidden="true"></div>
           <button id="spectrogramScaleToggle" class="visualizer__action" type="button">対数にする</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="playConfirmDialog" class="modal" hidden>
+      <div class="modal__content" role="dialog" aria-modal="true" aria-labelledby="playConfirmTitle">
+        <div id="playConfirmTitle" class="modal__title">イントネーションを初期化してplayしますか？</div>
+        <p class="modal__body">編集したイントネーションは元に戻ります。</p>
+        <div class="modal__actions">
+          <button id="playConfirmReset" type="button">イントネーションを初期化してplay</button>
+          <button id="playConfirmCancel" type="button" class="secondary-button">playしない</button>
         </div>
       </div>
     </div>
