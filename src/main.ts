@@ -123,6 +123,7 @@ let statusHideTimer: number | null = null;
 let isProcessing = false;
 let autoPlayTimer: number | null = null;
 let lastSynthesizedBuffer: ArrayBuffer | null = null;
+let lastSpectrogramSignature: string | null = null;
 const audioCache = new Map<string, ArrayBuffer>();
 let availableStyles: VoiceStyleOption[] = [];
 let selectedStyleId = ZUNDAMON_SPEAKER_ID;
@@ -1156,7 +1157,8 @@ function drawSpectrogram(
   return cappedTargetX;
 }
 
-function initializeVisualizationCanvases() {
+function initializeVisualizationCanvases(options?: { preserveSpectrogram?: boolean }) {
+  const preserveSpectrogram = options?.preserveSpectrogram ?? false;
   invalidateColorVariableCache();
   ['renderedWaveform', 'realtimeWaveform', 'spectrogram'].forEach((id) => {
     const canvas = document.getElementById(id) as HTMLCanvasElement | null;
@@ -1164,6 +1166,10 @@ function initializeVisualizationCanvases() {
 
     const { ctx, width, height } = prepareCanvas(canvas);
     if (!ctx) return;
+
+    if (id === 'spectrogram' && preserveSpectrogram) {
+      return;
+    }
 
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
@@ -1748,13 +1754,32 @@ async function synthesize(audioQuery: AudioQuery, speakerId: number): Promise<Ar
 async function playAudio(
   decodedBuffer: AudioBuffer,
   realtimeCanvas?: HTMLCanvasElement | null,
-  spectrogramCanvas?: HTMLCanvasElement | null
+  spectrogramCanvas?: HTMLCanvasElement | null,
+  options?: { resetSpectrogram?: boolean }
 ) {
   await Tone.start();
 
   const player = new Tone.Player(decodedBuffer);
   const waveformAnalyser = realtimeCanvas ? new Tone.Analyser('waveform', 4096) : null;
   const fftAnalyser = spectrogramCanvas ? new Tone.Analyser('fft', 1024) : null;
+  const renderedProgress = document.getElementById('renderedWaveformProgress') as HTMLDivElement | null;
+  const spectrogramProgress = document.getElementById('spectrogramProgress') as HTMLDivElement | null;
+  const updateProgressLines = (ratio: number) => {
+    const clamped = Math.min(Math.max(ratio, 0), 1) * 100;
+    [renderedProgress, spectrogramProgress].forEach((el) => {
+      if (el) {
+        el.style.left = `${clamped}%`;
+        el.classList.add('is-active');
+      }
+    });
+  };
+  const clearProgressLines = () => {
+    [renderedProgress, spectrogramProgress].forEach((el) => {
+      if (el) {
+        el.classList.remove('is-active');
+      }
+    });
+  };
 
   if (waveformAnalyser) {
     player.connect(waveformAnalyser);
@@ -1772,18 +1797,21 @@ async function playAudio(
   let spectrogramCeiling = fftAnalyser ? fftAnalyser.size : 0;
   const playbackDurationMs = Math.max(decodedBuffer.duration * 1000, 1);
   const sampleRate = Math.max(decodedBuffer.sampleRate, 1);
-  spectrogramNeedsReset = true;
+  const shouldResetSpectrogram = options?.resetSpectrogram ?? true;
+  spectrogramNeedsReset = shouldResetSpectrogram;
   const startTime = performance.now();
   realtimePreviousSegment = null;
   let currentEstimatedFrequency: number | null = null;
+  updateProgressLines(0);
 
   const render = () => {
+    const elapsed = performance.now() - startTime;
+    const progress = Math.min(elapsed / playbackDurationMs, 1);
+
     if (fftAnalyser && spectrogramCanvas) {
       const values = fftAnalyser.getValue() as Float32Array;
       currentEstimatedFrequency = estimateFundamentalFrequency(values, sampleRate);
       spectrogramCeiling = determineSpectrogramCeiling(values, spectrogramCeiling || values.length - 1);
-      const elapsed = performance.now() - startTime;
-      const progress = Math.min(elapsed / playbackDurationMs, 1);
       const needsReset = spectrogramNeedsReset || lastSpectrogramScale !== spectrogramScale;
       spectrogramX = drawSpectrogram(
         values,
@@ -1806,6 +1834,7 @@ async function playAudio(
       drawRealtimeWaveform(values, realtimeCanvas, sampleRate, currentEstimatedFrequency);
     }
 
+    updateProgressLines(progress);
     animationId = requestAnimationFrame(render);
   };
 
@@ -1820,6 +1849,7 @@ async function playAudio(
       if (animationId !== null) {
         cancelAnimationFrame(animationId);
       }
+      clearProgressLines();
       waveformAnalyser?.dispose();
       fftAnalyser?.dispose();
       player.dispose();
@@ -1892,18 +1922,20 @@ async function handlePlay() {
   isProcessing = true;
   playButton.disabled = true;
   updateExportButtonState(exportButton);
-  initializeVisualizationCanvases();
   
   try {
     const audioContext = Tone.getContext().rawContext as BaseAudioContext;
     const decodedBuffers: AudioBuffer[] = [];
     let usedCache = false;
+    let allSegmentsCached = true;
+    const currentSignature = segments.map((segment) => getAudioCacheKey(segment.text, segment.styleId)).join('|');
     for (const segment of segments) {
       const cacheKey = getAudioCacheKey(segment.text, segment.styleId);
       let audioBuffer = audioCache.get(cacheKey) ?? null;
       if (audioBuffer) {
         usedCache = true;
       } else {
+        allSegmentsCached = false;
         showStatus('音声クエリを作成中...', 'info');
         const audioQuery = await getAudioQuery(segment.text, segment.styleId);
         showStatus('音声を生成中...', 'info');
@@ -1927,6 +1959,8 @@ async function handlePlay() {
 
     lastSynthesizedBuffer = encodeAudioBufferToWav(combinedBuffer);
 
+    const shouldPreserveSpectrogram = allSegmentsCached && lastSpectrogramSignature === currentSignature;
+    initializeVisualizationCanvases({ preserveSpectrogram: shouldPreserveSpectrogram });
     if (renderedCanvas) {
       drawRenderedWaveform(combinedBuffer, renderedCanvas);
     }
@@ -1937,7 +1971,10 @@ async function handlePlay() {
     } else {
       showStatus('音声を再生中（キャッシュ）...', 'info');
     }
-    await playAudio(combinedBuffer, realtimeCanvas, spectrogramCanvas);
+    await playAudio(combinedBuffer, realtimeCanvas, spectrogramCanvas, {
+      resetSpectrogram: !shouldPreserveSpectrogram,
+    });
+    lastSpectrogramSignature = currentSignature;
     const spokenText = segments.map((segment) => segment.text).join('');
     const intonationStyleId = segments[0]?.styleId ?? selectedStyleId;
     await fetchAndRenderIntonation(spokenText, intonationStyleId);
