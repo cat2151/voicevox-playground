@@ -197,6 +197,31 @@ export function calculateStepSize(range: { min: number; max: number }) {
   return step > 0 ? step : 0.1;
 }
 
+export function calculateLetterKeyAdjustment(params: {
+  currentPitch: number;
+  baseRange: { min: number; max: number };
+  rangeExtra: number;
+  stepSize: number;
+  direction: 'up' | 'down';
+  ctrlModifier: boolean;
+}) {
+  const step = params.stepSize * (params.ctrlModifier ? 0.5 : 1);
+  const delta = step * (params.direction === 'up' ? 1 : -1);
+  let desiredExtra = params.rangeExtra;
+  const tentativePitch = params.currentPitch + delta;
+  const maxWithExtra = params.baseRange.max + desiredExtra;
+  const minWithExtra = params.baseRange.min - desiredExtra;
+  if (tentativePitch > maxWithExtra) {
+    desiredExtra = Math.max(desiredExtra, tentativePitch - params.baseRange.max);
+  } else if (tentativePitch < minWithExtra) {
+    desiredExtra = Math.max(desiredExtra, params.baseRange.min - tentativePitch);
+  }
+  const adjustedMin = params.baseRange.min - desiredExtra;
+  const adjustedMax = params.baseRange.max + desiredExtra;
+  const pitch = Math.min(Math.max(tentativePitch, adjustedMin), adjustedMax);
+  return { pitch, rangeExtra: desiredExtra };
+}
+
 function handleIntonationWheel(event: WheelEvent) {
   if (intonationDragIndex !== null) {
     event.preventDefault();
@@ -729,7 +754,32 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
     const targetIndex = intonationPoints.findIndex((_, idx) => idx % 26 === letterIndex);
     if (targetIndex !== -1) {
       intonationSelectedIndex = targetIndex;
-      drawIntonationChart(intonationPoints);
+      if (!intonationInitialPitchRange) {
+        updateInitialRangeFromPoints(intonationPoints);
+      }
+      const baseRange = getBaseDisplayRange();
+      if (baseRange) {
+        const isUpperCase =
+          event.key.length === 1 && event.key === event.key.toUpperCase() && event.key !== event.key.toLowerCase();
+        const { pitch, rangeExtra } = calculateLetterKeyAdjustment({
+          currentPitch: intonationPoints[targetIndex].pitch,
+          baseRange,
+          rangeExtra: intonationRangeExtra,
+          stepSize: intonationStepSize,
+          direction: isUpperCase ? 'down' : 'up',
+          ctrlModifier: event.ctrlKey,
+        });
+        applyRangeExtra(rangeExtra);
+        const newPitch = clampPitchToDisplayRange(pitch);
+        intonationPoints[targetIndex].pitch = newPitch;
+        applyPitchToQuery(targetIndex, newPitch);
+        disableLoopOnIntonationEdit();
+        intonationDirty = true;
+        drawIntonationChart(intonationPoints);
+        scheduleIntonationPlayback();
+      } else {
+        drawIntonationChart(intonationPoints);
+      }
       event.preventDefault();
     }
     return;
