@@ -197,6 +197,31 @@ export function calculateStepSize(range: { min: number; max: number }) {
   return step > 0 ? step : 0.1;
 }
 
+export function calculateLetterKeyAdjustment(params: {
+  currentPitch: number;
+  baseRange: { min: number; max: number };
+  rangeExtra: number;
+  stepSize: number;
+  direction: 'up' | 'down';
+  ctrlModifier: boolean;
+}) {
+  const step = params.stepSize * (params.ctrlModifier ? 0.5 : 1);
+  const delta = step * (params.direction === 'up' ? 1 : -1);
+  let desiredExtra = params.rangeExtra;
+  const tentativePitch = params.currentPitch + delta;
+  const maxWithExtra = params.baseRange.max + desiredExtra;
+  const minWithExtra = params.baseRange.min - desiredExtra;
+  if (tentativePitch > maxWithExtra) {
+    desiredExtra = Math.max(desiredExtra, tentativePitch - params.baseRange.max);
+  } else if (tentativePitch < minWithExtra) {
+    desiredExtra = Math.max(desiredExtra, params.baseRange.min - tentativePitch);
+  }
+  const adjustedMin = params.baseRange.min - desiredExtra;
+  const adjustedMax = params.baseRange.max + desiredExtra;
+  const pitch = Math.min(Math.max(tentativePitch, adjustedMin), adjustedMax);
+  return { pitch, rangeExtra: desiredExtra };
+}
+
 function handleIntonationWheel(event: WheelEvent) {
   if (intonationDragIndex !== null) {
     event.preventDefault();
@@ -498,6 +523,26 @@ function applyPitchToQuery(pointIndex: number, pitch: number) {
   }
 }
 
+function applyPitchEdit(
+  pointIndex: number,
+  pitch: number,
+  options: { redraw?: boolean; schedulePlayback?: boolean } = {}
+) {
+  if (pointIndex < 0 || pointIndex >= intonationPoints.length) return;
+  const redraw = options.redraw !== false;
+  const schedulePlayback = options.schedulePlayback !== false;
+  intonationPoints[pointIndex].pitch = pitch;
+  applyPitchToQuery(pointIndex, pitch);
+  disableLoopOnIntonationEdit();
+  intonationDirty = true;
+  if (redraw) {
+    drawIntonationChart(intonationPoints);
+  }
+  if (schedulePlayback) {
+    scheduleIntonationPlayback();
+  }
+}
+
 function scheduleIntonationPlayback() {
   if (intonationDebounceTimer !== null) {
     window.clearTimeout(intonationDebounceTimer);
@@ -673,12 +718,8 @@ export function handleIntonationPointerMove(event: MouseEvent | PointerEvent) {
   const y = event.clientY - rect.top;
   refreshDisplayRange();
   const newPitch = clampPitchToDisplayRange(pitchFromY(y));
-  intonationPoints[targetIndex].pitch = newPitch;
   intonationSelectedIndex = targetIndex;
-  applyPitchToQuery(targetIndex, newPitch);
-  disableLoopOnIntonationEdit();
-  intonationDirty = true;
-  drawIntonationChart(intonationPoints);
+  applyPitchEdit(targetIndex, newPitch, { schedulePlayback: false });
   intonationPlaybackPending = true;
 }
 
@@ -729,7 +770,27 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
     const targetIndex = intonationPoints.findIndex((_, idx) => idx % 26 === letterIndex);
     if (targetIndex !== -1) {
       intonationSelectedIndex = targetIndex;
-      drawIntonationChart(intonationPoints);
+      if (!intonationInitialPitchRange) {
+        updateInitialRangeFromPoints(intonationPoints);
+      }
+      const baseRange = getBaseDisplayRange();
+      if (baseRange) {
+        const isUpperCase =
+          event.key.length === 1 && event.key === event.key.toUpperCase() && event.key !== event.key.toLowerCase();
+        const { pitch, rangeExtra } = calculateLetterKeyAdjustment({
+          currentPitch: intonationPoints[targetIndex].pitch,
+          baseRange,
+          rangeExtra: intonationRangeExtra,
+          stepSize: intonationStepSize,
+          direction: isUpperCase ? 'down' : 'up',
+          ctrlModifier: event.ctrlKey,
+        });
+        applyRangeExtra(rangeExtra);
+        const newPitch = clampPitchToDisplayRange(pitch);
+        applyPitchEdit(targetIndex, newPitch);
+      } else {
+        drawIntonationChart(intonationPoints);
+      }
       event.preventDefault();
     }
     return;
@@ -765,12 +826,7 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
     const targetIndex = intonationSelectedIndex ?? 0;
     const adjustment = event.key === 'ArrowUp' ? step : -step;
     const newPitch = clampPitchToDisplayRange(intonationPoints[targetIndex].pitch + adjustment);
-    intonationPoints[targetIndex].pitch = newPitch;
-    applyPitchToQuery(targetIndex, newPitch);
-    disableLoopOnIntonationEdit();
-    intonationDirty = true;
-    drawIntonationChart(intonationPoints);
-    scheduleIntonationPlayback();
+    applyPitchEdit(targetIndex, newPitch);
   }
 }
 
