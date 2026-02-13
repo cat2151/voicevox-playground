@@ -130,20 +130,22 @@ async function confirmResetIntonationBeforePlay() {
   const previousActiveElement = document.activeElement as HTMLElement | null;
   dialog.removeAttribute('hidden');
   let settled = false;
-  let keydownHandler: ((event: KeyboardEvent) => void) | null = null;
-  const cleanup = () => {
-    if (settled) return;
-    settled = true;
-    dialog.setAttribute('hidden', 'true');
-    if (keydownHandler) {
-      dialog.removeEventListener('keydown', keydownHandler);
-    }
-    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
-      previousActiveElement.focus();
-    }
-  };
   (resetButton as HTMLElement).focus();
   return new Promise<boolean>((resolve) => {
+    let keydownHandler: ((event: KeyboardEvent) => void) | null = null;
+    const cleanup = () => {
+      if (settled) return;
+      settled = true;
+      dialog.setAttribute('hidden', 'true');
+      if (keydownHandler) {
+        dialog.removeEventListener('keydown', keydownHandler);
+      }
+      resetButton.removeEventListener('click', handleReset);
+      cancelButton.removeEventListener('click', handleCancel);
+      if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+        previousActiveElement.focus();
+      }
+    };
     const handleReset = () => {
       cleanup();
       resolve(true);
@@ -219,15 +221,17 @@ export async function handlePlay() {
     return;
   }
 
+  playRequestPending = true;
+
   if (isIntonationDirty()) {
     const shouldReset = await confirmResetIntonationBeforePlay();
     if (!shouldReset) {
+      playRequestPending = false;
       return;
     }
     resetIntonationState();
   }
 
-  playRequestPending = true;
   appState.isProcessing = true;
   playButton.disabled = true;
   updateExportButtonState(exportButton);
