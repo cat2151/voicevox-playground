@@ -516,6 +516,7 @@ async function replayCachedIntonationAudio() {
   if (!appState.lastSynthesizedBuffer || appState.isProcessing) return false;
   const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
   const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
+  const renderedCanvas = document.getElementById('renderedWaveform') as HTMLCanvasElement | null;
   const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
   const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
   try {
@@ -525,6 +526,9 @@ async function replayCachedIntonationAudio() {
     initializeVisualizationCanvases({ preserveSpectrogram: true });
     const audioContext = Tone.getContext().rawContext as BaseAudioContext;
     const decodedBuffer = await audioContext.decodeAudioData(appState.lastSynthesizedBuffer.slice(0));
+    if (renderedCanvas) {
+      drawRenderedWaveform(decodedBuffer, renderedCanvas);
+    }
     await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas, { resetSpectrogram: false });
     return true;
   } catch (error) {
