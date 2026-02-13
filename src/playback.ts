@@ -25,6 +25,10 @@ import {
 } from './visualization';
 
 const audioCache = new Map<string, ArrayBuffer>();
+const PLAY_ICON_SVG =
+  '<svg class="icon icon--play" aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M7 5.5v13l11-6.5-11-6.5Z"></path></svg>';
+const STOP_ICON_SVG =
+  '<svg class="icon icon--stop" aria-hidden="true" viewBox="0 0 24 24" focusable="false"><rect x="7" y="7" width="10" height="10" rx="2"></rect></svg>';
 let autoPlayTimer: number | null = null;
 let loopCheckboxEl: HTMLInputElement | null = null;
 let playRequestPending = false;
@@ -38,11 +42,13 @@ export function setPlayButtonAppearance(mode: 'play' | 'stop') {
   const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
   if (!playButton) return;
   if (mode === 'play') {
-    playButton.innerHTML = '<span aria-hidden="true">▶️</span>';
+    playButton.innerHTML = PLAY_ICON_SVG;
+    playButton.dataset.icon = 'play';
     playButton.setAttribute('aria-label', 'Play');
     playButton.title = 'Play';
   } else {
-    playButton.innerHTML = '<span aria-hidden="true">⏹️</span>';
+    playButton.innerHTML = STOP_ICON_SVG;
+    playButton.dataset.icon = 'stop';
     playButton.setAttribute('aria-label', 'Stop');
     playButton.title = 'Stop';
   }
