@@ -1,4 +1,4 @@
-Last updated: 2026-02-13
+Last updated: 2026-02-14
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -194,6 +194,8 @@ Last updated: 2026-02-13
 - .github/actions-tmp/issue-notes/35.md
 - .github/actions-tmp/issue-notes/38.md
 - .github/actions-tmp/issue-notes/4.md
+- .github/actions-tmp/issue-notes/40.md
+- .github/actions-tmp/issue-notes/42.md
 - .github/actions-tmp/issue-notes/7.md
 - .github/actions-tmp/issue-notes/8.md
 - .github/actions-tmp/issue-notes/9.md
@@ -219,21 +221,31 @@ Last updated: 2026-02-13
 - issue-notes/26.md
 - issue-notes/27.md
 - issue-notes/30.md
-- issue-notes/44.md
 - issue-notes/45.md
-- issue-notes/50.md
 - issue-notes/51.md
-- issue-notes/54.md
 - issue-notes/56.md
+- issue-notes/62.md
+- issue-notes/64.md
+- issue-notes/65.md
+- issue-notes/66.md
+- issue-notes/67.md
+- issue-notes/68.md
+- issue-notes/72.md
+- issue-notes/74.md
 - package-lock.json
 - package.json
 - src/audio.ts
 - src/config.ts
+- src/intonation.test.ts
 - src/intonation.ts
 - src/main.ts
+- src/playback.test.ts
+- src/playback.ts
 - src/state.ts
 - src/status.ts
+- src/styleManager.test.ts
 - src/styleManager.ts
+- src/textLists.test.ts
 - src/textLists.ts
 - src/uiControls.ts
 - src/visualization.ts
@@ -241,58 +253,151 @@ Last updated: 2026-02-13
 - vite.config.ts
 
 ## 現在のオープンIssues
-## [Issue #58](../issue-notes/58.md): 大きなファイルの検出: 4個のファイルが500行を超えています
+## [Issue #76](../issue-notes/76.md): 大きなファイルの検出: 3個のファイルが500行を超えています
 以下のファイルが500行を超えています。リファクタリングを検討してください。
 
 ## 検出されたファイル
 
 | ファイル | 行数 | 超過行数 |
 |---------|------|----------|
-| `src/visualization.ts` | 776 | +276 |
-| `src/intonation.ts` | 726 | +226 |
-| `index.html` | 654 | +154 |
-| `src/main.ts` | 556 | +56 |
+| `src/intonation.ts` | 880 | +380 |
+| `src/visualization.ts` | 864 | +364 |
+| `index.html` | 671 | +171 |
 
-## 推奨事項
+## テスト実施のお願い
 
-1. ファイルを機能ごとに分割する
-2. 共通ロジックを別モジュールに抽出する
-3. クラスやイ...
+- リファクタリング前後にテストを実行し、それぞれのテスト失敗件数を報告してください
+- リファクタリング前後のどちらかでテストがredの場合、ま...
 ラベル: refactoring, code-quality, automated
---- issue-notes/58.md の内容 ---
+--- issue-notes/76.md の内容 ---
 
 ```markdown
 
 ```
 
-## [Issue #57](../issue-notes/57.md): Restore waveform/spectrogram visuals and favorites toggle reliability
-Recent refactors broke waveform frequency lines, spectrogram reuse, color mapping, realtime visibility, and favorites folding. This patch restores expected visuals and caching behavior.
+## [Issue #75](../issue-notes/75.md): Create issue when Deploy to GitHub Pages workflow fails
+Adds automation to open or update an issue when the “Deploy to GitHub Pages” workflow fails.
 
-- Waveform rendering: normalize to peak for full-height display, add -6 dB grid/labels, and connect FFT peak esti...
+## Changes
+- Added `.github/workflows/create-issue-on-actions-failure.yml` listening to `workflow_run` of Deploy to GitHub Pages, gated to failures.
+- Ensures `ci-failure` label exists, searches for an exis...
 ラベル: 
---- issue-notes/57.md の内容 ---
+--- issue-notes/75.md の内容 ---
 
 ```markdown
 
 ```
 
-## [Issue #56](../issue-notes/56.md): 巨大リファクタリングでいろいろエンバグしているので修正する
-[issue-notes/56.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/56.md)
+## [Issue #74](../issue-notes/74.md): GitHub Actionsでビルドが落ちたら、issueを起票するようにする。cat2151の他のリポジトリのワークフローを参考にする
+[issue-notes/74.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/74.md)
+
+...
+ラベル: 
+--- issue-notes/74.md の内容 ---
+
+```markdown
+# issue GitHub Actionsでビルドが落ちたら、issueを起票するようにする。cat2151の他のリポジトリのワークフローを参考にする #74
+[issues #74](https://github.com/cat2151/voicevox-playground/issues/74)
+
+# 落ちたビルドのURL
+- https://github.com/cat2151/voicevox-playground/actions/runs/21991496344/job/63539577377
+
+
+```
+
+## [Issue #72](../issue-notes/72.md): イントネーション編集で、CTRL + 下や、下0.5x を押したとき、minが縮まないことがある
+[issue-notes/72.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/72.md)
 
 ...
 ラベル: good first issue
---- issue-notes/56.md の内容 ---
+--- issue-notes/72.md の内容 ---
 
 ```markdown
-# issue 巨大リファクタリングでいろいろエンバグしているので修正する #56
-[issues #56](https://github.com/cat2151/voicevox-playground/issues/56)
+# issue イントネーション編集で、CTRL + 下や、下0.5x を押したとき、minが縮まないことがある #72
+[issues #72](https://github.com/cat2151/voicevox-playground/issues/72)
 
-- 波形表示欄にて、FFT推定周波数が、ポイントだけになってしまっている。折れ線グラフも描画すること
-- スペクトログラム欄にて、cache再生時に、「半透明上書き塗りつぶしスペクトログラム描画」されてどんどん画像がおかしくなってしまう。cache再生時は新たな描画はしないこと
-- スペクトログラム欄の色付けがおかしい。「FFT peakの大きい色から弱い色にかけて、グラデーションで色をつける」べし。スタンダードなのは最も強い部分がホワイト、次に強いのがオレンジ、次にレッド、次にブルー、次にブラック（peak 0）で、それを滑らかに色相（ブルーからブラックは明度）グラデーション、だった気がする。web検索して整理し、実現せよ。
-- 波形表示は上下いっぱいに拡大表示し、-6dB単位かつ文字が重ならないようにdBの薄いグリッド線を引くべし。
-- リアルタイム波形表示欄が完全に見えなくなっている。表示させること。
-- お気に入り管理欄は折りたたみ可能にせよ。
+# 事例
+- -0.0から縮まない
+- 現在編集中のイントネーションのminが5あっても、5に到達せず、-0.0のまま
+- 仮説
+    - もしかして「-0.0という、最初に生成したときのイントネーション初期min」よりも大きくできない、という制約になっている？
+    - もしそうなら、userの意図と違う。
+    - CTRL + 下や、下0.5x を押したときのminの制約は、「現在編集中のイントネーションのminより大きくはできない」である。
+        - この事例のケースだと、5まで到達してよい。-0.0でstopしてしまうのはuserの意図と違う。
+- max側も同様である
+
+```
+
+## [Issue #68](../issue-notes/68.md): styleプルダウン、区切り文字、の右に「ランダムstyle」チェックボックスをつける
+[issue-notes/68.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/68.md)
+
+...
+ラベル: good first issue
+--- issue-notes/68.md の内容 ---
+
+```markdown
+# issue styleプルダウン、区切り文字、の右に「ランダムstyle」チェックボックスをつける #68
+[issues #68](https://github.com/cat2151/voicevox-playground/issues/68)
+
+- デフォルトoff。
+- onにした場合、
+    - styleプルダウンがランダムで決定される。
+    - ループ再生ごとにランダムで変更される（なのでcache再生はされない）
+
+```
+
+## [Issue #67](../issue-notes/67.md): playボタンがstopボタンになっているとき、演奏stopができない
+[issue-notes/67.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/67.md)
+
+...
+ラベル: good first issue
+--- issue-notes/67.md の内容 ---
+
+```markdown
+# issue playボタンがstopボタンになっているとき、演奏stopができない #67
+[issues #67](https://github.com/cat2151/voicevox-playground/issues/67)
+
+- Tone.jsによるplayは、stopできるはず
+- stopできない原因を調査せよ
+- stopボタンにconsole.logをつけ、そもそもstop操作を受け付けているか？をデバッグできるようにせよ
+- あらゆる局面でstopができるようなアーキテクチャにせよ
+    - 例えばイントネーション編集中は、素早くstopして新たなイントネーション生成をするべきだろう
+    - 「playが終了するまでstop操作をまったく受け付けない、つまりstopができない」のではUXが悪い
+
+```
+
+## [Issue #66](../issue-notes/66.md): playボタンのplayマークがダサい
+[issue-notes/66.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/66.md)
+
+...
+ラベル: good first issue
+--- issue-notes/66.md の内容 ---
+
+```markdown
+# issue playボタンのplayマークがダサい #66
+[issues #66](https://github.com/cat2151/voicevox-playground/issues/66)
+
+- emojiをやめてSVGにせよ
+- ダウンロードボタンのフロッピーディスクemojiもダサいので外すべし
+
+```
+
+## [Issue #64](../issue-notes/64.md): キーボードa-zの機能がエンバグしているので修正する
+[issue-notes/64.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/64.md)
+
+...
+ラベル: good first issue
+--- issue-notes/64.md の内容 ---
+
+```markdown
+# issue キーボードa-zの機能がエンバグしているので修正する #64
+[issues #64](https://github.com/cat2151/voicevox-playground/issues/64)
+
+- a-zは、対応したモーラにfocusするだけでなくaならup、Aならdownすること
+- 変化量は、最初にレスポンスで得たイントネーションminとmaxの間を10分割した1段階、で変化させること
+    - ctrlを押しながらの場合、変化量を1/2すること
+    - maxをoverしたら、同じ1段階ぶんだけmaxを増やす。minも同様。
+- これにより、キーボードで思考の速さでイントネーション調整できるUXの可能性を開く、ことを目指す
 
 ```
 
@@ -311,58 +416,182 @@ Recent refactors broke waveform frequency lines, spectrogram reuse, color mappin
 
 ```
 
-## [Issue #50](../issue-notes/50.md): イントネーション編集のマウス操作のレスポンスが悪い
-[issue-notes/50.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/50.md)
-
-...
-ラベル: good first issue
---- issue-notes/50.md の内容 ---
-
-```markdown
-# issue イントネーション編集のマウス操作のレスポンスが悪い #50
-[issues #50](https://github.com/cat2151/voicevox-playground/issues/50)
-
-
-
-```
-
-## [Issue #45](../issue-notes/45.md): イントネーション、キーボード操作、で、aとAを繰り返してもその中間の値が指定できず、もどかしい
-[issue-notes/45.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/45.md)
-
-...
-ラベル: good first issue
---- issue-notes/45.md の内容 ---
-
-```markdown
-# issue イントネーション、キーボード操作、で、aとAを繰り返してもその中間の値が指定できず、もどかしい #45
-[issues #45](https://github.com/cat2151/voicevox-playground/issues/45)
-
-# 対策
-- aでup、Aでdownだが、1秒以内にa,A,aと入力したとき、aのup量を通常の1/2することで、中間の値を指定可能にする
-- 同様に、1秒以内にA,a,Aと入力したときは、Aのdown量を通常の1/2とする
-- 要は、upとdownを素早く交互に入力したときだけ、その中間の値を入力できるようにするということ
-- upもdownもなく1秒が経過したら、up量とdown量は通常に戻る
-- 要はステートマシンで、通常モードと、up/down半減モード、があるということ
-
-
-```
-
-## [Issue #44](../issue-notes/44.md): dark modeにて、styleと区切り文字の欄が、背景色も文字色もほぼ黒で、視認性が低い
-[issue-notes/44.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/44.md)
-
-...
-ラベル: good first issue
---- issue-notes/44.md の内容 ---
-
-```markdown
-# issue dark modeにて、styleと区切り文字の欄が、背景色も文字色もほぼ黒で、視認性が低い #44
-[issues #44](https://github.com/cat2151/voicevox-playground/issues/44)
-
-
-
-```
-
 ## ドキュメントで言及されているファイルの内容
+### .github/actions-tmp/issue-notes/2.md
+```md
+{% raw %}
+# issue GitHub Actions「関数コールグラフhtmlビジュアライズ生成」を共通ワークフロー化する #2
+[issues #2](https://github.com/cat2151/github-actions/issues/2)
+
+
+# prompt
+```
+あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
+このymlファイルを、以下の2つのファイルに分割してください。
+1. 共通ワークフロー       cat2151/github-actions/.github/workflows/callgraph_enhanced.yml
+2. 呼び出し元ワークフロー cat2151/github-actions/.github/workflows/call-callgraph_enhanced.yml
+まずplanしてください
+```
+
+# 結果
+- indent
+    - linter？がindentのエラーを出しているがyml内容は見た感じOK
+    - テキストエディタとagentの相性問題と判断する
+    - 別のテキストエディタでsaveしなおし、テキストエディタをreload
+    - indentのエラーは解消した
+- LLMレビュー
+    - agent以外の複数のLLMにレビューさせる
+    - prompt
+```
+あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
+以下の2つのファイルをレビューしてください。最優先で、エラーが発生するかどうかだけレビューしてください。エラー以外の改善事項のチェックをするかわりに、エラー発生有無チェックに最大限注力してください。
+
+--- 共通ワークフロー
+
+# GitHub Actions Reusable Workflow for Call Graph Generation
+name: Generate Call Graph
+
+# TODO Windowsネイティブでのtestをしていた名残が残っているので、今後整理していく。今はWSL act でtestしており、Windowsネイティブ環境依存問題が解決した
+#  ChatGPTにレビューさせるとそこそこ有用そうな提案が得られたので、今後それをやる予定
+#  agentに自己チェックさせる手も、セカンドオピニオンとして選択肢に入れておく
+
+on:
+  workflow_call:
+
+jobs:
+  check-commits:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.check.outputs.should-run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50 # 過去のコミットを取得
+
+      - name: Check for user commits in last 24 hours
+        id: check
+        run: |
+          node .github/scripts/callgraph_enhanced/check-commits.cjs
+
+  generate-callgraph:
+    needs: check-commits
+    if: needs.check-commits.outputs.should-run == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      security-events: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Remove old CodeQL packages cache
+        run: rm -rf ~/.codeql/packages
+
+      - name: Check Node.js version
+        run: |
+          node .github/scripts/callgraph_enhanced/check-node-version.cjs
+
+      - name: Install CodeQL CLI
+        run: |
+          wget https://github.com/github/codeql-cli-binaries/releases/download/v2.22.1/codeql-linux64.zip
+          unzip codeql-linux64.zip
+          sudo mv codeql /opt/codeql
+          echo "/opt/codeql" >> $GITHUB_PATH
+
+      - name: Install CodeQL query packs
+        run: |
+          /opt/codeql/codeql pack install .github/codeql-queries
+
+      - name: Check CodeQL exists
+        run: |
+          node .github/scripts/callgraph_enhanced/check-codeql-exists.cjs
+
+      - name: Verify CodeQL Configuration
+        run: |
+          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs verify-config
+
+      - name: Remove existing CodeQL DB (if any)
+        run: |
+          rm -rf codeql-db
+
+      - name: Perform CodeQL Analysis
+        run: |
+          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs analyze
+
+      - name: Check CodeQL Analysis Results
+        run: |
+          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs check-results
+
+      - name: Debug CodeQL execution
+        run: |
+          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs debug
+
+      - name: Wait for CodeQL results
+        run: |
+          node -e "setTimeout(()=>{}, 10000)"
+
+      - name: Find and process CodeQL results
+        run: |
+          node .github/scripts/callgraph_enhanced/find-process-results.cjs
+
+      - name: Generate HTML graph
+        run: |
+          node .github/scripts/callgraph_enhanced/generate-html-graph.cjs
+
+      - name: Copy files to generated-docs and commit results
+        run: |
+          node .github/scripts/callgraph_enhanced/copy-commit-results.cjs
+
+--- 呼び出し元
+# 呼び出し元ワークフロー: call-callgraph_enhanced.yml
+name: Call Call Graph Enhanced
+
+on:
+  schedule:
+    # 毎日午前5時(JST) = UTC 20:00前日
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+jobs:
+  call-callgraph-enhanced:
+    # uses: cat2151/github-actions/.github/workflows/callgraph_enhanced.yml
+    uses: ./.github/workflows/callgraph_enhanced.yml # ローカルでのテスト用
+```
+
+# レビュー結果OKと判断する
+- レビュー結果を人力でレビューした形になった
+
+# test
+- #4 同様にローカル WSL + act でtestする
+- エラー。userのtest設計ミス。
+  - scriptの挙動 : src/ がある前提
+  - 今回の共通ワークフローのリポジトリ : src/ がない
+  - 今回testで実現したいこと
+    - 仮のソースでよいので、関数コールグラフを生成させる
+  - 対策
+    - src/ にダミーを配置する
+- test green
+  - ただしcommit pushはしてないので、html内容が0件NG、といったケースの検知はできない
+  - もしそうなったら別issueとしよう
+
+# test green
+
+# commit用に、yml 呼び出し元 uses をlocal用から本番用に書き換える
+
+# closeとする
+- もしhtml内容が0件NG、などになったら、別issueとするつもり
+
+{% endraw %}
+```
+
 ### .github/actions-tmp/issue-notes/4.md
 ```md
 {% raw %}
@@ -700,7 +929,8 @@ planにおいては、修正対象のソースファイル名と関数名を、�
         font-size: 16px;
         font-family: inherit;
         box-sizing: border-box;
-        background: var(--bg-color);
+        background: var(--panel-bg);
+        color: var(--text-color);
       }
       select:focus {
         outline: none;
@@ -714,7 +944,11 @@ planにおいては、修正対象のソースファイル名と関数名を、�
         font-size: 16px;
         font-family: inherit;
         box-sizing: border-box;
-        background: var(--bg-color);
+        background: var(--panel-bg);
+        color: var(--text-color);
+      }
+      input[type="text"]::placeholder {
+        color: var(--muted-text);
       }
       input[type="text"]:focus {
         outline: none;
@@ -993,7 +1227,7 @@ planにおいては、修正対象のソースファイル名と関数名を、�
       }
       .intonation-canvas-wrapper {
         display: grid;
-        grid-template-columns: 120px 1fr;
+        grid-template-columns: 88px 1fr;
         column-gap: 12px;
         align-items: stretch;
         touch-action: none;
@@ -1012,7 +1246,7 @@ planにおいては、修正対象のソースファイル名と関数名を、�
       }
       .intonation-range-value {
         position: relative;
-        padding: 6px 8px;
+        padding: 4px 6px;
         font-size: 13px;
         color: var(--muted-text);
         background: var(--panel-bg);
@@ -1039,7 +1273,7 @@ planにおいては、修正対象のソースファイル名と関数名を、�
       .intonation-controls--bottom {
       }
       .intonation-controls__button {
-        padding: 6px 8px;
+        padding: 4px 6px;
         font-size: 13px;
         margin-top: 0;
         width: 100%;
@@ -1064,7 +1298,7 @@ planにおいては、修正対象のソースファイル名と関数名を、�
         font-weight: 700;
       }
       #intonationCanvas {
-        width: 95%;
+        width: 100%;
         height: 200px;
         touch-action: none;
       }
@@ -1144,7 +1378,13 @@ planにおいては、修正対象のソースファイル名と関数名を、�
     <div class="container">
       <div class="style-row">
         <select id="styleSelect" aria-label="話者・ボイス選択"></select>
-        <input id="delimiterInput" type="text" aria-label="切替区切り文字" placeholder="例: [] または [ ]" />
+        <select id="speakerStyleSelect" aria-label="現在のキャラのスタイル選択"></select>
+        <input
+          id="delimiterInput"
+          type="text"
+          aria-label="切替区切り文字"
+          placeholder="空欄のままなら切り替えなし"
+        />
       </div>
 
       <div class="input-row">
@@ -1200,6 +1440,12 @@ planにおいては、修正対象のソースファイル名と関数名を、�
             aria-pressed="false"
             aria-label="キーボード操作を有効/無効にする"
           >キーボード操作: OFF</button>
+          <button
+            id="intonationResetButton"
+            class="secondary-button"
+            type="button"
+            aria-label="取得したイントネーションにリセットする"
+          >リセット</button>
           <button
             id="intonationFavoriteButton"
             class="secondary-button"
@@ -1261,45 +1507,6 @@ planにおいては、修正対象のソースファイル名と関数名を、�
 {% endraw %}
 ```
 
-### issue-notes/44.md
-```md
-{% raw %}
-# issue dark modeにて、styleと区切り文字の欄が、背景色も文字色もほぼ黒で、視認性が低い #44
-[issues #44](https://github.com/cat2151/voicevox-playground/issues/44)
-
-
-
-{% endraw %}
-```
-
-### issue-notes/45.md
-```md
-{% raw %}
-# issue イントネーション、キーボード操作、で、aとAを繰り返してもその中間の値が指定できず、もどかしい #45
-[issues #45](https://github.com/cat2151/voicevox-playground/issues/45)
-
-# 対策
-- aでup、Aでdownだが、1秒以内にa,A,aと入力したとき、aのup量を通常の1/2することで、中間の値を指定可能にする
-- 同様に、1秒以内にA,a,Aと入力したときは、Aのdown量を通常の1/2とする
-- 要は、upとdownを素早く交互に入力したときだけ、その中間の値を入力できるようにするということ
-- upもdownもなく1秒が経過したら、up量とdown量は通常に戻る
-- 要はステートマシンで、通常モードと、up/down半減モード、があるということ
-
-
-{% endraw %}
-```
-
-### issue-notes/50.md
-```md
-{% raw %}
-# issue イントネーション編集のマウス操作のレスポンスが悪い #50
-[issues #50](https://github.com/cat2151/voicevox-playground/issues/50)
-
-
-
-{% endraw %}
-```
-
 ### issue-notes/51.md
 ```md
 {% raw %}
@@ -1311,18 +1518,91 @@ planにおいては、修正対象のソースファイル名と関数名を、�
 {% endraw %}
 ```
 
-### issue-notes/56.md
+### issue-notes/64.md
 ```md
 {% raw %}
-# issue 巨大リファクタリングでいろいろエンバグしているので修正する #56
-[issues #56](https://github.com/cat2151/voicevox-playground/issues/56)
+# issue キーボードa-zの機能がエンバグしているので修正する #64
+[issues #64](https://github.com/cat2151/voicevox-playground/issues/64)
 
-- 波形表示欄にて、FFT推定周波数が、ポイントだけになってしまっている。折れ線グラフも描画すること
-- スペクトログラム欄にて、cache再生時に、「半透明上書き塗りつぶしスペクトログラム描画」されてどんどん画像がおかしくなってしまう。cache再生時は新たな描画はしないこと
-- スペクトログラム欄の色付けがおかしい。「FFT peakの大きい色から弱い色にかけて、グラデーションで色をつける」べし。スタンダードなのは最も強い部分がホワイト、次に強いのがオレンジ、次にレッド、次にブルー、次にブラック（peak 0）で、それを滑らかに色相（ブルーからブラックは明度）グラデーション、だった気がする。web検索して整理し、実現せよ。
-- 波形表示は上下いっぱいに拡大表示し、-6dB単位かつ文字が重ならないようにdBの薄いグリッド線を引くべし。
-- リアルタイム波形表示欄が完全に見えなくなっている。表示させること。
-- お気に入り管理欄は折りたたみ可能にせよ。
+- a-zは、対応したモーラにfocusするだけでなくaならup、Aならdownすること
+- 変化量は、最初にレスポンスで得たイントネーションminとmaxの間を10分割した1段階、で変化させること
+    - ctrlを押しながらの場合、変化量を1/2すること
+    - maxをoverしたら、同じ1段階ぶんだけmaxを増やす。minも同様。
+- これにより、キーボードで思考の速さでイントネーション調整できるUXの可能性を開く、ことを目指す
+
+{% endraw %}
+```
+
+### issue-notes/66.md
+```md
+{% raw %}
+# issue playボタンのplayマークがダサい #66
+[issues #66](https://github.com/cat2151/voicevox-playground/issues/66)
+
+- emojiをやめてSVGにせよ
+- ダウンロードボタンのフロッピーディスクemojiもダサいので外すべし
+
+{% endraw %}
+```
+
+### issue-notes/67.md
+```md
+{% raw %}
+# issue playボタンがstopボタンになっているとき、演奏stopができない #67
+[issues #67](https://github.com/cat2151/voicevox-playground/issues/67)
+
+- Tone.jsによるplayは、stopできるはず
+- stopできない原因を調査せよ
+- stopボタンにconsole.logをつけ、そもそもstop操作を受け付けているか？をデバッグできるようにせよ
+- あらゆる局面でstopができるようなアーキテクチャにせよ
+    - 例えばイントネーション編集中は、素早くstopして新たなイントネーション生成をするべきだろう
+    - 「playが終了するまでstop操作をまったく受け付けない、つまりstopができない」のではUXが悪い
+
+{% endraw %}
+```
+
+### issue-notes/68.md
+```md
+{% raw %}
+# issue styleプルダウン、区切り文字、の右に「ランダムstyle」チェックボックスをつける #68
+[issues #68](https://github.com/cat2151/voicevox-playground/issues/68)
+
+- デフォルトoff。
+- onにした場合、
+    - styleプルダウンがランダムで決定される。
+    - ループ再生ごとにランダムで変更される（なのでcache再生はされない）
+
+{% endraw %}
+```
+
+### issue-notes/72.md
+```md
+{% raw %}
+# issue イントネーション編集で、CTRL + 下や、下0.5x を押したとき、minが縮まないことがある #72
+[issues #72](https://github.com/cat2151/voicevox-playground/issues/72)
+
+# 事例
+- -0.0から縮まない
+- 現在編集中のイントネーションのminが5あっても、5に到達せず、-0.0のまま
+- 仮説
+    - もしかして「-0.0という、最初に生成したときのイントネーション初期min」よりも大きくできない、という制約になっている？
+    - もしそうなら、userの意図と違う。
+    - CTRL + 下や、下0.5x を押したときのminの制約は、「現在編集中のイントネーションのminより大きくはできない」である。
+        - この事例のケースだと、5まで到達してよい。-0.0でstopしてしまうのはuserの意図と違う。
+- max側も同様である
+
+{% endraw %}
+```
+
+### issue-notes/74.md
+```md
+{% raw %}
+# issue GitHub Actionsでビルドが落ちたら、issueを起票するようにする。cat2151の他のリポジトリのワークフローを参考にする #74
+[issues #74](https://github.com/cat2151/voicevox-playground/issues/74)
+
+# 落ちたビルドのURL
+- https://github.com/cat2151/voicevox-playground/actions/runs/21991496344/job/63539577377
+
 
 {% endraw %}
 ```
@@ -1355,21 +1635,30 @@ let intonationMaxValueEl: HTMLElement | null = null;
 let intonationMinValueEl: HTMLElement | null = null;
 let intonationFavoritesListEl: HTMLUListElement | null = null;
 let loopCheckboxEl: HTMLInputElement | null = null;
+let intonationInitialQuery: AudioQuery | null = null;
+let intonationInitialPitchRange: { min: number; max: number } | null = null;
+let intonationDisplayRange: { min: number; max: number } | null = null;
+let intonationRangeExtra = 0;
 let intonationPoints: IntonationPoint[] = [];
 let intonationPointPositions: Array<{ x: number; y: number }> = [];
 let intonationSelectedIndex: number | null = null;
 let intonationDebounceTimer: number | null = null;
 let intonationDragIndex: number | null = null;
 let intonationActivePointerId: number | null = null;
+let intonationPlaybackPending = false;
 let intonationChartRange: IntonationChartRange | null = null;
 let intonationTopScale = 1;
 let intonationBottomScale = 1;
+let intonationStepSize = 1;
 let intonationKeyboardEnabled = false;
 let currentIntonationStyleId = ZUNDAMON_SPEAKER_ID;
 let currentIntonationQuery: AudioQuery | null = null;
 let intonationDirty = false;
 let intonationFavorites: IntonationFavorite[] = [];
 let onStyleChange: ((styleId: number) => void) | null = null;
+let wheelHandlerAttached = false;
+let scrollLocked = false;
+let previousBodyOverflow: string | null = null;
 
 function isValidAudioQueryShape(query: unknown): query is AudioQuery {
   return (
@@ -1438,7 +1727,108 @@ function disableLoopOnIntonationEdit() {
   }
 }
 
+function getPitchRange(points: IntonationPoint[]): { min: number; max: number } {
+  if (points.length === 0) {
+    return { min: 0, max: 0 };
+  }
+  let min = points[0].pitch;
+  let max = points[0].pitch;
+  for (let i = 1; i < points.length; i += 1) {
+    const pitch = points[i].pitch;
+    if (pitch < min) min = pitch;
+    if (pitch > max) max = pitch;
+  }
+  return { min, max };
+}
+
+function calculateBasePadding(span: number) {
+  return span === 0 ? 0.1 : span * 0.1;
+}
+
+function getBaseDisplayRange(): { min: number; max: number } | null {
+  if (!intonationInitialPitchRange) return null;
+  const span = Math.max(intonationInitialPitchRange.max - intonationInitialPitchRange.min, 0);
+  const basePadding = calculateBasePadding(span);
+  const topPadding = basePadding * intonationTopScale;
+  const bottomPadding = basePadding * intonationBottomScale;
+  return {
+    min: intonationInitialPitchRange.min - bottomPadding,
+    max: intonationInitialPitchRange.max + topPadding,
+  };
+}
+
+function calculateDisplayRange(extra: number): { min: number; max: number } | null {
+  const baseRange = getBaseDisplayRange();
+  if (!baseRange) return null;
+  let min = baseRange.min - extra;
+  let max = baseRange.max + extra;
+  if (min >= max) {
+    const center = (min + max) / 2;
+    min = center - 0.0001;
+    max = center + 0.0001;
+  }
+  return { min, max };
+}
+
+function getMinimumAllowedExtra() {
+  const baseRange = getBaseDisplayRange();
+  if (!baseRange) return 0;
+  const dataRange = getPitchRange(intonationPoints);
+  const minExtraByMin = baseRange.min - dataRange.min;
+  const minExtraByMax = dataRange.max - baseRange.max;
+  return Math.max(minExtraByMin, minExtraByMax);
+}
+
+function applyRangeExtra(desiredExtra: number) {
+  const baseRange = getBaseDisplayRange();
+  if (!baseRange) return;
+  const minimumExtra = getMinimumAllowedExtra();
+  intonationRangeExtra = Math.max(desiredExtra, minimumExtra);
+  const range = calculateDisplayRange(intonationRangeExtra);
+  if (range) {
+    intonationDisplayRange = range;
+    if (intonationChartRange) {
+      intonationChartRange.min = range.min;
+      intonationChartRange.max = range.max;
+    }
+  }
+}
+
+function refreshDisplayRange() {
+  applyRangeExtra(intonationRangeExtra);
+}
+
+function clampPitchToDisplayRange(pitch: number) {
+  if (!intonationDisplayRange) return pitch;
+  return Math.min(Math.max(pitch, intonationDisplayRange.min), intonationDisplayRange.max);
+}
+
+export function calculateStepSize(range: { min: number; max: number }) {
+  const span = Math.max(range.max - range.min, 0);
+  const step = span / 10;
+  return step > 0 ? step : 0.1;
+}
+
+function handleIntonationWheel(event: WheelEvent) {
+  if (intonationDragIndex !== null) {
+    event.preventDefault();
+  }
+}
+
+function updateInitialRangeFromPoints(points: IntonationPoint[]) {
+  const range = getPitchRange(points);
+  intonationInitialPitchRange = range;
+  intonationStepSize = calculateStepSize(range);
+  intonationRangeExtra = 0;
+  refreshDisplayRange();
+}
+
 export function resetIntonationState() {
+  intonationInitialQuery = null;
+  intonationInitialPitchRange = null;
+  intonationDisplayRange = null;
+  intonationRangeExtra = 0;
+  intonationStepSize = 1;
   currentIntonationQuery = null;
   intonationPoints = [];
   intonationPointPositions = [];
@@ -1481,6 +1871,10 @@ export function initializeIntonationElements(options: {
   intonationFavorites = loadIntonationFavorites();
   persistIntonationFavorites();
   renderIntonationFavoritesList();
+  if (!wheelHandlerAttached) {
+    window.addEventListener('wheel', handleIntonationWheel, { passive: false });
+    wheelHandlerAttached = true;
+  }
 }
 
 export function isIntonationDirty() {
@@ -1599,20 +1993,14 @@ export function drawIntonationChart(points: IntonationPoint[]) {
     return;
   }
 
-  let min = points[0].pitch;
-  let max = points[0].pitch;
-  for (let i = 1; i < points.length; i += 1) {
-    const pitch = points[i].pitch;
-    if (pitch < min) min = pitch;
-    if (pitch > max) max = pitch;
+  if (!intonationInitialPitchRange) {
+    updateInitialRangeFromPoints(points);
   }
-
-  const span = Math.max(max - min, 0);
-  const basePadding = span === 0 ? 0.1 : span * 0.1;
-  const topPadding = basePadding * intonationTopScale;
-  const bottomPadding = basePadding * intonationBottomScale;
-  const rangeMin = min - bottomPadding;
-  const rangeMax = max + topPadding;
+  if (!intonationDisplayRange) {
+    refreshDisplayRange();
+  }
+  const rangeMin = intonationDisplayRange?.min ?? 0;
+  const rangeMax = intonationDisplayRange?.max ?? 10;
   const rangeSpan = Math.max(rangeMax - rangeMin, 0.0001);
 
   if (intonationChartRange) {
@@ -1628,7 +2016,7 @@ export function drawIntonationChart(points: IntonationPoint[]) {
   const pointSpacing = Math.max(1, (width - margin * 2) / Math.max(points.length - 1, 1));
   intonationPointPositions = points.map((point, index) => {
     const x = margin + index * pointSpacing;
-    const normalized = (point.pitch - rangeMin) / rangeSpan;
+    const normalized = (clampPitchToDisplayRange(point.pitch) - rangeMin) / rangeSpan;
     const y = height - margin - normalized * innerHeight;
     return { x, y };
   });
@@ -1683,6 +2071,7 @@ export function adjustIntonationScale(direction: 'top' | 'bottom', factor: numbe
   } else {
     intonationBottomScale = Math.max(0.05, intonationBottomScale * factor);
   }
+  refreshDisplayRange();
   drawIntonationChart(intonationPoints);
 }
 
@@ -1694,14 +2083,12 @@ function pitchFromY(y: number) {
   return min + normalized * (max - min);
 }
 
-function findNearestIntonationPoint(x: number, y: number) {
+function findNearestIntonationPoint(x: number) {
   if (!intonationPointPositions.length) return -1;
   let closestIndex = 0;
   let closestDistance = Infinity;
   intonationPointPositions.forEach((pos, index) => {
-    const dx = pos.x - x;
-    const dy = pos.y - y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const distance = Math.abs(pos.x - x);
     if (distance < closestDistance) {
       closestDistance = distance;
       closestIndex = index;
@@ -1735,6 +2122,36 @@ function scheduleIntonationPlayback() {
     }
     void playUpdatedIntonation();
   }, INTONATION_DEBOUNCE_MS);
+}
+
+async function replayCachedIntonationAudio() {
+  if (!appState.lastSynthesizedBuffer || appState.isProcessing) return false;
+  const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
+  const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
+  const renderedCanvas = document.getElementById('renderedWaveform') as HTMLCanvasElement | null;
+  const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
+  const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
+  try {
+    appState.isProcessing = true;
+    if (playButton) playButton.disabled = true;
+    updateExportButtonState(exportButton);
+    initializeVisualizationCanvases({ preserveSpectrogram: true });
+    const audioContext = Tone.getContext().rawContext as BaseAudioContext;
+    const decodedBuffer = await audioContext.decodeAudioData(appState.lastSynthesizedBuffer.slice(0));
+    if (renderedCanvas) {
+      drawRenderedWaveform(decodedBuffer, renderedCanvas);
+    }
+    await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas, { resetSpectrogram: false });
+    return true;
+  } catch (error) {
+    console.error('Intonation cache playback error:', error);
+    showStatus('キャッシュの再生に失敗しました', 'error');
+    return false;
+  } finally {
+    appState.isProcessing = false;
+    if (playButton) playButton.disabled = false;
+    updateExportButtonState(exportButton);
+  }
 }
 
 export async function playUpdatedIntonation() {
@@ -1792,12 +2209,14 @@ export async function fetchAndRenderIntonation(text: string, styleId: number) {
   try {
     const query = await getAudioQuery(text, styleId);
     const elapsed = performance.now() - start;
-    currentIntonationQuery = query;
+    intonationInitialQuery = cloneAudioQuery(query);
+    currentIntonationQuery = cloneAudioQuery(query);
     currentIntonationStyleId = styleId;
     intonationPoints = buildIntonationPointsFromQuery(query);
     intonationTopScale = 1;
     intonationBottomScale = 1;
     intonationSelectedIndex = intonationPoints.length > 0 ? 0 : null;
+    updateInitialRangeFromPoints(intonationPoints);
     drawIntonationChart(intonationPoints);
     intonationDirty = false;
     updateIntonationTiming(`イントネーション取得: ${Math.round(elapsed)} ms`);
@@ -1808,18 +2227,39 @@ export async function fetchAndRenderIntonation(text: string, styleId: number) {
   }
 }
 
+export function resetIntonationToInitial() {
+  if (!intonationInitialQuery) return;
+  currentIntonationQuery = cloneAudioQuery(intonationInitialQuery);
+  intonationPoints = buildIntonationPointsFromQuery(currentIntonationQuery);
+  intonationTopScale = 1;
+  intonationBottomScale = 1;
+  intonationSelectedIndex = intonationPoints.length > 0 ? 0 : null;
+  intonationDirty = false;
+  intonationPlaybackPending = false;
+  if (intonationDebounceTimer !== null) {
+    window.clearTimeout(intonationDebounceTimer);
+    intonationDebounceTimer = null;
+  }
+  updateInitialRangeFromPoints(intonationPoints);
+  drawIntonationChart(intonationPoints);
+}
+
 export function handleIntonationPointerDown(event: MouseEvent | PointerEvent) {
   if (event.button !== 0) return;
   if (!intonationCanvas || intonationPointPositions.length === 0) return;
   const rect = intonationCanvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  const targetIndex = findNearestIntonationPoint(x, y);
+  const targetIndex = findNearestIntonationPoint(x);
   if (targetIndex !== -1) {
     intonationDragIndex = targetIndex;
     intonationSelectedIndex = targetIndex;
     disableLoopOnIntonationEdit();
     intonationCanvas.focus();
+    if (!scrollLocked) {
+      previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      scrollLocked = true;
+    }
     if ('pointerId' in event) {
       intonationActivePointerId = event.pointerId;
       intonationCanvas.setPointerCapture(event.pointerId);
@@ -1833,28 +2273,43 @@ export function handleIntonationPointerMove(event: MouseEvent | PointerEvent) {
   if (intonationDragIndex === null || !intonationCanvas || intonationPointPositions.length === 0) {
     return;
   }
+  event.preventDefault();
   if ('pointerId' in event && intonationActivePointerId !== null && event.pointerId !== intonationActivePointerId) {
     return;
   }
   const rect = intonationCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const targetIndex = findNearestIntonationPoint(x);
+  if (targetIndex === -1) return;
+  intonationDragIndex = targetIndex;
   const y = event.clientY - rect.top;
-  const newPitch = pitchFromY(y);
-  intonationPoints[intonationDragIndex].pitch = newPitch;
-  intonationSelectedIndex = intonationDragIndex;
-  applyPitchToQuery(intonationDragIndex, newPitch);
+  refreshDisplayRange();
+  const newPitch = clampPitchToDisplayRange(pitchFromY(y));
+  intonationPoints[targetIndex].pitch = newPitch;
+  intonationSelectedIndex = targetIndex;
+  applyPitchToQuery(targetIndex, newPitch);
   disableLoopOnIntonationEdit();
   intonationDirty = true;
   drawIntonationChart(intonationPoints);
-  scheduleIntonationPlayback();
+  intonationPlaybackPending = true;
 }
 
 export function handleIntonationPointerUp() {
   if (intonationDragIndex !== null) {
     intonationDragIndex = null;
   }
+  if (scrollLocked) {
+    document.body.style.overflow = previousBodyOverflow ?? '';
+    scrollLocked = false;
+    previousBodyOverflow = null;
+  }
   if (intonationActivePointerId !== null && intonationCanvas) {
     intonationCanvas.releasePointerCapture(intonationActivePointerId);
     intonationActivePointerId = null;
+  }
+  if (intonationPlaybackPending) {
+    intonationPlaybackPending = false;
+    scheduleIntonationPlayback();
   }
 }
 
@@ -1862,26 +2317,9 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
   if (!intonationCanvas || intonationPointPositions.length === 0 || !intonationKeyboardEnabled) {
     return;
   }
-  if (event.key === 'Enter') {
+  if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
-    if (intonationSelectedIndex === null) {
-      intonationSelectedIndex = 0;
-      drawIntonationChart(intonationPoints);
-      return;
-    }
-    const targetIndex = intonationSelectedIndex;
-    const target = intonationPointPositions[targetIndex];
-    const rect = intonationCanvas.getBoundingClientRect();
-    const x = target.x + rect.left;
-    const y = target.y + rect.top;
-    const syntheticEvent = new PointerEvent('pointerdown', {
-      clientX: x,
-      clientY: y,
-      pointerId: 1,
-      bubbles: true,
-      cancelable: true,
-    });
-    intonationCanvas.dispatchEvent(syntheticEvent);
+    void replayCachedIntonationAudio();
     return;
   }
   if (event.key === 'Escape' || event.key === 'Esc') {
@@ -1894,25 +2332,6 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
     if (intonationSelectedIndex !== null) {
       intonationSelectedIndex = null;
       drawIntonationChart(intonationPoints);
-    }
-    return;
-  }
-  if (event.key === ' ' && intonationSelectedIndex !== null) {
-    const targetIndex = intonationSelectedIndex;
-    const target = intonationPointPositions[targetIndex];
-    if (target) {
-      const rect = intonationCanvas.getBoundingClientRect();
-      const x = target.x + rect.left;
-      const y = target.y + rect.top;
-      const syntheticEvent = new PointerEvent('pointerdown', {
-        clientX: x,
-        clientY: y,
-        pointerId: 1,
-        bubbles: true,
-        cancelable: true,
-      });
-      intonationCanvas.dispatchEvent(syntheticEvent);
-      event.preventDefault();
     }
     return;
   }
@@ -1941,11 +2360,23 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
   }
   if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
     event.preventDefault();
-    const range = intonationChartRange ? intonationChartRange.max - intonationChartRange.min : 0;
-    const delta = Math.max(range * 0.02, 1);
+    if (intonationSelectedIndex === null) {
+      intonationSelectedIndex = 0;
+    }
+    if (!intonationInitialPitchRange) {
+      updateInitialRangeFromPoints(intonationPoints);
+    }
+    refreshDisplayRange();
+    const step = intonationStepSize * (event.shiftKey && !event.ctrlKey ? 0.5 : 1);
+    if (event.ctrlKey) {
+      const rangeDelta = event.key === 'ArrowUp' ? step : -step;
+      applyRangeExtra(intonationRangeExtra + rangeDelta);
+      drawIntonationChart(intonationPoints);
+      return;
+    }
     const targetIndex = intonationSelectedIndex ?? 0;
-    const adjustment = event.key === 'ArrowUp' ? delta : -delta;
-    const newPitch = intonationPoints[targetIndex].pitch + adjustment;
+    const adjustment = event.key === 'ArrowUp' ? step : -step;
+    const newPitch = clampPitchToDisplayRange(intonationPoints[targetIndex].pitch + adjustment);
     intonationPoints[targetIndex].pitch = newPitch;
     applyPitchToQuery(targetIndex, newPitch);
     disableLoopOnIntonationEdit();
@@ -2019,12 +2450,14 @@ export function applyIntonationFavorite(item: IntonationFavorite) {
   }
   onStyleChange?.(item.styleId);
   currentIntonationStyleId = item.styleId;
+  intonationInitialQuery = cloneAudioQuery(item.query);
   currentIntonationQuery = cloneAudioQuery(item.query);
   intonationPoints = buildIntonationPointsFromQuery(currentIntonationQuery);
   intonationTopScale = 1;
   intonationBottomScale = 1;
   intonationSelectedIndex = intonationPoints.length > 0 ? 0 : null;
   intonationDirty = false;
+  updateInitialRangeFromPoints(intonationPoints);
   drawIntonationChart(intonationPoints);
   void playUpdatedIntonation();
 }
@@ -2054,571 +2487,9 @@ export function saveCurrentIntonationFavorite(selectedStyleId: number) {
 }
 
 export function refreshIntonationChart() {
+  refreshDisplayRange();
   drawIntonationChart(intonationPoints);
 }
-
-{% endraw %}
-```
-
-### src/main.ts
-```ts
-{% raw %}
-import * as Tone from 'tone';
-import { AUDIO_CACHE_LIMIT, AUTO_PLAY_DEBOUNCE_MS, DELIMITER_STORAGE_KEY, FrequencyScale } from './config';
-import { addToHistory, initializeTextLists } from './textLists';
-import {
-  adjustIntonationScale,
-  fetchAndRenderIntonation,
-  getIntonationKeyboardEnabled,
-  handleIntonationKeyDown,
-  handleIntonationPointerDown,
-  handleIntonationPointerMove,
-  handleIntonationPointerUp,
-  initializeIntonationCanvas,
-  initializeIntonationElements,
-  isIntonationDirty,
-  refreshIntonationChart,
-  resetIntonationState,
-  saveCurrentIntonationFavorite,
-  setIntonationKeyboardEnabled,
-  setStyleChangeHandler,
-} from './intonation';
-import { appState } from './state';
-import { updateExportButtonState } from './uiControls';
-import { showStatus, scheduleHideStatus } from './status';
-import { combineAudioBuffers, encodeAudioBufferToWav, getAudioQuery, synthesize } from './audio';
-import {
-  buildTextSegments,
-  fetchVoiceStyles,
-  getSelectedStyleId,
-  parseDelimiterConfig,
-  populateStyleSelect,
-  setSelectedStyleId,
-} from './styleManager';
-import {
-  drawRenderedWaveform,
-  getSpectrogramScale,
-  initializeVisualizationCanvases,
-  isPlaybackActive,
-  playAudio,
-  requestSpectrogramReset,
-  stopActivePlayback,
-  setSpectrogramScale,
-} from './visualization';
-
-const audioCache = new Map<string, ArrayBuffer>();
-let autoPlayTimer: number | null = null;
-let delimiterSaveTimer: number | null = null;
-let favoritesListEl: HTMLUListElement | null = null;
-let historyListEl: HTMLUListElement | null = null;
-let intonationFavoritesListEl: HTMLUListElement | null = null;
-let loopCheckboxEl: HTMLInputElement | null = null;
-let playRequestPending = false;
-let stopInProgress = false;
-
-function setPlayButtonAppearance(mode: 'play' | 'stop') {
-  const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
-  if (!playButton) return;
-  if (mode === 'play') {
-    playButton.innerHTML = '<span aria-hidden="true">▶️</span>';
-    playButton.setAttribute('aria-label', 'Play');
-    playButton.title = 'Play';
-  } else {
-    playButton.innerHTML = '<span aria-hidden="true">⏹️</span>';
-    playButton.setAttribute('aria-label', 'Stop');
-    playButton.title = 'Stop';
-  }
-}
-
-function stopPlaybackAndResetLoop() {
-  stopInProgress = true;
-  stopActivePlayback();
-  if (loopCheckboxEl) {
-    loopCheckboxEl.checked = false;
-  }
-  setPlayButtonAppearance('play');
-  setTimeout(() => {
-    stopInProgress = false;
-  }, 0);
-}
-
-function getAudioCacheKey(text: string, styleId: number) {
-  return `${styleId}::${text}`;
-}
-
-function setTextAndPlay(text: string) {
-  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
-  if (!textArea) return;
-  textArea.value = text;
-  if (autoPlayTimer !== null) {
-    window.clearTimeout(autoPlayTimer);
-    autoPlayTimer = null;
-  }
-  scheduleAutoPlay();
-}
-
-function downloadLastAudio() {
-  if (!appState.lastSynthesizedBuffer) return;
-
-  const blob = new Blob([appState.lastSynthesizedBuffer], { type: 'audio/wav' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'voicevox-output.wav';
-  document.body.appendChild(link);
-  link.click();
-  window.setTimeout(() => {
-    URL.revokeObjectURL(url);
-    link.remove();
-  }, 0);
-}
-
-function scheduleAutoPlay() {
-  if (autoPlayTimer !== null) {
-    window.clearTimeout(autoPlayTimer);
-  }
-
-  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
-  if (!textArea) return;
-  const text = textArea.value.trim();
-  if (!text) {
-    autoPlayTimer = null;
-    return;
-  }
-
-  const triggerPlay = () => {
-    autoPlayTimer = null;
-    if (appState.isProcessing) {
-      autoPlayTimer = window.setTimeout(triggerPlay, AUTO_PLAY_DEBOUNCE_MS);
-      return;
-    }
-    void handlePlay();
-  };
-
-  autoPlayTimer = window.setTimeout(triggerPlay, AUTO_PLAY_DEBOUNCE_MS);
-}
-
-async function confirmResetIntonationBeforePlay() {
-  const dialog = document.getElementById('playConfirmDialog');
-  const resetButton = document.getElementById('playConfirmReset');
-  const cancelButton = document.getElementById('playConfirmCancel');
-  if (!dialog || !resetButton || !cancelButton) {
-    return window.confirm('イントネーションの編集内容が破棄されます。再生してよろしいですか？');
-  }
-  const previousActiveElement = document.activeElement as HTMLElement | null;
-  dialog.removeAttribute('hidden');
-  let settled = false;
-  let keydownHandler: ((event: KeyboardEvent) => void) | null = null;
-  const cleanup = () => {
-    if (settled) return;
-    settled = true;
-    dialog.setAttribute('hidden', 'true');
-    if (keydownHandler) {
-      dialog.removeEventListener('keydown', keydownHandler);
-    }
-    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
-      previousActiveElement.focus();
-    }
-  };
-  (resetButton as HTMLElement).focus();
-  return new Promise<boolean>((resolve) => {
-    const handleReset = () => {
-      cleanup();
-      resolve(true);
-    };
-    const handleCancel = () => {
-      cleanup();
-      resolve(false);
-    };
-    keydownHandler = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' || event.key === 'Esc') {
-        event.preventDefault();
-        handleCancel();
-      }
-    };
-    dialog.addEventListener('keydown', keydownHandler);
-    resetButton.addEventListener('click', handleReset, { once: true });
-    cancelButton.addEventListener('click', handleCancel, { once: true });
-  });
-}
-
-function handlePlayButtonClick() {
-  if (stopInProgress || playRequestPending) {
-    return;
-  }
-  if (isPlaybackActive()) {
-    stopPlaybackAndResetLoop();
-    return;
-  }
-  if (appState.isProcessing) {
-    return;
-  }
-  void handlePlay();
-}
-
-async function handlePlay() {
-  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
-  const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
-  const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
-  const renderedCanvas = document.getElementById('renderedWaveform') as HTMLCanvasElement | null;
-  const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
-  const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
-  const loopCheckbox = document.getElementById('loopCheckbox') as HTMLInputElement | null;
-  const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
-  const delimiterInput = document.getElementById('delimiterInput') as HTMLInputElement | null;
-
-  if (!textArea || !playButton) {
-    console.error('Required UI elements not found');
-    return;
-  }
-
-  const text = textArea.value.trim();
-
-  if (!text) {
-    showStatus('テキストを入力してください', 'error');
-    return;
-  }
-
-  if (styleSelect && styleSelect.value) {
-    const parsed = Number(styleSelect.value);
-    if (!Number.isNaN(parsed)) {
-      setSelectedStyleId(parsed);
-    }
-  }
-
-  const delimiter = parseDelimiterConfig(delimiterInput?.value ?? '');
-  const segments = buildTextSegments(text, delimiter, getSelectedStyleId());
-  if (segments.length === 0) {
-    showStatus('テキストを入力してください', 'error');
-    return;
-  }
-
-  if (appState.isProcessing || playRequestPending) {
-    return;
-  }
-
-  if (isIntonationDirty()) {
-    const shouldReset = await confirmResetIntonationBeforePlay();
-    if (!shouldReset) {
-      return;
-    }
-    resetIntonationState();
-  }
-
-  playRequestPending = true;
-  appState.isProcessing = true;
-  playButton.disabled = true;
-  updateExportButtonState(exportButton);
-
-  try {
-    const audioContext = Tone.getContext().rawContext as BaseAudioContext;
-    const decodedBuffers: AudioBuffer[] = [];
-    let usedCache = false;
-    let allSegmentsCached = true;
-    const currentSignature = segments.map((segment) => getAudioCacheKey(segment.text, segment.styleId)).join('|');
-    for (const segment of segments) {
-      const cacheKey = getAudioCacheKey(segment.text, segment.styleId);
-      let audioBuffer = audioCache.get(cacheKey) ?? null;
-      if (audioBuffer) {
-        usedCache = true;
-      } else {
-        allSegmentsCached = false;
-        showStatus('音声クエリを作成中...', 'info');
-        const audioQuery = await getAudioQuery(segment.text, segment.styleId);
-        showStatus('音声を生成中...', 'info');
-        audioBuffer = await synthesize(audioQuery, segment.styleId);
-        if (audioCache.size >= AUDIO_CACHE_LIMIT) {
-          const oldest = audioCache.keys().next().value;
-          if (oldest !== undefined) {
-            audioCache.delete(oldest);
-          }
-        }
-        audioCache.set(cacheKey, audioBuffer);
-      }
-      const decodedBuffer = await audioContext.decodeAudioData(audioBuffer.slice(0));
-      decodedBuffers.push(decodedBuffer);
-    }
-
-    const combinedBuffer = combineAudioBuffers(decodedBuffers, audioContext);
-    if (!combinedBuffer) {
-      throw new Error('音声の結合に失敗しました。');
-    }
-
-    appState.lastSynthesizedBuffer = encodeAudioBufferToWav(combinedBuffer);
-
-    const shouldPreserveSpectrogram = allSegmentsCached && appState.lastSpectrogramSignature === currentSignature;
-    initializeVisualizationCanvases({ preserveSpectrogram: shouldPreserveSpectrogram });
-    if (renderedCanvas) {
-      drawRenderedWaveform(combinedBuffer, renderedCanvas);
-    }
-
-    if (!usedCache) {
-      showStatus('音声を再生中...', 'info');
-    } else {
-      showStatus('音声を再生中（キャッシュ）...', 'info');
-    }
-    setPlayButtonAppearance('stop');
-    playButton.disabled = false;
-    const playbackResult = await playAudio(combinedBuffer, realtimeCanvas, spectrogramCanvas, {
-      resetSpectrogram: !shouldPreserveSpectrogram,
-    });
-    if (playbackResult.stopped) {
-      showStatus('再生を停止しました', 'info');
-      scheduleHideStatus(1500);
-      return;
-    }
-    appState.lastSpectrogramSignature = currentSignature;
-    const spokenText = segments.map((segment) => segment.text).join('');
-    const intonationStyleId = segments[0]?.styleId ?? getSelectedStyleId();
-    await fetchAndRenderIntonation(spokenText, intonationStyleId);
-    addToHistory(text);
-
-    showStatus('再生完了！', 'success');
-    scheduleHideStatus(3000);
-
-    if (loopCheckbox?.checked) {
-      setTimeout(() => {
-        if (loopCheckbox.checked) {
-          void handlePlay();
-        }
-      }, 0);
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    showStatus(
-      `エラーが発生しました: ${error instanceof Error ? error.message : String(error)}`,
-      'error'
-    );
-  } finally {
-    setPlayButtonAppearance('play');
-    playButton.disabled = false;
-    playRequestPending = false;
-    appState.isProcessing = false;
-    updateExportButtonState(exportButton);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
-  const textArea = document.getElementById('text') as HTMLTextAreaElement | null;
-  const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
-  const usageToggleButton = document.getElementById('usageToggleButton') as HTMLButtonElement | null;
-  const usagePanel = document.getElementById('usagePanel');
-  const spectrogramScaleToggle = document.getElementById('spectrogramScaleToggle') as HTMLButtonElement | null;
-  const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
-  const delimiterInput = document.getElementById('delimiterInput') as HTMLInputElement | null;
-  const favoritesToggleButton = document.getElementById('favoritesToggleButton') as HTMLButtonElement | null;
-  const favoritesPanel = document.getElementById('favoritesPanel');
-  favoritesListEl = document.getElementById('favoritesList') as HTMLUListElement | null;
-  historyListEl = document.getElementById('historyList') as HTMLUListElement | null;
-  intonationFavoritesListEl = document.getElementById('intonationFavoritesList') as HTMLUListElement | null;
-  const intonationCanvas = document.getElementById('intonationCanvas') as HTMLCanvasElement | null;
-  const intonationTimingEl = null;
-  const intonationLabelsEl = document.getElementById('intonationLabels');
-  const intonationMaxValueEl = document.getElementById('intonationMaxValue');
-  const intonationMinValueEl = document.getElementById('intonationMinValue');
-  const intonationExpandTop = document.getElementById('intonationExpandTop') as HTMLButtonElement | null;
-  const intonationShrinkTop = document.getElementById('intonationShrinkTop') as HTMLButtonElement | null;
-  const intonationShrinkBottom = document.getElementById('intonationShrinkBottom') as HTMLButtonElement | null;
-  const intonationExpandBottom = document.getElementById('intonationExpandBottom') as HTMLButtonElement | null;
-  const intonationKeyboardToggle = document.getElementById('intonationKeyboardToggle') as HTMLButtonElement | null;
-  const intonationFavoriteButton = document.getElementById('intonationFavoriteButton') as HTMLButtonElement | null;
-  loopCheckboxEl = document.getElementById('loopCheckbox') as HTMLInputElement | null;
-
-  if (loopCheckboxEl) {
-    loopCheckboxEl.addEventListener('change', () => {
-      if (
-        loopCheckboxEl?.checked &&
-        !appState.isProcessing &&
-        !isPlaybackActive() &&
-        !playRequestPending
-      ) {
-        void handlePlay();
-      }
-    });
-  }
-
-  setStyleChangeHandler((styleId) => {
-    setSelectedStyleId(styleId);
-  });
-
-  if (playButton) {
-    playButton.addEventListener('click', handlePlayButtonClick);
-    setPlayButtonAppearance('play');
-    playButton.focus();
-  }
-
-  if (textArea) {
-    textArea.addEventListener('input', scheduleAutoPlay);
-  }
-
-  if (exportButton) {
-    exportButton.addEventListener('click', downloadLastAudio);
-    updateExportButtonState(exportButton);
-  }
-
-  if (styleSelect) {
-    populateStyleSelect(styleSelect);
-    styleSelect.addEventListener('change', () => {
-      const parsed = Number(styleSelect.value);
-      if (!Number.isNaN(parsed)) {
-        setSelectedStyleId(parsed);
-      }
-    });
-  }
-  void fetchVoiceStyles(styleSelect ?? null);
-
-  if (delimiterInput) {
-    try {
-      const savedDelimiter = localStorage.getItem(DELIMITER_STORAGE_KEY);
-      if (savedDelimiter !== null) {
-        delimiterInput.value = savedDelimiter;
-      }
-    } catch (error) {
-      console.warn('Failed to restore delimiter config:', error);
-    }
-
-    const saveDelimiter = () => {
-      try {
-        localStorage.setItem(DELIMITER_STORAGE_KEY, delimiterInput.value);
-      } catch (error) {
-        console.warn('Failed to save delimiter config:', error);
-      }
-    };
-    const scheduleSaveDelimiter = () => {
-      if (delimiterSaveTimer !== null) {
-        window.clearTimeout(delimiterSaveTimer);
-      }
-      delimiterSaveTimer = window.setTimeout(saveDelimiter, AUTO_PLAY_DEBOUNCE_MS);
-    };
-    delimiterInput.addEventListener('input', scheduleSaveDelimiter);
-  }
-
-  if (usageToggleButton && usagePanel) {
-    usageToggleButton.addEventListener('click', () => {
-      const isHidden = usagePanel.hasAttribute('hidden');
-      if (isHidden) {
-        usagePanel.removeAttribute('hidden');
-      } else {
-        usagePanel.setAttribute('hidden', 'true');
-      }
-      usageToggleButton.setAttribute('aria-expanded', String(isHidden));
-    });
-  }
-
-  if (favoritesToggleButton && favoritesPanel) {
-    favoritesToggleButton.addEventListener('click', () => {
-      const isHidden = favoritesPanel.hasAttribute('hidden');
-      if (isHidden) {
-        favoritesPanel.removeAttribute('hidden');
-      } else {
-        favoritesPanel.setAttribute('hidden', 'true');
-      }
-      favoritesToggleButton.setAttribute('aria-expanded', String(isHidden));
-    });
-  }
-
-  initializeTextLists({
-    favoritesList: favoritesListEl,
-    historyList: historyListEl,
-    onSelectText: setTextAndPlay,
-  });
-
-  initializeIntonationElements({
-    canvas: intonationCanvas,
-    timingEl: intonationTimingEl,
-    labelsEl: intonationLabelsEl,
-    maxValueEl: intonationMaxValueEl,
-    minValueEl: intonationMinValueEl,
-    favoritesListEl: intonationFavoritesListEl,
-    loopCheckbox: loopCheckboxEl,
-  });
-
-  const updateSpectrogramScaleLabel = () => {
-    if (spectrogramScaleToggle) {
-      const scale = getSpectrogramScale();
-      const isLogScale = scale === 'log';
-      const nextLabel = isLogScale ? 'リニアにする' : '対数にする';
-      spectrogramScaleToggle.textContent = nextLabel;
-      spectrogramScaleToggle.setAttribute('aria-pressed', String(isLogScale));
-      spectrogramScaleToggle.setAttribute('aria-label', `スペクトログラムのスケールを${nextLabel}`);
-    }
-  };
-
-  if (spectrogramScaleToggle) {
-    updateSpectrogramScaleLabel();
-    spectrogramScaleToggle.addEventListener('click', () => {
-      const nextScale: FrequencyScale = getSpectrogramScale() === 'linear' ? 'log' : 'linear';
-      setSpectrogramScale(nextScale);
-      initializeVisualizationCanvases();
-      requestSpectrogramReset();
-      updateSpectrogramScaleLabel();
-    });
-  }
-
-  const updateIntonationKeyboardToggle = () => {
-    if (intonationKeyboardToggle) {
-      const enabled = getIntonationKeyboardEnabled();
-      intonationKeyboardToggle.textContent = enabled ? 'キーボード操作: ON' : 'キーボード操作: OFF';
-      intonationKeyboardToggle.setAttribute('aria-pressed', String(enabled));
-      intonationKeyboardToggle.setAttribute(
-        'aria-label',
-        enabled ? 'キーボード操作を無効にする' : 'キーボード操作を有効にする'
-      );
-    }
-  };
-
-  if (intonationKeyboardToggle) {
-    updateIntonationKeyboardToggle();
-    intonationKeyboardToggle.addEventListener('click', () => {
-      setIntonationKeyboardEnabled(!getIntonationKeyboardEnabled());
-      updateIntonationKeyboardToggle();
-      if (getIntonationKeyboardEnabled() && intonationCanvas) {
-        intonationCanvas.focus();
-      }
-      refreshIntonationChart();
-    });
-  }
-
-  if (intonationFavoriteButton) {
-    intonationFavoriteButton.addEventListener('click', () =>
-      saveCurrentIntonationFavorite(getSelectedStyleId())
-    );
-  }
-
-  if (intonationExpandTop) {
-    intonationExpandTop.addEventListener('click', () => adjustIntonationScale('top', 2));
-  }
-  if (intonationShrinkTop) {
-    intonationShrinkTop.addEventListener('click', () => adjustIntonationScale('top', 0.5));
-  }
-  if (intonationShrinkBottom) {
-    intonationShrinkBottom.addEventListener('click', () => adjustIntonationScale('bottom', 0.5));
-  }
-  if (intonationExpandBottom) {
-    intonationExpandBottom.addEventListener('click', () => adjustIntonationScale('bottom', 2));
-  }
-
-  if (intonationCanvas) {
-    intonationCanvas.addEventListener('pointerdown', handleIntonationPointerDown);
-    intonationCanvas.addEventListener('pointermove', handleIntonationPointerMove);
-    intonationCanvas.addEventListener('pointerleave', handleIntonationPointerUp);
-    intonationCanvas.addEventListener('keydown', handleIntonationKeyDown);
-    intonationCanvas.addEventListener('focus', () => {
-      refreshIntonationChart();
-    });
-  }
-  window.addEventListener('mouseup', handleIntonationPointerUp);
-  window.addEventListener('pointerup', handleIntonationPointerUp);
-
-  initializeVisualizationCanvases();
-  initializeIntonationCanvas();
-  window.addEventListener('resize', () => {
-    initializeVisualizationCanvases();
-    initializeIntonationCanvas();
-    refreshIntonationChart();
-  });
-});
 
 {% endraw %}
 ```
@@ -2644,6 +2515,13 @@ let realtimeSegmentBuffer: Float32Array | null = null;
 let fftMagnitudeBuffer: Float32Array | null = null;
 let fftHpsBuffer: Float32Array | null = null;
 let activePlaybackStopper: (() => void) | null = null;
+const SPECTROGRAM_COLOR_STOPS = [
+  { stop: 0, color: [0, 0, 0] }, // black
+  { stop: 0.25, color: [0, 64, 192] }, // blue
+  { stop: 0.5, color: [210, 40, 40] }, // red
+  { stop: 0.75, color: [255, 165, 0] }, // orange
+  { stop: 1, color: [255, 255, 255] }, // white
+];
 
 export function getSpectrogramScale() {
   return spectrogramScale;
@@ -2747,6 +2625,29 @@ function getHannWindow(size: number) {
   return window;
 }
 
+function lerpColor(a: number[], b: number[], t: number) {
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * t),
+    Math.round(a[1] + (b[1] - a[1]) * t),
+    Math.round(a[2] + (b[2] - a[2]) * t),
+  ];
+}
+
+function mapIntensityToSpectrogramColor(intensity: number) {
+  const clamped = Math.max(0, Math.min(1, intensity));
+  for (let i = 0; i < SPECTROGRAM_COLOR_STOPS.length - 1; i++) {
+    const current = SPECTROGRAM_COLOR_STOPS[i];
+    const next = SPECTROGRAM_COLOR_STOPS[i + 1];
+    if (clamped >= current.stop && clamped <= next.stop) {
+      const localT = (clamped - current.stop) / Math.max(next.stop - current.stop, 1e-6);
+      const [r, g, b] = lerpColor(current.color, next.color, localT);
+      return `rgb(${r},${g},${b})`;
+    }
+  }
+  const [r, g, b] = SPECTROGRAM_COLOR_STOPS[SPECTROGRAM_COLOR_STOPS.length - 1].color;
+  return `rgb(${r},${g},${b})`;
+}
+
 function estimateFrequencySeries(
   channelData: Float32Array,
   sampleRate: number,
@@ -2818,8 +2719,47 @@ export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElem
 
   const channelData = buffer.getChannelData(0);
   const totalSamples = channelData.length;
+  let maxAbs = 0;
+  for (let i = 0; i < totalSamples; i++) {
+    const abs = Math.abs(channelData[i]);
+    if (abs > maxAbs) {
+      maxAbs = abs;
+    }
+  }
   const samplesPerPixel = Math.max(1, Math.floor(totalSamples / width));
-  const halfHeight = (height * WAVEFORM_TARGET_RATIO) / 2;
+  const baseHalfHeight = (height * WAVEFORM_TARGET_RATIO) / 2;
+  const amplitudeScale = baseHalfHeight / Math.max(maxAbs, 1e-4);
+  const centerY = height / 2;
+
+  ctx.save();
+  ctx.strokeStyle = getColorVariable('--grid-color', 'rgba(0,0,0,0.08)');
+  ctx.fillStyle = getColorVariable('--axis-label', '#666666');
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const labelMetrics = ctx.measureText('-00 dB');
+  const labelHeight = (labelMetrics.actualBoundingBoxAscent ?? 0) + (labelMetrics.actualBoundingBoxDescent ?? 0);
+  const minLabelGap = Math.max(11, Math.ceil(labelHeight || 0)) + 2;
+  let lastLabelY: number | null = null;
+  for (let db = 0; db >= -60; db -= 6) {
+    const amplitudeRatio = 10 ** (db / 20);
+    const offset = amplitudeRatio * baseHalfHeight;
+    if (offset > height) break;
+    const positions = [centerY - offset, centerY + offset];
+    const label = `${db} dB`;
+    for (const y of positions) {
+      if (y < 0 || y > height) continue;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+      if (lastLabelY === null || Math.abs(y - lastLabelY) >= minLabelGap) {
+        ctx.fillText(label, 6, y);
+        lastLabelY = y;
+      }
+    }
+  }
+  ctx.restore();
 
   ctx.strokeStyle = getColorVariable('--primary-color', '#4CAF50');
   ctx.beginPath();
@@ -2833,19 +2773,30 @@ export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElem
       if (value < min) min = value;
       if (value > max) max = value;
     }
-    const yMin = height / 2 - min * halfHeight;
-    const yMax = height / 2 - max * halfHeight;
+    const yMin = centerY - min * amplitudeScale;
+    const yMax = centerY - max * amplitudeScale;
     ctx.moveTo(x, yMin);
     ctx.lineTo(x, yMax);
   }
   ctx.stroke();
 
   const frequencies = estimateFrequencySeries(channelData, buffer.sampleRate, width / 6);
-  ctx.fillStyle = getColorVariable('--highlight-color', '#ff9800');
-  for (const freq of frequencies) {
-    const x = (freq.time / buffer.duration) * width;
-    const y = height - (Math.log10(freq.freq + 1) / Math.log10(buffer.sampleRate / 2 + 1)) * height;
-    ctx.fillRect(x - 1, y - 1, 2, 2);
+  if (frequencies.length > 0) {
+    const highlightColor = getColorVariable('--highlight-color', '#ff9800');
+    ctx.strokeStyle = highlightColor;
+    ctx.fillStyle = highlightColor;
+    ctx.beginPath();
+    frequencies.forEach((freq, index) => {
+      const x = (freq.time / buffer.duration) * width;
+      const y = height - (Math.log10(freq.freq + 1) / Math.log10(buffer.sampleRate / 2 + 1)) * height;
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+      ctx.fillRect(x - 1, y - 1, 2, 2);
+    });
+    ctx.stroke();
   }
 
   ctx.strokeStyle = getColorVariable('--grid-color', 'rgba(0,0,0,0.1)');
@@ -2909,8 +2860,16 @@ function drawRealtimeWaveform(
   const segmentLength = Math.max(1, Math.min(targetSamples, windowSize));
 
   const segment = extractAlignedRealtimeSegment(windowed, segmentLength);
+  let segmentMaxAbs = 0;
+  for (let i = 0; i < segment.length; i++) {
+    const abs = Math.abs(segment[i]);
+    if (abs > segmentMaxAbs) {
+      segmentMaxAbs = abs;
+    }
+  }
   const samplesPerPixel = Math.max(1, segment.length / width);
-  const halfHeight = (height * WAVEFORM_TARGET_RATIO) / 2;
+  const baseHalfHeight = (height * WAVEFORM_TARGET_RATIO) / 2;
+  const amplitudeScale = baseHalfHeight / Math.max(segmentMaxAbs, 1e-4);
 
   ctx.strokeStyle = getColorVariable('--primary-color', '#4CAF50');
   ctx.beginPath();
@@ -2924,8 +2883,8 @@ function drawRealtimeWaveform(
       if (value < min) min = value;
       if (value > max) max = value;
     }
-    const yMin = height / 2 - min * halfHeight;
-    const yMax = height / 2 - max * halfHeight;
+    const yMin = height / 2 - min * amplitudeScale;
+    const yMax = height / 2 - max * amplitudeScale;
     ctx.moveTo(x, yMin);
     ctx.lineTo(x, yMax);
   }
@@ -3085,19 +3044,11 @@ function drawSpectrogram(
   const maxFreq = Math.max(sampleRate / 2, 1);
   const cappedTargetX = Math.min(drawableWidth, Math.max(0, Math.floor(progress * drawableWidth)));
   const targetX = cappedTargetX;
-  const startX = reset || targetX <= previousX ? 0 : previousX;
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, drawableHeight);
-  const colorStops = [
-    { stop: 0, color: getColorVariable('--spectrogram-high', '#ff2a6d') },
-    { stop: 0.25, color: getColorVariable('--spectrogram-mid-high', '#f8c102') },
-    { stop: 0.5, color: getColorVariable('--spectrogram-mid', '#7fff7f') },
-    { stop: 0.75, color: getColorVariable('--spectrogram-mid-low', '#2a93d5') },
-    { stop: 1, color: getColorVariable('--spectrogram-low', '#3e1bdb') },
-  ];
-  colorStops.forEach(({ stop, color }) => gradient.addColorStop(stop, color));
-
-  const resetX = reset ? 0 : startX;
+  const drawRange = reset
+    ? { start: 0, end: targetX }
+    : targetX > previousX
+      ? { start: Math.max(previousX + 1, 0), end: targetX }
+      : null;
   if (reset) {
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
@@ -3108,39 +3059,41 @@ function drawSpectrogram(
   const MIN_DB = -100;
   const MAX_DB = 0;
   ctx.save();
-  for (let x = resetX; x <= targetX; x++) {
-    const columnX = leftMargin + x;
-    for (let bin = 0; bin < values.length; bin++) {
-      const magnitudeDb = values[bin];
-      const clampedDb = Math.max(MIN_DB, Math.min(MAX_DB, magnitudeDb));
-      const intensity = (clampedDb - MIN_DB) / (MAX_DB - MIN_DB);
-      if (intensity <= 0) continue;
+  ctx.globalAlpha = 1;
+  if (drawRange) {
+    for (let x = drawRange.start; x <= drawRange.end; x++) {
+      const columnX = leftMargin + x;
+      for (let bin = 0; bin < values.length; bin++) {
+        const magnitudeDb = values[bin];
+        const clampedDb = Math.max(MIN_DB, Math.min(MAX_DB, magnitudeDb));
+        const intensity = (clampedDb - MIN_DB) / (MAX_DB - MIN_DB);
+        if (intensity <= 0) continue;
 
-      const freq = (bin / ceilingIndex) * maxFreq;
-      const normalized = scale === 'log'
-        ? (freq <= 0
-            ? 0
-            : (Math.log10(Math.max(freq, minLogFreq)) - Math.log10(minLogFreq)) /
-              Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
-        : freq / maxFreq;
+        const freq = (bin / ceilingIndex) * maxFreq;
+        const normalized = scale === 'log'
+          ? (freq <= 0
+              ? 0
+              : (Math.log10(Math.max(freq, minLogFreq)) - Math.log10(minLogFreq)) /
+                Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
+          : freq / maxFreq;
 
-      const nextBin = bin + 1;
-      const nextFreq = nextBin > ceilingIndex ? maxFreq : (nextBin / ceilingIndex) * maxFreq;
-      const nextNormalized = scale === 'log'
-        ? (nextFreq <= 0
-            ? 0
-            : (Math.log10(Math.max(nextFreq, minLogFreq)) - Math.log10(minLogFreq)) /
-              Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
-        : nextFreq / maxFreq;
+        const nextBin = bin + 1;
+        const nextFreq = nextBin > ceilingIndex ? maxFreq : (nextBin / ceilingIndex) * maxFreq;
+        const nextNormalized = scale === 'log'
+          ? (nextFreq <= 0
+              ? 0
+              : (Math.log10(Math.max(nextFreq, minLogFreq)) - Math.log10(minLogFreq)) /
+                Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
+          : nextFreq / maxFreq;
 
-      const yTop = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
-      const yBottom = drawableHeight - Math.min(nextNormalized * drawableHeight, drawableHeight);
-      const rectY = Math.min(yTop, yBottom);
-      const rectHeight = Math.max(1, Math.abs(yBottom - yTop));
+        const yTop = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
+        const yBottom = drawableHeight - Math.min(nextNormalized * drawableHeight, drawableHeight);
+        const rectY = Math.min(yTop, yBottom);
+        const rectHeight = Math.max(1, Math.abs(yBottom - yTop));
 
-      ctx.globalAlpha = intensity;
-      ctx.fillStyle = gradient;
-      ctx.fillRect(columnX, rectY, 1, rectHeight);
+        ctx.fillStyle = mapIntensityToSpectrogramColor(intensity);
+        ctx.fillRect(columnX, rectY, 1, rectHeight);
+      }
     }
   }
   ctx.restore();
@@ -3153,7 +3106,7 @@ function drawSpectrogram(
   ctx.lineTo(width, drawableHeight);
   ctx.stroke();
 
-  if (reset || targetX <= startX) {
+  if (reset || targetX <= previousX) {
     ctx.strokeStyle = getColorVariable('--grid-color', 'rgba(0,0,0,0.05)');
     ctx.beginPath();
     const tickSpacing = Math.max(MIN_TICK_SPACING_PX, width / 10);
@@ -3313,21 +3266,27 @@ export async function playAudio(
     if (fftAnalyser && spectrogramCanvas) {
       const values = fftAnalyser.getValue() as Float32Array;
       currentEstimatedFrequency = estimateFundamentalFrequency(values, sampleRate);
-      spectrogramCeiling = determineSpectrogramCeiling(values, spectrogramCeiling || values.length - 1);
       const needsReset = spectrogramNeedsReset || lastSpectrogramScale !== spectrogramScale;
-      spectrogramX = drawSpectrogram(
-        values,
-        spectrogramCanvas,
-        progress,
-        spectrogramCeiling,
-        spectrogramX,
-        sampleRate,
-        spectrogramScale,
-        needsReset
-      );
-      if (needsReset) {
-        spectrogramNeedsReset = false;
-        lastSpectrogramScale = spectrogramScale;
+      const shouldDrawSpectrogram = shouldResetSpectrogram || needsReset;
+      if (shouldDrawSpectrogram) {
+        spectrogramCeiling = determineSpectrogramCeiling(
+          values,
+          spectrogramCeiling || values.length - 1
+        );
+        spectrogramX = drawSpectrogram(
+          values,
+          spectrogramCanvas,
+          progress,
+          spectrogramCeiling,
+          spectrogramX,
+          sampleRate,
+          spectrogramScale,
+          needsReset
+        );
+        if (needsReset) {
+          spectrogramNeedsReset = false;
+          lastSpectrogramScale = spectrogramScale;
+        }
       }
     }
 
@@ -3408,27 +3367,30 @@ export async function playAudio(
 
 ## 最近の変更（過去7日間）
 ### コミット履歴:
-44edac4 Merge pull request #55 from cat2151/codex/split-large-source-file
-b9beff3 Update issue notes for UI improvements and fixes
-b43acbb Update issue notes for bug fixes and enhancements
-dcf3171 refactor: extract style management module
-683223b Add issue note for #56 [auto]
-cf94d81 Add issue note for #54 [auto]
-1a78ec8 Initial plan
-3b4dd08 Merge pull request #53 from cat2151/codex/fix-spectrogram-issues
-fc9ddc1 fix: wire key hints and theme highlight color
-eac970f fix: improve spectrogram and intonation visuals
+f03cb6d Add build URL to issue notes
+b48b21d Add issue note for #74 [auto]
+fbc9c18 Merge pull request #73 from cat2151/codex/fix-dark-mode-visibility
+30ed456 test: organize populate speaker style test
+7b806cf feat: add speaker style selector
+0c5d1ac Initial plan
+5b9e108 Merge pull request #71 from cat2151/codex/fix-spectrogram-display-bug
+d8c32c2 Expand issue notes for issue #72
+4c7cdaa Add issue note for #72 [auto]
+3d1437c fix: keep spectrogram columns stable near playback end
 
 ### 変更されたファイル:
 index.html
-issue-notes/52.md
-issue-notes/54.md
-issue-notes/56.md
-src/intonation.ts
+issue-notes/44.md
+issue-notes/69.md
+issue-notes/72.md
+issue-notes/74.md
 src/main.ts
+src/playback.test.ts
+src/playback.ts
+src/styleManager.test.ts
 src/styleManager.ts
 src/visualization.ts
 
 
 ---
-Generated at: 2026-02-13 07:05:12 JST
+Generated at: 2026-02-14 07:06:07 JST

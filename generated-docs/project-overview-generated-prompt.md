@@ -1,4 +1,4 @@
-Last updated: 2026-02-13
+Last updated: 2026-02-14
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -145,8 +145,10 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
     "tone": "^15.1.22"
   },
   "devDependencies": {
+    "jsdom": "^28.0.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
   }
 }
 
@@ -165,22 +167,32 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
   📖 26.md
   📖 27.md
   📖 30.md
-  📖 44.md
   📖 45.md
-  📖 50.md
   📖 51.md
-  📖 54.md
   📖 56.md
+  📖 62.md
+  📖 64.md
+  📖 65.md
+  📖 66.md
+  📖 67.md
+  📖 68.md
+  📖 72.md
+  📖 74.md
 📊 package-lock.json
 📊 package.json
 📁 src/
   📘 audio.ts
   📘 config.ts
+  📘 intonation.test.ts
   📘 intonation.ts
   📘 main.ts
+  📘 playback.test.ts
+  📘 playback.ts
   📘 state.ts
   📘 status.ts
+  📘 styleManager.test.ts
   📘 styleManager.ts
+  📘 textLists.test.ts
   📘 textLists.ts
   📘 uiControls.ts
   📘 visualization.ts
@@ -188,7 +200,7 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
 📘 vite.config.ts
 
 ## ファイル詳細分析
-**index.html** (655行, 20037バイト)
+**index.html** (672行, 20502バイト)
   - 関数: なし
   - インポート: なし
 
@@ -196,16 +208,28 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
   - 関数: getAudioQuery, synthesize, combineAudioBuffers, encodeAudioBufferToWav, writeString, clamp, if, catch, for
   - インポート: ./config
 
-**src/config.ts** (82行, 2016バイト)
+**src/config.ts** (82行, 2014バイト)
   - 関数: なし
   - インポート: なし
 
-**src/intonation.ts** (727行, 24480バイト)
-  - 関数: isValidAudioQueryShape, cloneAudioQuery, dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, updateIntonationTiming, disableLoopOnIntonationEdit, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, initializeIntonationCanvas, buildIntonationPointsFromQuery, renderIntonationLabels, drawIntonationChart, adjustIntonationScale, pitchFromY, findNearestIntonationPoint, applyPitchToQuery, scheduleIntonationPlayback, playUpdatedIntonation, fetchAndRenderIntonation, handleIntonationPointerDown, handleIntonationPointerMove, handleIntonationPointerUp, handleIntonationKeyDown, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, for, catch, if
+**src/intonation.test.ts** (17行, 600バイト)
+  - 関数: なし
+  - インポート: vitest, ./intonation
+
+**src/intonation.ts** (881行, 30118バイト)
+  - 関数: isValidAudioQueryShape, cloneAudioQuery, dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, updateIntonationTiming, disableLoopOnIntonationEdit, getPitchRange, calculateBasePadding, getBaseDisplayRange, calculateDisplayRange, getMinimumAllowedExtra, applyRangeExtra, refreshDisplayRange, clampPitchToDisplayRange, calculateStepSize, handleIntonationWheel, updateInitialRangeFromPoints, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, initializeIntonationCanvas, buildIntonationPointsFromQuery, renderIntonationLabels, drawIntonationChart, adjustIntonationScale, pitchFromY, findNearestIntonationPoint, applyPitchToQuery, scheduleIntonationPlayback, replayCachedIntonationAudio, playUpdatedIntonation, fetchAndRenderIntonation, resetIntonationToInitial, handleIntonationPointerDown, handleIntonationPointerMove, handleIntonationPointerUp, handleIntonationKeyDown, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, for, catch, if
   - インポート: tone, ./audio, ./status
 
-**src/main.ts** (557行, 19248バイト)
-  - 関数: setPlayButtonAppearance, stopPlaybackAndResetLoop, getAudioCacheKey, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, confirmResetIntonationBeforePlay, handlePlayButtonClick, handlePlay, triggerPlay, cleanup, handleReset, handleCancel, saveDelimiter, scheduleSaveDelimiter, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, for, catch
+**src/main.ts** (292行, 10801バイト)
+  - 関数: applyStyleSelection, saveDelimiter, scheduleSaveDelimiter, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, catch
+  - インポート: ./config, ./textLists, ./state
+
+**src/playback.test.ts** (32行, 962バイト)
+  - 関数: なし
+  - インポート: vitest, ./playback
+
+**src/playback.ts** (326行, 10331バイト)
+  - 関数: setLoopCheckboxElement, setPlayButtonAppearance, isPlayRequestPending, stopPlaybackAndResetLoop, getAudioCacheKey, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, confirmResetIntonationBeforePlay, handlePlayButtonClick, handlePlay, triggerPlay, cleanup, handleReset, handleCancel, if, for, catch
   - インポート: tone, ./config, ./textLists
 
 **src/state.ts** (6行, 156バイト)
@@ -216,9 +240,17 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
   - 関数: showStatus, hideStatus, scheduleHideStatus, invalidateColorVariableCache, getColorVariable, if
   - インポート: なし
 
-**src/styleManager.ts** (177行, 5351バイト)
-  - 関数: getSelectedStyleId, setSelectedStyleId, getStyleLabel, getStyleById, resolveStyleMarker, parseDelimiterConfig, addSegment, buildTextSegments, populateStyleSelect, fetchVoiceStyles, if, while, catch
+**src/styleManager.test.ts** (117行, 3745バイト)
+  - 関数: なし
+  - インポート: vitest, jsdom, ./config
+
+**src/styleManager.ts** (210行, 6482バイト)
+  - 関数: getSelectedStyleId, setSelectedStyleId, getStyleLabel, getStyleById, getSpeakerStylesByStyleId, resolveStyleMarker, parseDelimiterConfig, addSegment, buildTextSegments, populateStyleSelect, populateSpeakerStyleSelect, fetchVoiceStyles, if, while, catch
   - インポート: なし
+
+**src/textLists.test.ts** (66行, 2492バイト)
+  - 関数: なし
+  - インポート: vitest, ./config, ./textLists
 
 **src/textLists.ts** (136行, 4254バイト)
   - 関数: loadStoredList, persistList, persistLists, dedupeAndLimit, renderList, renderTextLists, moveToFavorites, moveToHistory, addToHistory, initializeTextLists, catch, for, if
@@ -228,8 +260,8 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
   - 関数: updateExportButtonState, if
   - インポート: ./state
 
-**src/visualization.ts** (777行, 25197バイト)
-  - 関数: getSpectrogramScale, setSpectrogramScale, requestSpectrogramReset, isPlaybackActive, stopActivePlayback, prepareCanvas, fftRadix2, getHannWindow, estimateFrequencySeries, drawRenderedWaveform, drawRealtimeWaveform, determineSpectrogramCeiling, estimateFundamentalFrequency, computeSegmentStats, computeSegmentCorrelation, extractAlignedRealtimeSegment, drawSpectrogram, initializeVisualizationCanvases, playAudio, updateProgressLines, clearProgressLines, render, cleanup, finalize, stopPlayback, if, for
+**src/visualization.ts** (865行, 28032バイト)
+  - 関数: getSpectrogramScale, setSpectrogramScale, requestSpectrogramReset, isPlaybackActive, stopActivePlayback, prepareCanvas, fftRadix2, getHannWindow, lerpColor, mapIntensityToSpectrogramColor, estimateFrequencySeries, drawRenderedWaveform, drawRealtimeWaveform, determineSpectrogramCeiling, estimateFundamentalFrequency, computeSegmentStats, computeSegmentCorrelation, extractAlignedRealtimeSegment, drawSpectrogram, initializeVisualizationCanvases, playAudio, updateProgressLines, clearProgressLines, render, cleanup, finalize, stopPlayback, if, for
   - インポート: tone, ./status
 
 **vite.config.ts** (9行, 137バイト)
@@ -251,6 +283,17 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
       - persistIntonationFavorites ()
       - updateIntonationTiming ()
       - disableLoopOnIntonationEdit ()
+      - getPitchRange ()
+      - calculateBasePadding ()
+      - getBaseDisplayRange ()
+      - calculateDisplayRange ()
+      - getMinimumAllowedExtra ()
+      - applyRangeExtra ()
+      - refreshDisplayRange ()
+      - clampPitchToDisplayRange ()
+      - calculateStepSize ()
+      - handleIntonationWheel ()
+      - updateInitialRangeFromPoints ()
       - resetIntonationState ()
       - setStyleChangeHandler ()
       - initializeIntonationElements ()
@@ -266,8 +309,10 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
       - findNearestIntonationPoint ()
       - applyPitchToQuery ()
       - scheduleIntonationPlayback ()
+      - replayCachedIntonationAudio ()
       - playUpdatedIntonation ()
       - fetchAndRenderIntonation ()
+      - resetIntonationToInitial ()
       - handleIntonationPointerDown ()
       - handleIntonationPointerMove ()
       - handleIntonationPointerUp ()
@@ -284,36 +329,41 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
       - drawRenderedWaveform ()
       - initializeVisualizationCanvases ()
       - playAudio ()
-  - setPlayButtonAppearance (src/main.ts)
-    - stopPlaybackAndResetLoop ()
-      - getAudioCacheKey ()
-      - setTextAndPlay ()
-      - downloadLastAudio ()
-      - scheduleAutoPlay ()
-      - confirmResetIntonationBeforePlay ()
-      - handlePlayButtonClick ()
-      - handlePlay ()
-      - cleanup ()
-      - handleCancel ()
-      - updateSpectrogramScaleLabel ()
+  - applyStyleSelection (src/main.ts)
+    - updateSpectrogramScaleLabel ()
       - updateIntonationKeyboardToggle ()
+      - setLoopCheckboxElement ()
+      - setPlayButtonAppearance ()
+      - isPlayRequestPending ()
+      - handlePlay ()
       - getSelectedStyleId ()
       - setSelectedStyleId ()
-      - parseDelimiterConfig ()
-      - buildTextSegments ()
       - populateStyleSelect ()
+      - populateSpeakerStyleSelect ()
       - fetchVoiceStyles ()
-      - addToHistory ()
       - initializeTextLists ()
       - getSpectrogramScale ()
       - setSpectrogramScale ()
       - requestSpectrogramReset ()
       - isPlaybackActive ()
+  - stopPlaybackAndResetLoop ()
+    - getAudioCacheKey ()
+      - setTextAndPlay ()
+      - downloadLastAudio ()
+      - scheduleAutoPlay ()
+      - confirmResetIntonationBeforePlay ()
+      - handlePlayButtonClick ()
+      - cleanup ()
+      - handleCancel ()
+      - parseDelimiterConfig ()
+      - buildTextSegments ()
+      - addToHistory ()
       - stopActivePlayback ()
   - hideStatus ()
     - invalidateColorVariableCache ()
   - getStyleLabel ()
     - getStyleById ()
+      - getSpeakerStylesByStyleId ()
       - resolveStyleMarker ()
       - addSegment ()
   - loadStoredList (src/textLists.ts)
@@ -327,6 +377,8 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
   - prepareCanvas ()
     - fftRadix2 ()
       - getHannWindow ()
+      - lerpColor ()
+      - mapIntensityToSpectrogramColor ()
       - estimateFrequencySeries ()
       - drawRealtimeWaveform ()
       - determineSpectrogramCeiling ()
@@ -341,10 +393,10 @@ GitHub Actionsを使用してGitHub Pagesに自動デプロイされます。
       - finalize ()
 - catch (src/audio.ts)
 - for (src/audio.ts)
-- triggerPlay (src/main.ts)
-- handleReset (src/main.ts)
 - saveDelimiter (src/main.ts)
 - scheduleSaveDelimiter (src/main.ts)
+- triggerPlay (src/playback.ts)
+- handleReset (src/playback.ts)
 - while (src/styleManager.ts)
 - stopPlayback (src/visualization.ts)
 
@@ -360,26 +412,27 @@ issue-notes/25.md
 issue-notes/26.md
 issue-notes/27.md
 issue-notes/30.md
-issue-notes/44.md
 issue-notes/45.md
-issue-notes/50.md
 issue-notes/51.md
-issue-notes/54.md
 issue-notes/56.md
+issue-notes/62.md
+issue-notes/64.md
+issue-notes/65.md
+issue-notes/66.md
+issue-notes/67.md
+issue-notes/68.md
+issue-notes/72.md
+issue-notes/74.md
 package-lock.json
 package.json
 src/audio.ts
 src/config.ts
+src/intonation.test.ts
 src/intonation.ts
 src/main.ts
-src/state.ts
-src/status.ts
-src/styleManager.ts
-src/textLists.ts
-src/uiControls.ts
-src/visualization.ts
+src/playback.test.ts
+src/playback.ts
 tsconfig.json
-vite.config.ts
 
 上記の情報を基に、プロンプトで指定された形式でプロジェクト概要を生成してください。
 特に以下の点を重視してください：
@@ -391,4 +444,4 @@ vite.config.ts
 
 
 ---
-Generated at: 2026-02-13 07:05:12 JST
+Generated at: 2026-02-14 07:06:07 JST
