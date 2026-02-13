@@ -95,7 +95,8 @@
         font-size: 16px;
         font-family: inherit;
         box-sizing: border-box;
-        background: var(--bg-color);
+        background: var(--panel-bg);
+        color: var(--text-color);
       }
       select:focus {
         outline: none;
@@ -109,7 +110,11 @@
         font-size: 16px;
         font-family: inherit;
         box-sizing: border-box;
-        background: var(--bg-color);
+        background: var(--panel-bg);
+        color: var(--text-color);
+      }
+      input[type="text"]::placeholder {
+        color: var(--muted-text);
       }
       input[type="text"]:focus {
         outline: none;
@@ -539,7 +544,13 @@
     <div class="container">
       <div class="style-row">
         <select id="styleSelect" aria-label="話者・ボイス選択"></select>
-        <input id="delimiterInput" type="text" aria-label="切替区切り文字" placeholder="例: [] または [ ]" />
+        <select id="speakerStyleSelect" aria-label="現在のキャラのスタイル選択"></select>
+        <input
+          id="delimiterInput"
+          type="text"
+          aria-label="切替区切り文字"
+          placeholder="空欄のままなら切り替えなし"
+        />
       </div>
 
       <div class="input-row">

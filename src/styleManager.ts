@@ -28,6 +28,12 @@ function getStyleById(id: number) {
   return availableStyles.find((style) => style.id === id) ?? null;
 }
 
+function getSpeakerStylesByStyleId(styleId: number) {
+  const baseStyle = getStyleById(styleId);
+  if (!baseStyle) return [];
+  return availableStyles.filter((style) => style.speakerName === baseStyle.speakerName);
+}
+
 function resolveStyleMarker(marker: string, currentStyleId: number) {
   const trimmed = marker.trim();
   if (!trimmed) return null;
@@ -147,7 +153,33 @@ export function populateStyleSelect(styleSelect: HTMLSelectElement | null) {
   styleSelect.value = String(selectedStyleId);
 }
 
-export async function fetchVoiceStyles(styleSelect: HTMLSelectElement | null) {
+export function populateSpeakerStyleSelect(
+  speakerStyleSelect: HTMLSelectElement | null,
+  baseStyleId: number
+) {
+  if (!speakerStyleSelect) return;
+  speakerStyleSelect.innerHTML = '';
+  const speakerStyles = getSpeakerStylesByStyleId(baseStyleId);
+  if (speakerStyles.length === 0) {
+    speakerStyleSelect.disabled = true;
+    return;
+  }
+  speakerStyleSelect.disabled = false;
+  speakerStyles.forEach((style) => {
+    const option = document.createElement('option');
+    option.value = String(style.id);
+    option.textContent = `${style.name} (ID: ${style.id})`;
+    speakerStyleSelect.appendChild(option);
+  });
+  const defaultStyle =
+    speakerStyles.find((style) => style.id === baseStyleId) ?? speakerStyles[0];
+  speakerStyleSelect.value = String(defaultStyle.id);
+}
+
+export async function fetchVoiceStyles(
+  styleSelect: HTMLSelectElement | null,
+  speakerStyleSelect?: HTMLSelectElement | null
+) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
@@ -172,5 +204,6 @@ export async function fetchVoiceStyles(styleSelect: HTMLSelectElement | null) {
   } finally {
     clearTimeout(timeoutId);
     populateStyleSelect(styleSelect);
+    populateSpeakerStyleSelect(speakerStyleSelect ?? null, selectedStyleId);
   }
 }

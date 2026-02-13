@@ -31,6 +31,7 @@ import {
   fetchVoiceStyles,
   getSelectedStyleId,
   populateStyleSelect,
+  populateSpeakerStyleSelect,
   setSelectedStyleId,
 } from './styleManager';
 import {
@@ -51,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const usagePanel = document.getElementById('usagePanel');
   const spectrogramScaleToggle = document.getElementById('spectrogramScaleToggle') as HTMLButtonElement | null;
   const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
+  const speakerStyleSelect = document.getElementById('speakerStyleSelect') as HTMLSelectElement | null;
   const delimiterInput = document.getElementById('delimiterInput') as HTMLInputElement | null;
   const favoritesToggleButton = document.getElementById('favoritesToggleButton') as HTMLButtonElement | null;
   const favoritesPanel = document.getElementById('favoritesPanel');
@@ -72,6 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const loopCheckboxEl = document.getElementById('loopCheckbox') as HTMLInputElement | null;
   setLoopCheckboxElement(loopCheckboxEl);
 
+  const applyStyleSelection = (styleId: number) => {
+    setSelectedStyleId(styleId);
+    if (styleSelect) {
+      styleSelect.value = String(styleId);
+    }
+    populateSpeakerStyleSelect(speakerStyleSelect, styleId);
+  };
+
   if (loopCheckboxEl) {
     loopCheckboxEl.addEventListener('change', () => {
       if (
@@ -86,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   setStyleChangeHandler((styleId) => {
-    setSelectedStyleId(styleId);
+    applyStyleSelection(styleId);
   });
 
   if (playButton) {
@@ -109,11 +119,21 @@ document.addEventListener('DOMContentLoaded', () => {
     styleSelect.addEventListener('change', () => {
       const parsed = Number(styleSelect.value);
       if (!Number.isNaN(parsed)) {
-        setSelectedStyleId(parsed);
+        applyStyleSelection(parsed);
+      }
+    });
+    applyStyleSelection(getSelectedStyleId());
+  }
+
+  if (speakerStyleSelect) {
+    speakerStyleSelect.addEventListener('change', () => {
+      const parsed = Number(speakerStyleSelect.value);
+      if (!Number.isNaN(parsed)) {
+        applyStyleSelection(parsed);
       }
     });
   }
-  void fetchVoiceStyles(styleSelect ?? null);
+  void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null);
 
   if (delimiterInput) {
     try {
