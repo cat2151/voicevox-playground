@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { JSDOM } from 'jsdom';
 import { ZUNDAMON_SPEAKER_ID } from './config';
-import { buildTextSegments, fetchVoiceStyles, parseDelimiterConfig } from './styleManager';
+import {
+  buildTextSegments,
+  fetchVoiceStyles,
+  parseDelimiterConfig,
+  populateSpeakerStyleSelect,
+} from './styleManager';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -60,5 +66,49 @@ describe('buildTextSegments', () => {
       { text: 'world', styleId: 11 },
     ]);
     expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it('populates speaker style select with styles for the same speaker', async () => {
+    const fakeResponse = [
+      {
+        name: 'Tester',
+        styles: [
+          { id: 10, name: 'ノーマル' },
+          { id: 11, name: 'ハッピー' },
+        ],
+      },
+      {
+        name: 'Another',
+        styles: [{ id: 20, name: 'ノーマル' }],
+      },
+    ];
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => fakeResponse,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const dom = new JSDOM('<!doctype html><html><body></body></html>');
+    const originalDocument = (globalThis as any).document;
+    const originalWindow = (globalThis as any).window;
+    (globalThis as any).document = dom.window.document;
+    (globalThis as any).window = dom.window;
+
+    try {
+      const mainSelect = document.createElement('select');
+      await fetchVoiceStyles(mainSelect);
+
+      const speakerSelect = document.createElement('select');
+      populateSpeakerStyleSelect(speakerSelect, 10);
+      expect(Array.from(speakerSelect.options).map((option) => option.value)).toEqual(['10', '11']);
+      expect(speakerSelect.value).toBe('10');
+
+      populateSpeakerStyleSelect(speakerSelect, 20);
+      expect(Array.from(speakerSelect.options).map((option) => option.value)).toEqual(['20']);
+      expect(speakerSelect.value).toBe('20');
+    } finally {
+      (globalThis as any).document = originalDocument;
+      (globalThis as any).window = originalWindow;
+    }
   });
 });
