@@ -13,6 +13,7 @@ import {
   initializeIntonationElements,
   isIntonationDirty,
   refreshIntonationChart,
+  resetIntonationToInitial,
   resetIntonationState,
   saveCurrentIntonationFavorite,
   setIntonationKeyboardEnabled,
@@ -357,6 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const intonationShrinkBottom = document.getElementById('intonationShrinkBottom') as HTMLButtonElement | null;
   const intonationExpandBottom = document.getElementById('intonationExpandBottom') as HTMLButtonElement | null;
   const intonationKeyboardToggle = document.getElementById('intonationKeyboardToggle') as HTMLButtonElement | null;
+  const intonationResetButton = document.getElementById('intonationResetButton') as HTMLButtonElement | null;
   const intonationFavoriteButton = document.getElementById('intonationFavoriteButton') as HTMLButtonElement | null;
   loopCheckboxEl = document.getElementById('loopCheckbox') as HTMLInputElement | null;
 
@@ -504,6 +506,15 @@ document.addEventListener('DOMContentLoaded', () => {
         intonationCanvas.focus();
       }
       refreshIntonationChart();
+    });
+  }
+
+  if (intonationResetButton) {
+    intonationResetButton.addEventListener('click', () => {
+      resetIntonationToInitial();
+      if (getIntonationKeyboardEnabled() && intonationCanvas) {
+        intonationCanvas.focus();
+      }
     });
   }
 
