@@ -523,6 +523,26 @@ function applyPitchToQuery(pointIndex: number, pitch: number) {
   }
 }
 
+function applyPitchEdit(
+  pointIndex: number,
+  pitch: number,
+  options: { redraw?: boolean; schedulePlayback?: boolean } = {}
+) {
+  if (pointIndex < 0 || pointIndex >= intonationPoints.length) return;
+  const redraw = options.redraw !== false;
+  const schedulePlayback = options.schedulePlayback !== false;
+  intonationPoints[pointIndex].pitch = pitch;
+  applyPitchToQuery(pointIndex, pitch);
+  disableLoopOnIntonationEdit();
+  intonationDirty = true;
+  if (redraw) {
+    drawIntonationChart(intonationPoints);
+  }
+  if (schedulePlayback) {
+    scheduleIntonationPlayback();
+  }
+}
+
 function scheduleIntonationPlayback() {
   if (intonationDebounceTimer !== null) {
     window.clearTimeout(intonationDebounceTimer);
@@ -698,12 +718,8 @@ export function handleIntonationPointerMove(event: MouseEvent | PointerEvent) {
   const y = event.clientY - rect.top;
   refreshDisplayRange();
   const newPitch = clampPitchToDisplayRange(pitchFromY(y));
-  intonationPoints[targetIndex].pitch = newPitch;
   intonationSelectedIndex = targetIndex;
-  applyPitchToQuery(targetIndex, newPitch);
-  disableLoopOnIntonationEdit();
-  intonationDirty = true;
-  drawIntonationChart(intonationPoints);
+  applyPitchEdit(targetIndex, newPitch, { schedulePlayback: false });
   intonationPlaybackPending = true;
 }
 
@@ -771,12 +787,7 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
         });
         applyRangeExtra(rangeExtra);
         const newPitch = clampPitchToDisplayRange(pitch);
-        intonationPoints[targetIndex].pitch = newPitch;
-        applyPitchToQuery(targetIndex, newPitch);
-        disableLoopOnIntonationEdit();
-        intonationDirty = true;
-        drawIntonationChart(intonationPoints);
-        scheduleIntonationPlayback();
+        applyPitchEdit(targetIndex, newPitch);
       } else {
         drawIntonationChart(intonationPoints);
       }
@@ -815,12 +826,7 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
     const targetIndex = intonationSelectedIndex ?? 0;
     const adjustment = event.key === 'ArrowUp' ? step : -step;
     const newPitch = clampPitchToDisplayRange(intonationPoints[targetIndex].pitch + adjustment);
-    intonationPoints[targetIndex].pitch = newPitch;
-    applyPitchToQuery(targetIndex, newPitch);
-    disableLoopOnIntonationEdit();
-    intonationDirty = true;
-    drawIntonationChart(intonationPoints);
-    scheduleIntonationPlayback();
+    applyPitchEdit(targetIndex, newPitch);
   }
 }
 
