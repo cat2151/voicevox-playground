@@ -545,9 +545,11 @@ function drawSpectrogram(
   const maxFreq = Math.max(sampleRate / 2, 1);
   const cappedTargetX = Math.min(drawableWidth, Math.max(0, Math.floor(progress * drawableWidth)));
   const targetX = cappedTargetX;
-  const startX = reset || targetX <= previousX ? 0 : previousX;
-
-  const resetX = reset ? 0 : startX;
+  const drawRange = reset
+    ? { start: 0, end: targetX }
+    : targetX > previousX
+      ? { start: Math.max(previousX + 1, 0), end: targetX }
+      : null;
   if (reset) {
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
@@ -559,38 +561,40 @@ function drawSpectrogram(
   const MAX_DB = 0;
   ctx.save();
   ctx.globalAlpha = 1;
-  for (let x = resetX; x <= targetX; x++) {
-    const columnX = leftMargin + x;
-    for (let bin = 0; bin < values.length; bin++) {
-      const magnitudeDb = values[bin];
-      const clampedDb = Math.max(MIN_DB, Math.min(MAX_DB, magnitudeDb));
-      const intensity = (clampedDb - MIN_DB) / (MAX_DB - MIN_DB);
-      if (intensity <= 0) continue;
+  if (drawRange) {
+    for (let x = drawRange.start; x <= drawRange.end; x++) {
+      const columnX = leftMargin + x;
+      for (let bin = 0; bin < values.length; bin++) {
+        const magnitudeDb = values[bin];
+        const clampedDb = Math.max(MIN_DB, Math.min(MAX_DB, magnitudeDb));
+        const intensity = (clampedDb - MIN_DB) / (MAX_DB - MIN_DB);
+        if (intensity <= 0) continue;
 
-      const freq = (bin / ceilingIndex) * maxFreq;
-      const normalized = scale === 'log'
-        ? (freq <= 0
-            ? 0
-            : (Math.log10(Math.max(freq, minLogFreq)) - Math.log10(minLogFreq)) /
-              Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
-        : freq / maxFreq;
+        const freq = (bin / ceilingIndex) * maxFreq;
+        const normalized = scale === 'log'
+          ? (freq <= 0
+              ? 0
+              : (Math.log10(Math.max(freq, minLogFreq)) - Math.log10(minLogFreq)) /
+                Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
+          : freq / maxFreq;
 
-      const nextBin = bin + 1;
-      const nextFreq = nextBin > ceilingIndex ? maxFreq : (nextBin / ceilingIndex) * maxFreq;
-      const nextNormalized = scale === 'log'
-        ? (nextFreq <= 0
-            ? 0
-            : (Math.log10(Math.max(nextFreq, minLogFreq)) - Math.log10(minLogFreq)) /
-              Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
-        : nextFreq / maxFreq;
+        const nextBin = bin + 1;
+        const nextFreq = nextBin > ceilingIndex ? maxFreq : (nextBin / ceilingIndex) * maxFreq;
+        const nextNormalized = scale === 'log'
+          ? (nextFreq <= 0
+              ? 0
+              : (Math.log10(Math.max(nextFreq, minLogFreq)) - Math.log10(minLogFreq)) /
+                Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
+          : nextFreq / maxFreq;
 
-      const yTop = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
-      const yBottom = drawableHeight - Math.min(nextNormalized * drawableHeight, drawableHeight);
-      const rectY = Math.min(yTop, yBottom);
-      const rectHeight = Math.max(1, Math.abs(yBottom - yTop));
+        const yTop = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
+        const yBottom = drawableHeight - Math.min(nextNormalized * drawableHeight, drawableHeight);
+        const rectY = Math.min(yTop, yBottom);
+        const rectHeight = Math.max(1, Math.abs(yBottom - yTop));
 
-      ctx.fillStyle = mapIntensityToSpectrogramColor(intensity);
-      ctx.fillRect(columnX, rectY, 1, rectHeight);
+        ctx.fillStyle = mapIntensityToSpectrogramColor(intensity);
+        ctx.fillRect(columnX, rectY, 1, rectHeight);
+      }
     }
   }
   ctx.restore();
@@ -603,7 +607,7 @@ function drawSpectrogram(
   ctx.lineTo(width, drawableHeight);
   ctx.stroke();
 
-  if (reset || targetX <= startX) {
+  if (reset || targetX <= previousX) {
     ctx.strokeStyle = getColorVariable('--grid-color', 'rgba(0,0,0,0.05)');
     ctx.beginPath();
     const tickSpacing = Math.max(MIN_TICK_SPACING_PX, width / 10);
