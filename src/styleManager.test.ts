@@ -67,7 +67,9 @@ describe('buildTextSegments', () => {
     ]);
     expect(fetchMock).toHaveBeenCalled();
   });
+});
 
+describe('populateSpeakerStyleSelect', () => {
   it('populates speaker style select with styles for the same speaker', async () => {
     const fakeResponse = [
       {
