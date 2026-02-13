@@ -170,8 +170,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (favoritesToggleButton && favoritesPanel) {
+    favoritesPanel.hidden = true;
+    favoritesToggleButton.setAttribute('aria-expanded', 'false');
     favoritesToggleButton.addEventListener('click', () => {
-      const isHidden = favoritesPanel.hasAttribute('hidden');
+      const isHidden = favoritesPanel.hidden;
       favoritesPanel.hidden = !isHidden;
       favoritesToggleButton.setAttribute('aria-expanded', String(isHidden));
     });
