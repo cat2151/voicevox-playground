@@ -66,14 +66,7 @@ jobs:
             }
 
             // Find existing open issue with same title and ci-failure label using Search API
-            const searchQuery = [
-              `repo:${context.repo.owner}/${context.repo.repo}`,
-              'is:issue',
-              'is:open',
-              `label:\"${labelName}\"`,
-              'in:title',
-              title,
-            ].join(' ');
+            const searchQuery = `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open label:"${labelName}" "${title}"`;
             const searchResult = await github.rest.search.issuesAndPullRequests({
               q: searchQuery,
               per_page: 100,
