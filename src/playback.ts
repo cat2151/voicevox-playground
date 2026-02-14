@@ -173,14 +173,15 @@ async function confirmResetIntonationBeforePlay() {
 }
 
 export function handlePlayButtonClick() {
-  if (stopInProgress || playRequestPending) {
+  if (stopInProgress) {
     return;
   }
   if (isPlaybackActive()) {
+    console.log('Stop button clicked');
     stopPlaybackAndResetLoop();
     return;
   }
-  if (appState.isProcessing) {
+  if (playRequestPending || appState.isProcessing) {
     return;
   }
   void handlePlay();
