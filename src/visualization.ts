@@ -162,9 +162,8 @@ function mapIntensityToSpectrogramColor(intensity: number) {
 }
 
 function formatTimeLabel(seconds: number) {
-  const rounded = Math.round(seconds * 10) / 10;
-  const text = Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(1);
-  return `${text.replace(/\.0$/, '')}s`;
+  const text = seconds.toFixed(3).replace(/\.?0+$/, '');
+  return `${text}s`;
 }
 
 export function buildTimeTicks(duration: number, stepSeconds = TIME_TICK_STEP_SECONDS) {
@@ -212,7 +211,13 @@ function drawTimeTicks(
   const labelY = height - 2;
   ticks.forEach((time) => {
     const x = leftMargin + Math.min(drawableWidth, Math.max(0, (time / safeDuration) * drawableWidth));
-    ctx.fillText(formatTimeLabel(time), x, labelY);
+    const label = formatTimeLabel(time);
+    const labelWidth = ctx.measureText(label).width;
+    const halfWidth = labelWidth / 2;
+    const minX = leftMargin + halfWidth;
+    const maxX = leftMargin + drawableWidth - halfWidth;
+    const clampedX = Math.min(maxX, Math.max(minX, x));
+    ctx.fillText(label, clampedX, labelY);
   });
   ctx.restore();
 }
@@ -975,6 +980,9 @@ export async function playAudio(
   let spectrogramDrawPending = false;
   const requestSpectrogramDraw = (forceReset: boolean) => {
     if (!spectrogramCanvas || !cachedSpectrogramData) {
+      return;
+    }
+    if (cachedSpectrogramData.signature !== spectrogramSignature) {
       return;
     }
     if (!playbackStarted) {

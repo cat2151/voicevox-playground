@@ -43,6 +43,11 @@ describe('buildTimeTicks', () => {
   it('returns empty ticks when duration is non-positive', () => {
     expect(buildTimeTicks(0)).toEqual([]);
   });
+
+  it('returns empty ticks when step is non-positive', () => {
+    expect(buildTimeTicks(1, 0)).toEqual([]);
+    expect(buildTimeTicks(1, -0.5)).toEqual([]);
+  });
 });
 
 describe('analyzeSpectrogramFrames', () => {
