@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest';
 
-import { calculateLetterKeyAdjustment, calculateStepSize } from './intonation';
+import { calculateLetterKeyAdjustment, calculateStepSize, clampRangeExtra } from './intonation';
 
 describe('calculateStepSize', () => {
   it('returns one tenth of the initial pitch span', () => {
@@ -20,38 +20,52 @@ describe('calculateLetterKeyAdjustment', () => {
     const result = calculateLetterKeyAdjustment({
       currentPitch: 5,
       baseRange: { min: 0, max: 10 },
-      rangeExtra: 0,
+      rangeExtra: { top: 0, bottom: 0 },
       stepSize: 1,
       direction: 'up',
       ctrlModifier: false,
     });
     expect(result.pitch).toBeCloseTo(6);
-    expect(result.rangeExtra).toBeCloseTo(0);
+    expect(result.rangeExtra.top).toBeCloseTo(0);
+    expect(result.rangeExtra.bottom).toBeCloseTo(0);
   });
 
   it('lowers pitch by a half step when ctrl is held for uppercase keys', () => {
     const result = calculateLetterKeyAdjustment({
       currentPitch: 5,
       baseRange: { min: 0, max: 10 },
-      rangeExtra: 0,
+      rangeExtra: { top: 0, bottom: 0 },
       stepSize: 1,
       direction: 'down',
       ctrlModifier: true,
     });
     expect(result.pitch).toBeCloseTo(4.5);
-    expect(result.rangeExtra).toBeCloseTo(0);
+    expect(result.rangeExtra.top).toBeCloseTo(0);
+    expect(result.rangeExtra.bottom).toBeCloseTo(0);
   });
 
   it('expands the display range when the adjustment exceeds the current max', () => {
     const result = calculateLetterKeyAdjustment({
       currentPitch: 10,
       baseRange: { min: 0, max: 10 },
-      rangeExtra: 0,
+      rangeExtra: { top: 0, bottom: 0 },
       stepSize: 1,
       direction: 'up',
       ctrlModifier: false,
     });
     expect(result.pitch).toBeCloseTo(11);
-    expect(result.rangeExtra).toBeCloseTo(1);
+    expect(result.rangeExtra.top).toBeCloseTo(1);
+    expect(result.rangeExtra.bottom).toBeCloseTo(0);
+  });
+});
+
+describe('clampRangeExtra', () => {
+  it('tightens bottom independently when top is already constrained by data max', () => {
+    const baseRange = { min: -0.5, max: 10.5 };
+    const dataRange = { min: 5, max: 10 };
+    const desired = { top: -1, bottom: -2 };
+    const clamped = clampRangeExtra(desired, baseRange, dataRange);
+    expect(clamped.top).toBeCloseTo(-0.5);
+    expect(clamped.bottom).toBeCloseTo(-2);
   });
 });
