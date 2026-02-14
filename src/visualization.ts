@@ -27,6 +27,7 @@ type OfflineSpectrogramData = {
 };
 let cachedSpectrogramData: OfflineSpectrogramData | null = null;
 let lastSpectrogramCanvas: HTMLCanvasElement | null = null;
+let pendingSpectrogramSignature: string | null = null;
 const SPECTROGRAM_COLOR_STOPS = [
   { stop: 0, color: [0, 0, 0] }, // black
   { stop: 0.25, color: [0, 64, 192] }, // blue
@@ -217,11 +218,31 @@ function estimateFrequencySeries(
   return grouped;
 }
 
-function buildSpectrogramSignature(buffer: AudioBuffer) {
-  return `${buffer.length}:${buffer.sampleRate}:${buffer.numberOfChannels}`;
+function computeAudioContentHash(buffer: AudioBuffer, maxSamples = 1000) {
+  const channelData = buffer.getChannelData(0);
+  const length = channelData.length;
+  if (length === 0) {
+    return 0;
+  }
+  const step = Math.max(1, Math.floor(length / maxSamples));
+  let hash = 5381;
+  for (let i = 0; i < length; i += step) {
+    const sample = channelData[i];
+    const intSample = Math.floor((sample + 1) * 32767);
+    hash = ((hash << 5) + hash) ^ intSample;
+    hash |= 0;
+  }
+  hash ^= buffer.sampleRate;
+  hash ^= buffer.numberOfChannels << 16;
+  return hash >>> 0;
 }
 
-function analyzeSpectrogramFrames(buffer: AudioBuffer, columnCount: number) {
+export function buildSpectrogramSignature(buffer: AudioBuffer) {
+  const contentHash = computeAudioContentHash(buffer);
+  return `${buffer.length}:${buffer.sampleRate}:${buffer.numberOfChannels}:${contentHash}`;
+}
+
+export async function analyzeSpectrogramFrames(buffer: AudioBuffer, columnCount: number) {
   const columns = Math.max(1, columnCount);
   const fftSize = 1024;
   const binCount = fftSize / 2;
@@ -231,36 +252,47 @@ function analyzeSpectrogramFrames(buffer: AudioBuffer, columnCount: number) {
   const peakMagnitudes = new Float32Array(binCount);
   peakMagnitudes.fill(-Infinity);
   const maxStartSample = Math.max(buffer.length - fftSize, 0);
+  const CHUNK_SIZE = 64;
 
-  for (let column = 0; column < columns; column++) {
-    const position = columns <= 1 ? 0 : column / (columns - 1);
-    const startSample = Math.max(0, Math.min(Math.floor(position * maxStartSample), maxStartSample));
-    const real = new Float32Array(fftSize);
-    const imag = new Float32Array(fftSize);
-    for (let i = 0; i < fftSize; i++) {
-      const sampleIndex = startSample + i;
-      real[i] = (channelData[sampleIndex] ?? 0) * window[i];
-    }
-    fftRadix2(real, imag);
-
-    const magnitudes = new Float32Array(binCount);
-    for (let i = 0; i < binCount; i++) {
-      const magnitude = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
-      const db = 20 * Math.log10(Math.max(magnitude, 1e-12));
-      magnitudes[i] = db;
-      if (db > peakMagnitudes[i]) {
-        peakMagnitudes[i] = db;
+  const processChunk = (startColumn: number, endColumn: number) => {
+    for (let column = startColumn; column < endColumn; column++) {
+      const position = columns <= 1 ? 0 : column / (columns - 1);
+      const startSample = Math.max(0, Math.min(Math.floor(position * maxStartSample), maxStartSample));
+      const real = new Float32Array(fftSize);
+      const imag = new Float32Array(fftSize);
+      for (let i = 0; i < fftSize; i++) {
+        const sampleIndex = startSample + i;
+        real[i] = (channelData[sampleIndex] ?? 0) * window[i];
       }
-    }
+      fftRadix2(real, imag);
 
-    frames.push(magnitudes);
+      const magnitudes = new Float32Array(binCount);
+      for (let i = 0; i < binCount; i++) {
+        const magnitude = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
+        const db = 20 * Math.log10(Math.max(magnitude, 1e-12));
+        magnitudes[i] = db;
+        if (db > peakMagnitudes[i]) {
+          peakMagnitudes[i] = db;
+        }
+      }
+
+      frames.push(magnitudes);
+    }
+  };
+
+  for (let column = 0; column < columns; column += CHUNK_SIZE) {
+    const endColumn = Math.min(column + CHUNK_SIZE, columns);
+    processChunk(column, endColumn);
+    if (endColumn < columns) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
   }
 
   const ceilingIndex = determineSpectrogramCeiling(peakMagnitudes, binCount - 1);
   const duration = buffer.duration;
   const sampleRate = buffer.sampleRate;
   const frequencies = frames.map((frame, index) => ({
-    time: (index / Math.max(frames.length - 1, 1)) * duration,
+    time: frames.length <= 1 ? 0 : (index / Math.max(frames.length - 1, 1)) * duration,
     freq: estimateFundamentalFrequency(frame, sampleRate),
   }));
 
@@ -642,6 +674,7 @@ function drawOfflineSpectrogram(
   if (data.frames.length === 0) return;
   let previousX = -1;
   const totalFrames = data.frames.length;
+  let completed = false;
   for (let i = 0; i < totalFrames; i++) {
     const progress = totalFrames <= 1 ? 1 : i / (totalFrames - 1);
     previousX = drawSpectrogram(
@@ -655,9 +688,12 @@ function drawOfflineSpectrogram(
       reset && i === 0
     );
   }
+  completed = true;
   drawFrequencyTrack(data.frequencies, canvas, data.duration, data.sampleRate, scale);
-  spectrogramNeedsReset = false;
-  lastSpectrogramScale = scale;
+  if (completed) {
+    spectrogramNeedsReset = false;
+    lastSpectrogramScale = scale;
+  }
 }
 
 function drawSpectrogram(
@@ -909,16 +945,26 @@ export async function playAudio(
       || cachedSpectrogramData.signature !== spectrogramSignature;
     if (shouldAnalyze) {
       spectrogramNeedsReset = true;
-      void Promise.resolve().then(() => {
-        const analysis = analyzeSpectrogramFrames(decodedBuffer, columnCount);
-        cachedSpectrogramData = {
-          ...analysis,
-          signature: spectrogramSignature,
-        };
-        if (lastSpectrogramCanvas) {
-          drawOfflineSpectrogram(cachedSpectrogramData, lastSpectrogramCanvas, spectrogramScale, true);
-        }
-      });
+      const analysisSignature = spectrogramSignature;
+      pendingSpectrogramSignature = analysisSignature;
+      void Promise.resolve()
+        .then(async () => {
+          const analysis = await analyzeSpectrogramFrames(decodedBuffer, columnCount);
+          if (pendingSpectrogramSignature !== analysisSignature) {
+            return;
+          }
+          cachedSpectrogramData = {
+            ...analysis,
+            signature: analysisSignature,
+          };
+          pendingSpectrogramSignature = null;
+          if (lastSpectrogramCanvas && spectrogramSignature === analysisSignature) {
+            drawOfflineSpectrogram(cachedSpectrogramData, lastSpectrogramCanvas, spectrogramScale, true);
+          }
+        })
+        .catch((error) => {
+          console.error('Error during spectrogram analysis:', error);
+        });
     } else if (spectrogramNeedsReset && cachedSpectrogramData) {
       drawOfflineSpectrogram(cachedSpectrogramData, spectrogramCanvas, spectrogramScale, true);
     }
