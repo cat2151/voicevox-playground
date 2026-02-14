@@ -1,3 +1,4 @@
+import './styles.css';
 import { AUTO_PLAY_DEBOUNCE_MS, DELIMITER_STORAGE_KEY, FrequencyScale } from './config';
 import { initializeTextLists } from './textLists';
 import {
