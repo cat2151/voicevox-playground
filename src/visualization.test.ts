@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeSpectrogramFrames, buildSpectrogramSignature } from './visualization';
+import { analyzeSpectrogramFrames, buildSpectrogramSignature, buildTimeTicks } from './visualization';
 
 class MockAudioBuffer {
   readonly length: number;
@@ -28,6 +28,20 @@ describe('buildSpectrogramSignature', () => {
     const sigA = buildSpectrogramSignature(bufferA as unknown as AudioBuffer);
     const sigB = buildSpectrogramSignature(bufferB as unknown as AudioBuffer);
     expect(sigA).not.toBe(sigB);
+  });
+});
+
+describe('buildTimeTicks', () => {
+  it('returns ticks every 0.5s including the end of duration', () => {
+    expect(buildTimeTicks(1)).toEqual([0, 0.5, 1]);
+  });
+
+  it('includes the final duration even when not aligned to the step', () => {
+    expect(buildTimeTicks(1.2)).toEqual([0, 0.5, 1, 1.2]);
+  });
+
+  it('returns empty ticks when duration is non-positive', () => {
+    expect(buildTimeTicks(0)).toEqual([]);
   });
 });
 

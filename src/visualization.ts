@@ -2,12 +2,13 @@ import * as Tone from 'tone';
 import {
   FrequencyScale,
   MIN_LOG_FREQUENCY,
-  MIN_TICK_SPACING_PX,
   SPECTROGRAM_MAX_COLUMNS_PER_FRAME,
   WAVEFORM_TARGET_RATIO,
 } from './config';
 import { getColorVariable, invalidateColorVariableCache } from './status';
 
+const SPECTROGRAM_LEFT_MARGIN = 40;
+const TIME_TICK_STEP_SECONDS = 0.5;
 let spectrogramScale: FrequencyScale = 'linear';
 let spectrogramNeedsReset = false;
 let lastSpectrogramScale: FrequencyScale = 'linear';
@@ -26,7 +27,6 @@ type OfflineSpectrogramData = {
   signature: string;
 };
 let cachedSpectrogramData: OfflineSpectrogramData | null = null;
-let lastSpectrogramCanvas: HTMLCanvasElement | null = null;
 let pendingSpectrogramSignature: string | null = null;
 const SPECTROGRAM_COLOR_STOPS = [
   { stop: 0, color: [0, 0, 0] }, // black
@@ -159,6 +159,62 @@ function mapIntensityToSpectrogramColor(intensity: number) {
   }
   const [r, g, b] = SPECTROGRAM_COLOR_STOPS[SPECTROGRAM_COLOR_STOPS.length - 1].color;
   return `rgb(${r},${g},${b})`;
+}
+
+function formatTimeLabel(seconds: number) {
+  const rounded = Math.round(seconds * 10) / 10;
+  const text = Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(1);
+  return `${text.replace(/\.0$/, '')}s`;
+}
+
+export function buildTimeTicks(duration: number, stepSeconds = TIME_TICK_STEP_SECONDS) {
+  if (duration <= 0 || stepSeconds <= 0) {
+    return [];
+  }
+  const ticks: number[] = [0];
+  for (let t = stepSeconds; t < duration - 1e-6; t += stepSeconds) {
+    ticks.push(Number(t.toFixed(3)));
+  }
+  ticks.push(Number(duration.toFixed(3)));
+  return ticks;
+}
+
+function drawTimeTicks(
+  ctx: CanvasRenderingContext2D,
+  duration: number,
+  width: number,
+  height: number,
+  options?: { leftMargin?: number }
+) {
+  const ticks = buildTimeTicks(duration);
+  if (ticks.length === 0) return;
+
+  const leftMargin = options?.leftMargin ?? 0;
+  const drawableWidth = Math.max(1, width - leftMargin);
+  const safeDuration = Math.max(duration, 1e-6);
+  const gridColor = getColorVariable('--grid-color', 'rgba(0,0,0,0.06)');
+  const labelColor = getColorVariable('--axis-label', '#666666');
+
+  ctx.save();
+  ctx.strokeStyle = gridColor;
+  ctx.beginPath();
+  ticks.forEach((time) => {
+    const x = leftMargin + Math.min(drawableWidth, Math.max(0, (time / safeDuration) * drawableWidth));
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+  });
+  ctx.stroke();
+
+  ctx.fillStyle = labelColor;
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  const labelY = height - 2;
+  ticks.forEach((time) => {
+    const x = leftMargin + Math.min(drawableWidth, Math.max(0, (time / safeDuration) * drawableWidth));
+    ctx.fillText(formatTimeLabel(time), x, labelY);
+  });
+  ctx.restore();
 }
 
 function estimateFrequencySeries(
@@ -399,17 +455,7 @@ export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElem
     ctx.stroke();
   }
 
-  ctx.strokeStyle = getColorVariable('--grid-color', 'rgba(0,0,0,0.1)');
-  ctx.beginPath();
-  const maxDuration = buffer.duration;
-  const step = 0.5;
-  const maxTicks = Math.max(1, Math.ceil(maxDuration / step));
-  for (let i = 0; i <= maxTicks; i++) {
-    const x = (i * step * width) / maxDuration;
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-  }
-  ctx.stroke();
+  drawTimeTicks(ctx, buffer.duration, width, height);
 }
 
 function drawRealtimeWaveform(
@@ -635,9 +681,9 @@ function drawFrequencyTrack(
   const { ctx, width, height } = prepareCanvas(canvas);
   if (!ctx) return;
 
-  const drawableWidth = Math.max(1, width - 40);
+  const drawableWidth = Math.max(1, width - SPECTROGRAM_LEFT_MARGIN);
   const drawableHeight = height;
-  const leftMargin = 40;
+  const leftMargin = SPECTROGRAM_LEFT_MARGIN;
   const maxFreq = Math.max(sampleRate / 2, 1);
   const safeDuration = Math.max(duration, 1e-6);
   const logMax = Math.log10(Math.max(maxFreq, MIN_LOG_FREQUENCY));
@@ -690,6 +736,10 @@ function drawOfflineSpectrogram(
   }
   completed = true;
   drawFrequencyTrack(data.frequencies, canvas, data.duration, data.sampleRate, scale);
+  const { ctx, width, height } = prepareCanvas(canvas);
+  if (ctx) {
+    drawTimeTicks(ctx, data.duration, width, height, { leftMargin: SPECTROGRAM_LEFT_MARGIN });
+  }
   if (completed) {
     spectrogramNeedsReset = false;
     lastSpectrogramScale = scale;
@@ -709,9 +759,9 @@ function drawSpectrogram(
   const { ctx, width, height } = prepareCanvas(canvas);
   if (!ctx) return previousX;
 
-  const drawableWidth = width - 40;
+  const drawableWidth = width - SPECTROGRAM_LEFT_MARGIN;
   const drawableHeight = height;
-  const leftMargin = 40;
+  const leftMargin = SPECTROGRAM_LEFT_MARGIN;
   const minLogFreq = MIN_LOG_FREQUENCY;
   const maxFreq = Math.max(sampleRate / 2, 1);
   const cappedTargetX = Math.min(drawableWidth, Math.max(0, Math.floor(progress * drawableWidth)));
@@ -778,17 +828,6 @@ function drawSpectrogram(
   ctx.lineTo(width, drawableHeight);
   ctx.stroke();
 
-  if (reset || targetX <= previousX) {
-    ctx.strokeStyle = getColorVariable('--grid-color', 'rgba(0,0,0,0.05)');
-    ctx.beginPath();
-    const tickSpacing = Math.max(MIN_TICK_SPACING_PX, width / 10);
-    for (let x = leftMargin; x <= width; x += tickSpacing) {
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, drawableHeight);
-    }
-    ctx.stroke();
-  }
-
   ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
   ctx.beginPath();
   ctx.moveTo(leftMargin, 0);
@@ -850,11 +889,8 @@ export function initializeVisualizationCanvases(options?: { preserveSpectrogram?
     const { ctx, width, height } = prepareCanvas(canvas);
     if (!ctx) return;
 
-    if (id === 'spectrogram') {
-      lastSpectrogramCanvas = canvas;
-      if (preserveSpectrogram) {
-        return;
-      }
+    if (id === 'spectrogram' && preserveSpectrogram) {
+      return;
     }
 
     ctx.clearRect(0, 0, width, height);
@@ -897,14 +933,27 @@ export async function playAudio(
   const fftAnalyser = spectrogramCanvas ? new Tone.Analyser('fft', 1024) : null;
   const renderedProgress = document.getElementById('renderedWaveformProgress') as HTMLDivElement | null;
   const spectrogramProgress = document.getElementById('spectrogramProgress') as HTMLDivElement | null;
+  const setProgressPosition = (element: HTMLDivElement, ratio: number, leftMargin: number) => {
+    const parent = element.parentElement;
+    const width = parent?.clientWidth ?? 0;
+    const clamped = Math.min(Math.max(ratio, 0), 1);
+    if (width > 0) {
+      const usableWidth = Math.max(width - leftMargin, 1);
+      const leftPx = leftMargin + clamped * usableWidth;
+      const leftPercent = (leftPx / width) * 100;
+      element.style.left = `${leftPercent}%`;
+    } else {
+      element.style.left = `${clamped * 100}%`;
+    }
+    element.classList.add('is-active');
+  };
   const updateProgressLines = (ratio: number) => {
-    const clamped = Math.min(Math.max(ratio, 0), 1) * 100;
-    [renderedProgress, spectrogramProgress].forEach((el) => {
-      if (el) {
-        el.style.left = `${clamped}%`;
-        el.classList.add('is-active');
-      }
-    });
+    if (renderedProgress) {
+      setProgressPosition(renderedProgress, ratio, 0);
+    }
+    if (spectrogramProgress) {
+      setProgressPosition(spectrogramProgress, ratio, SPECTROGRAM_LEFT_MARGIN);
+    }
   };
   const clearProgressLines = () => {
     [renderedProgress, spectrogramProgress].forEach((el) => {
@@ -914,32 +963,31 @@ export async function playAudio(
     });
   };
 
-  if (waveformAnalyser) {
-    player.connect(waveformAnalyser);
-  }
-
-  if (fftAnalyser) {
-    player.connect(fftAnalyser);
-  }
-
-  player.toDestination();
-  player.start();
-
-  let animationId: number | null = null;
   const playbackDurationMs = Math.max(decodedBuffer.duration * 1000, 1);
   const sampleRate = Math.max(decodedBuffer.sampleRate, 1);
   const shouldResetSpectrogram = options?.resetSpectrogram ?? true;
   spectrogramNeedsReset = shouldResetSpectrogram;
-  const startTime = performance.now();
+  const spectrogramSignature = buildSpectrogramSignature(decodedBuffer);
+  let animationId: number | null = null;
   realtimePreviousSegment = null;
   let currentEstimatedFrequency: number | null = null;
-  const spectrogramSignature = buildSpectrogramSignature(decodedBuffer);
-  updateProgressLines(0);
+  let playbackStarted = false;
+  let spectrogramDrawPending = false;
+  const requestSpectrogramDraw = (forceReset: boolean) => {
+    if (!spectrogramCanvas || !cachedSpectrogramData) {
+      return;
+    }
+    if (!playbackStarted) {
+      spectrogramDrawPending = true;
+      return;
+    }
+    drawOfflineSpectrogram(cachedSpectrogramData, spectrogramCanvas, spectrogramScale, forceReset);
+    spectrogramDrawPending = false;
+  };
 
   if (spectrogramCanvas) {
-    lastSpectrogramCanvas = spectrogramCanvas;
     const { width } = prepareCanvas(spectrogramCanvas);
-    const columnCount = Math.max(1, width - 40);
+    const columnCount = Math.max(1, width - SPECTROGRAM_LEFT_MARGIN);
     const shouldAnalyze = shouldResetSpectrogram
       || !cachedSpectrogramData
       || cachedSpectrogramData.signature !== spectrogramSignature;
@@ -958,16 +1006,32 @@ export async function playAudio(
             signature: analysisSignature,
           };
           pendingSpectrogramSignature = null;
-          if (lastSpectrogramCanvas && spectrogramSignature === analysisSignature) {
-            drawOfflineSpectrogram(cachedSpectrogramData, lastSpectrogramCanvas, spectrogramScale, true);
-          }
+          spectrogramNeedsReset = true;
+          requestSpectrogramDraw(true);
         })
         .catch((error) => {
           console.error('Error during spectrogram analysis:', error);
         });
     } else if (spectrogramNeedsReset && cachedSpectrogramData) {
-      drawOfflineSpectrogram(cachedSpectrogramData, spectrogramCanvas, spectrogramScale, true);
+      requestSpectrogramDraw(true);
     }
+  }
+
+  if (waveformAnalyser) {
+    player.connect(waveformAnalyser);
+  }
+
+  if (fftAnalyser) {
+    player.connect(fftAnalyser);
+  }
+
+  player.toDestination();
+  player.start();
+  const startTime = performance.now();
+  playbackStarted = true;
+  updateProgressLines(0);
+  if (spectrogramDrawPending) {
+    requestSpectrogramDraw(true);
   }
 
   const render = () => {
@@ -979,8 +1043,8 @@ export async function playAudio(
       currentEstimatedFrequency = estimateFundamentalFrequency(values, sampleRate);
     }
 
-    if (spectrogramCanvas && cachedSpectrogramData && spectrogramNeedsReset) {
-      drawOfflineSpectrogram(cachedSpectrogramData, spectrogramCanvas, spectrogramScale, true);
+    if (spectrogramNeedsReset) {
+      requestSpectrogramDraw(true);
     }
 
     if (waveformAnalyser && realtimeCanvas) {
