@@ -160,16 +160,6 @@ function calculateDisplayRange(extra: RangeExtra): { min: number; max: number } 
   return { min, max };
 }
 
-function getMinimumAllowedExtra(): RangeExtra {
-  const baseRange = getBaseDisplayRange();
-  if (!baseRange) return { top: 0, bottom: 0 };
-  const dataRange = getPitchRange(intonationPoints);
-  return {
-    top: dataRange.max - baseRange.max,
-    bottom: baseRange.min - dataRange.min,
-  };
-}
-
 export function clampRangeExtra(
   desiredExtra: RangeExtra,
   baseRange: { min: number; max: number },
