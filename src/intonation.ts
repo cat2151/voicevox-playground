@@ -3,27 +3,21 @@ import { showStatus, scheduleHideStatus } from './status';
 import { intonationState, updateIntonationTiming } from './intonationState';
 import { cloneAudioQuery, isValidAudioQueryShape } from './intonationUtils';
 import {
-  adjustIntonationScale,
+  applyRangeExtra,
   buildIntonationPointsFromQuery,
   calculateLetterKeyAdjustment,
-  calculateStepSize,
-  applyRangeExtra,
   clampPitchToDisplayRange,
-  clampRangeExtra,
   drawIntonationChart,
   ensureWheelHandler,
   findNearestIntonationPoint,
   getBaseDisplayRange,
-  initializeIntonationCanvas,
   pitchFromY,
   refreshDisplayRange,
   updateInitialRangeFromPoints,
 } from './intonationDisplay';
 import {
-  fetchAndRenderIntonation,
   playUpdatedIntonation,
   replayCachedIntonationAudio,
-  resetIntonationToInitial,
   scheduleIntonationPlayback,
 } from './intonationPlayback';
 
