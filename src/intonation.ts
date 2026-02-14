@@ -16,6 +16,8 @@ import { initializeVisualizationCanvases, drawRenderedWaveform, playAudio } from
 import { appState } from './state';
 import { updateExportButtonState } from './uiControls';
 
+export type RangeExtra = { top: number; bottom: number };
+
 let intonationCanvas: HTMLCanvasElement | null = null;
 let intonationTimingEl: HTMLElement | null = null;
 let intonationLabelsEl: HTMLElement | null = null;
@@ -26,7 +28,7 @@ let loopCheckboxEl: HTMLInputElement | null = null;
 let intonationInitialQuery: AudioQuery | null = null;
 let intonationInitialPitchRange: { min: number; max: number } | null = null;
 let intonationDisplayRange: { min: number; max: number } | null = null;
-let intonationRangeExtra = 0;
+let intonationRangeExtra: RangeExtra = { top: 0, bottom: 0 };
 let intonationPoints: IntonationPoint[] = [];
 let intonationPointPositions: Array<{ x: number; y: number }> = [];
 let intonationSelectedIndex: number | null = null;
@@ -145,11 +147,11 @@ function getBaseDisplayRange(): { min: number; max: number } | null {
   };
 }
 
-function calculateDisplayRange(extra: number): { min: number; max: number } | null {
+function calculateDisplayRange(extra: RangeExtra): { min: number; max: number } | null {
   const baseRange = getBaseDisplayRange();
   if (!baseRange) return null;
-  let min = baseRange.min - extra;
-  let max = baseRange.max + extra;
+  let min = baseRange.min - extra.bottom;
+  let max = baseRange.max + extra.top;
   if (min >= max) {
     const center = (min + max) / 2;
     min = center - 0.0001;
@@ -158,20 +160,36 @@ function calculateDisplayRange(extra: number): { min: number; max: number } | nu
   return { min, max };
 }
 
-function getMinimumAllowedExtra() {
+function getMinimumAllowedExtra(): RangeExtra {
   const baseRange = getBaseDisplayRange();
-  if (!baseRange) return 0;
+  if (!baseRange) return { top: 0, bottom: 0 };
   const dataRange = getPitchRange(intonationPoints);
-  const minExtraByMin = baseRange.min - dataRange.min;
-  const minExtraByMax = dataRange.max - baseRange.max;
-  return Math.max(minExtraByMin, minExtraByMax);
+  return {
+    top: dataRange.max - baseRange.max,
+    bottom: baseRange.min - dataRange.min,
+  };
 }
 
-function applyRangeExtra(desiredExtra: number) {
+export function clampRangeExtra(
+  desiredExtra: RangeExtra,
+  baseRange: { min: number; max: number },
+  dataRange: { min: number; max: number }
+): RangeExtra {
+  const minimumExtra = {
+    top: dataRange.max - baseRange.max,
+    bottom: baseRange.min - dataRange.min,
+  };
+  return {
+    top: Math.max(desiredExtra.top, minimumExtra.top),
+    bottom: Math.max(desiredExtra.bottom, minimumExtra.bottom),
+  };
+}
+
+function applyRangeExtra(desiredExtra: RangeExtra) {
   const baseRange = getBaseDisplayRange();
   if (!baseRange) return;
-  const minimumExtra = getMinimumAllowedExtra();
-  intonationRangeExtra = Math.max(desiredExtra, minimumExtra);
+  const dataRange = getPitchRange(intonationPoints);
+  intonationRangeExtra = clampRangeExtra(desiredExtra, baseRange, dataRange);
   const range = calculateDisplayRange(intonationRangeExtra);
   if (range) {
     intonationDisplayRange = range;
@@ -200,26 +218,27 @@ export function calculateStepSize(range: { min: number; max: number }) {
 export function calculateLetterKeyAdjustment(params: {
   currentPitch: number;
   baseRange: { min: number; max: number };
-  rangeExtra: number;
+  rangeExtra: RangeExtra;
   stepSize: number;
   direction: 'up' | 'down';
   ctrlModifier: boolean;
 }) {
   const step = params.stepSize * (params.ctrlModifier ? 0.5 : 1);
   const delta = step * (params.direction === 'up' ? 1 : -1);
-  let desiredExtra = params.rangeExtra;
+  let desiredTopExtra = params.rangeExtra.top;
+  let desiredBottomExtra = params.rangeExtra.bottom;
   const tentativePitch = params.currentPitch + delta;
-  const maxWithExtra = params.baseRange.max + desiredExtra;
-  const minWithExtra = params.baseRange.min - desiredExtra;
+  const maxWithExtra = params.baseRange.max + desiredTopExtra;
+  const minWithExtra = params.baseRange.min - desiredBottomExtra;
   if (tentativePitch > maxWithExtra) {
-    desiredExtra = Math.max(desiredExtra, tentativePitch - params.baseRange.max);
+    desiredTopExtra = Math.max(desiredTopExtra, tentativePitch - params.baseRange.max);
   } else if (tentativePitch < minWithExtra) {
-    desiredExtra = Math.max(desiredExtra, params.baseRange.min - tentativePitch);
+    desiredBottomExtra = Math.max(desiredBottomExtra, params.baseRange.min - tentativePitch);
   }
-  const adjustedMin = params.baseRange.min - desiredExtra;
-  const adjustedMax = params.baseRange.max + desiredExtra;
+  const adjustedMin = params.baseRange.min - desiredBottomExtra;
+  const adjustedMax = params.baseRange.max + desiredTopExtra;
   const pitch = Math.min(Math.max(tentativePitch, adjustedMin), adjustedMax);
-  return { pitch, rangeExtra: desiredExtra };
+  return { pitch, rangeExtra: { top: desiredTopExtra, bottom: desiredBottomExtra } };
 }
 
 function handleIntonationWheel(event: WheelEvent) {
@@ -232,7 +251,7 @@ function updateInitialRangeFromPoints(points: IntonationPoint[]) {
   const range = getPitchRange(points);
   intonationInitialPitchRange = range;
   intonationStepSize = calculateStepSize(range);
-  intonationRangeExtra = 0;
+  intonationRangeExtra = { top: 0, bottom: 0 };
   refreshDisplayRange();
 }
 
@@ -240,7 +259,7 @@ export function resetIntonationState() {
   intonationInitialQuery = null;
   intonationInitialPitchRange = null;
   intonationDisplayRange = null;
-  intonationRangeExtra = 0;
+  intonationRangeExtra = { top: 0, bottom: 0 };
   intonationStepSize = 1;
   currentIntonationQuery = null;
   intonationPoints = [];
@@ -819,7 +838,10 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
     const step = intonationStepSize * (event.shiftKey && !event.ctrlKey ? 0.5 : 1);
     if (event.ctrlKey) {
       const rangeDelta = event.key === 'ArrowUp' ? step : -step;
-      applyRangeExtra(intonationRangeExtra + rangeDelta);
+      applyRangeExtra({
+        top: intonationRangeExtra.top + rangeDelta,
+        bottom: intonationRangeExtra.bottom + rangeDelta,
+      });
       drawIntonationChart(intonationPoints);
       return;
     }
