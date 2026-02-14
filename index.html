@@ -172,6 +172,17 @@
         flex: 1;
         min-width: 0;
       }
+      .style-row__random-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+        color: var(--text-color);
+        font-size: 14px;
+      }
+      .style-row__random-toggle input {
+        margin: 0;
+      }
       .input-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -560,6 +571,10 @@
           aria-label="切替区切り文字"
           placeholder="空欄のままなら切り替えなし"
         />
+        <label for="randomStyleCheckbox" class="style-row__random-toggle">
+          <input type="checkbox" id="randomStyleCheckbox" />
+          ランダムstyle
+        </label>
       </div>
 
       <div class="input-row">

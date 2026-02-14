@@ -32,6 +32,7 @@ import {
   getSelectedStyleId,
   populateStyleSelect,
   populateSpeakerStyleSelect,
+  selectRandomStyleId,
   setSelectedStyleId,
 } from './styleManager';
 import {
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
   const speakerStyleSelect = document.getElementById('speakerStyleSelect') as HTMLSelectElement | null;
   const delimiterInput = document.getElementById('delimiterInput') as HTMLInputElement | null;
+  const randomStyleCheckbox = document.getElementById('randomStyleCheckbox') as HTMLInputElement | null;
   const favoritesToggleButton = document.getElementById('favoritesToggleButton') as HTMLButtonElement | null;
   const favoritesPanel = document.getElementById('favoritesPanel');
   const favoritesListEl = document.getElementById('favoritesList') as HTMLUListElement | null;
@@ -80,6 +82,11 @@ document.addEventListener('DOMContentLoaded', () => {
       styleSelect.value = String(styleId);
     }
     populateSpeakerStyleSelect(speakerStyleSelect, styleId);
+  };
+  const applyRandomStyleSelection = () => {
+    const randomStyleId = selectRandomStyleId();
+    applyStyleSelection(randomStyleId);
+    return randomStyleId;
   };
 
   if (loopCheckboxEl) {
@@ -125,6 +132,14 @@ document.addEventListener('DOMContentLoaded', () => {
     applyStyleSelection(getSelectedStyleId());
   }
 
+  if (randomStyleCheckbox) {
+    randomStyleCheckbox.addEventListener('change', () => {
+      if (randomStyleCheckbox.checked) {
+        applyRandomStyleSelection();
+      }
+    });
+  }
+
   if (speakerStyleSelect) {
     speakerStyleSelect.addEventListener('change', () => {
       const parsed = Number(speakerStyleSelect.value);
@@ -133,7 +148,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null);
+  void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null).then(() => {
+    if (randomStyleCheckbox?.checked) {
+      applyRandomStyleSelection();
+    }
+  });
 
   if (delimiterInput) {
     try {
