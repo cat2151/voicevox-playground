@@ -14,6 +14,8 @@ import {
   buildTextSegments,
   getSelectedStyleId,
   parseDelimiterConfig,
+  populateSpeakerStyleSelect,
+  selectRandomStyleId,
   setSelectedStyleId,
 } from './styleManager';
 import {
@@ -198,7 +200,9 @@ export async function handlePlay() {
   const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
   const loopCheckbox = document.getElementById('loopCheckbox') as HTMLInputElement | null;
   const styleSelect = document.getElementById('styleSelect') as HTMLSelectElement | null;
+  const speakerStyleSelect = document.getElementById('speakerStyleSelect') as HTMLSelectElement | null;
   const delimiterInput = document.getElementById('delimiterInput') as HTMLInputElement | null;
+  const randomStyleCheckbox = document.getElementById('randomStyleCheckbox') as HTMLInputElement | null;
 
   if (!textArea || !playButton) {
     console.error('Required UI elements not found');
@@ -212,7 +216,15 @@ export async function handlePlay() {
     return;
   }
 
-  if (styleSelect && styleSelect.value) {
+  const randomStyleEnabled = randomStyleCheckbox?.checked ?? false;
+
+  if (randomStyleEnabled) {
+    const randomStyleId = selectRandomStyleId();
+    if (styleSelect) {
+      styleSelect.value = String(randomStyleId);
+    }
+    populateSpeakerStyleSelect(speakerStyleSelect, randomStyleId);
+  } else if (styleSelect && styleSelect.value) {
     const parsed = Number(styleSelect.value);
     if (!Number.isNaN(parsed)) {
       setSelectedStyleId(parsed);
@@ -248,12 +260,13 @@ export async function handlePlay() {
   try {
     const audioContext = Tone.getContext().rawContext as BaseAudioContext;
     const decodedBuffers: AudioBuffer[] = [];
+    const bypassCache = randomStyleEnabled;
     let usedCache = false;
-    let allSegmentsCached = true;
+    let allSegmentsCached = !bypassCache;
     const currentSignature = segments.map((segment) => getAudioCacheKey(segment.text, segment.styleId)).join('|');
     for (const segment of segments) {
       const cacheKey = getAudioCacheKey(segment.text, segment.styleId);
-      let audioBuffer = audioCache.get(cacheKey) ?? null;
+      let audioBuffer = bypassCache ? null : audioCache.get(cacheKey) ?? null;
       if (audioBuffer) {
         usedCache = true;
       } else {
@@ -262,13 +275,15 @@ export async function handlePlay() {
         const audioQuery = await getAudioQuery(segment.text, segment.styleId);
         showStatus('音声を生成中...', 'info');
         audioBuffer = await synthesize(audioQuery, segment.styleId);
-        if (audioCache.size >= AUDIO_CACHE_LIMIT) {
-          const oldest = audioCache.keys().next().value;
-          if (oldest !== undefined) {
-            audioCache.delete(oldest);
+        if (!bypassCache) {
+          if (audioCache.size >= AUDIO_CACHE_LIMIT) {
+            const oldest = audioCache.keys().next().value;
+            if (oldest !== undefined) {
+              audioCache.delete(oldest);
+            }
           }
+          audioCache.set(cacheKey, audioBuffer);
         }
-        audioCache.set(cacheKey, audioBuffer);
       }
       const decodedBuffer = await audioContext.decodeAudioData(audioBuffer.slice(0));
       decodedBuffers.push(decodedBuffer);
@@ -281,7 +296,8 @@ export async function handlePlay() {
 
     appState.lastSynthesizedBuffer = encodeAudioBufferToWav(combinedBuffer);
 
-    const shouldPreserveSpectrogram = allSegmentsCached && appState.lastSpectrogramSignature === currentSignature;
+    const shouldPreserveSpectrogram =
+      !bypassCache && allSegmentsCached && appState.lastSpectrogramSignature === currentSignature;
     initializeVisualizationCanvases({ preserveSpectrogram: shouldPreserveSpectrogram });
     if (renderedCanvas) {
       drawRenderedWaveform(combinedBuffer, renderedCanvas);

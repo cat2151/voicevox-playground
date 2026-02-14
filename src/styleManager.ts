@@ -20,6 +20,16 @@ export function setSelectedStyleId(styleId: number) {
   selectedStyleId = styleId;
 }
 
+export function selectRandomStyleId() {
+  if (availableStyles.length === 0) {
+    return selectedStyleId;
+  }
+  const randomIndex = Math.floor(Math.random() * availableStyles.length);
+  const randomStyle = availableStyles[randomIndex];
+  selectedStyleId = randomStyle.id;
+  return selectedStyleId;
+}
+
 function getStyleLabel(style: VoiceStyleOption) {
   return `${style.speakerName} - ${style.name} (ID: ${style.id})`;
 }

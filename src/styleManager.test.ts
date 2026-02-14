@@ -4,8 +4,10 @@ import { ZUNDAMON_SPEAKER_ID } from './config';
 import {
   buildTextSegments,
   fetchVoiceStyles,
+  getSelectedStyleId,
   parseDelimiterConfig,
   populateSpeakerStyleSelect,
+  selectRandomStyleId,
 } from './styleManager';
 
 afterEach(() => {
@@ -66,6 +68,32 @@ describe('buildTextSegments', () => {
       { text: 'world', styleId: 11 },
     ]);
     expect(fetchMock).toHaveBeenCalled();
+  });
+});
+
+describe('selectRandomStyleId', () => {
+  it('selects a random style from available options and updates the selection', async () => {
+    const fakeResponse = [
+      {
+        name: 'Tester',
+        styles: [
+          { id: 10, name: 'ノーマル' },
+          { id: 11, name: 'ハッピー' },
+        ],
+      },
+    ];
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => fakeResponse,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(Math, 'random').mockReturnValue(0.75);
+
+    await fetchVoiceStyles(null);
+    const selected = selectRandomStyleId();
+
+    expect(selected).toBe(11);
+    expect(getSelectedStyleId()).toBe(11);
   });
 });
 
