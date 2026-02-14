@@ -15,7 +15,6 @@ import { SPECTROGRAM_LEFT_MARGIN, buildTimeTicks } from './visualization/timeAxi
 
 let spectrogramScale: FrequencyScale = 'linear';
 let spectrogramNeedsReset = false;
-let lastSpectrogramScale: FrequencyScale = 'linear';
 let realtimePreviousSegment: Float32Array | null = null;
 let activePlaybackStopper: (() => void) | null = null;
 let cachedSpectrogramData: OfflineSpectrogramData | null = null;
@@ -76,7 +75,6 @@ export function initializeVisualizationCanvases(options?: { preserveSpectrogram?
         true
       );
       spectrogramNeedsReset = false;
-      lastSpectrogramScale = spectrogramScale;
     } else {
       ctx.beginPath();
       ctx.moveTo(0, height / 2);
@@ -152,7 +150,6 @@ export async function playAudio(
     }
     drawOfflineSpectrogram(cachedSpectrogramData, spectrogramCanvas, spectrogramScale, forceReset);
     spectrogramNeedsReset = false;
-    lastSpectrogramScale = spectrogramScale;
     spectrogramDrawPending = false;
   };
 

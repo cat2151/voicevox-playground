@@ -1,4 +1,4 @@
-import { FrequencyScale, MIN_LOG_FREQUENCY, SPECTROGRAM_MAX_COLUMNS_PER_FRAME } from '../config';
+import { FrequencyScale, MIN_LOG_FREQUENCY } from '../config';
 import { getColorVariable } from '../status';
 import { prepareCanvas } from './canvas';
 import { fftRadix2, getHannWindow } from './fft';
@@ -43,63 +43,6 @@ function mapIntensityToSpectrogramColor(intensity: number) {
   }
   const [r, g, b] = SPECTROGRAM_COLOR_STOPS[SPECTROGRAM_COLOR_STOPS.length - 1].color;
   return `rgb(${r},${g},${b})`;
-}
-
-function estimateFrequencySeries(
-  channelData: Float32Array,
-  sampleRate: number,
-  maxPoints: number
-): Array<{ time: number; freq: number }> {
-  const windowSize = 2048;
-  const targetPoints = Math.max(1, Math.min(maxPoints, Math.floor(channelData.length / windowSize)));
-  const hopSize = Math.max(
-    windowSize / 2,
-    Math.floor((channelData.length - windowSize) / Math.max(targetPoints - 1, 1))
-  );
-  if (channelData.length < windowSize || sampleRate <= 0) {
-    return [];
-  }
-  const window = getHannWindow(windowSize);
-  const fftSize = 1 << Math.ceil(Math.log2(windowSize));
-  const real = new Float32Array(fftSize);
-  const imag = new Float32Array(fftSize);
-  const frequencies: Array<{ time: number; freq: number }> = [];
-
-  for (let offset = 0; offset + windowSize <= channelData.length; offset += hopSize) {
-    real.fill(0);
-    imag.fill(0);
-    for (let i = 0; i < windowSize; i++) {
-      real[i] = channelData[offset + i] * window[i];
-    }
-    fftRadix2(real, imag);
-
-    let maxMag = 0;
-    let maxIndex = 0;
-    for (let i = 0; i < fftSize / 2; i++) {
-      const mag = real[i] * real[i] + imag[i] * imag[i];
-      if (mag > maxMag) {
-        maxMag = mag;
-        maxIndex = i;
-      }
-    }
-
-    const freq = (maxIndex * sampleRate) / fftSize;
-    frequencies.push({ time: offset / sampleRate, freq });
-  }
-
-  const grouped: Array<{ time: number; freq: number }> = [];
-  const columns = Math.max(1, Math.min(frequencies.length, SPECTROGRAM_MAX_COLUMNS_PER_FRAME));
-  const groupSize = Math.max(1, Math.floor(frequencies.length / columns));
-
-  for (let i = 0; i < frequencies.length; i += groupSize) {
-    const group = frequencies.slice(i, i + groupSize);
-    if (group.length === 0) continue;
-    const avgFreq = group.reduce((sum, item) => sum + item.freq, 0) / group.length;
-    const avgTime = group.reduce((sum, item) => sum + item.time, 0) / group.length;
-    grouped.push({ time: avgTime, freq: avgFreq });
-  }
-
-  return grouped;
 }
 
 function determineSpectrogramCeiling(values: Float32Array, previousCeiling: number) {
@@ -174,15 +117,12 @@ export function estimateFundamentalFrequency(values: Float32Array, sampleRate: n
 export async function analyzeSpectrogramFrames(buffer: AudioBuffer, columns: number) {
   const frames: SpectrogramFrame[] = [];
   const fftSize = 2048;
-  const hopSize = 1024;
   const channelData = buffer.getChannelData(0);
   const binCount = fftSize / 2;
   const peakMagnitudes = new Float32Array(binCount);
   const window = getHannWindow(fftSize);
   const totalSamples = channelData.length;
-  const durationSeconds = buffer.duration;
   const maxStartSample = Math.max(0, totalSamples - fftSize);
-  const samplesPerColumn = Math.max(1, Math.floor((durationSeconds * buffer.sampleRate) / columns));
   const CHUNK_SIZE = 64;
 
   const processChunk = async (startColumn: number, endColumn: number) => {
