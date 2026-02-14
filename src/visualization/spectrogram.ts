@@ -8,7 +8,7 @@ const SPECTROGRAM_COLOR_STOPS = [
   { stop: 0, color: [0, 0, 0] }, // black
   { stop: 0.25, color: [0, 64, 192] }, // blue
   { stop: 0.5, color: [210, 40, 40] }, // red
-  { stop: 0.75, color: [255, 165, 0] }, // orange
+  { stop: 0.99, color: [255, 165, 0] }, // orange
   { stop: 1, color: [255, 255, 255] }, // white
 ];
 
