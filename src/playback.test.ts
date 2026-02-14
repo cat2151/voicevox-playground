@@ -53,13 +53,25 @@ vi.mock('./audio', () => ({
 }));
 
 vi.mock('./visualization', () => {
-  const stopPlayback = vi.fn();
+  let active = false;
+  let resolvePlayback: ((result: { stopped: boolean }) => void) | null = null;
+  const stopActivePlayback = vi.fn(() => {
+    active = false;
+    resolvePlayback?.({ stopped: true });
+    resolvePlayback = null;
+  });
+  const playAudio = vi.fn(async () => {
+    active = true;
+    return new Promise<{ stopped: boolean }>((resolve) => {
+      resolvePlayback = resolve;
+    });
+  });
   return {
     drawRenderedWaveform: vi.fn(),
     initializeVisualizationCanvases: vi.fn(),
-    isPlaybackActive: vi.fn(() => true),
-    playAudio: vi.fn(async () => ({ stopped: true })),
-    stopActivePlayback: stopPlayback,
+    isPlaybackActive: vi.fn(() => active),
+    playAudio,
+    stopActivePlayback,
   };
 });
 
@@ -107,17 +119,15 @@ describe('handlePlayButtonClick', () => {
       <select id="styleSelect"></select>
       <input id="delimiterInput" />
     `;
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const playPromise = handlePlay();
     expect(isPlayRequestPending()).toBe(true);
 
+    await new Promise((resolve) => setTimeout(resolve, 0));
     handlePlayButtonClick();
 
     expect(stopActivePlayback).toHaveBeenCalledTimes(1);
-    expect(logSpy).toHaveBeenCalledWith('Stop button clicked');
 
     await playPromise;
-    logSpy.mockRestore();
   });
 });

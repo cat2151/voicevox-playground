@@ -177,7 +177,9 @@ export function handlePlayButtonClick() {
     return;
   }
   if (isPlaybackActive()) {
-    console.log('Stop button clicked');
+    if (import.meta.env.DEV) {
+      console.debug('Stop button clicked');
+    }
     stopPlaybackAndResetLoop();
     return;
   }
