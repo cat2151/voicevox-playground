@@ -95,6 +95,21 @@ describe('selectRandomStyleId', () => {
     expect(selected).toBe(11);
     expect(getSelectedStyleId()).toBe(11);
   });
+
+  it('returns the current selectedStyleId when no styles are available', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [],
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchVoiceStyles(null);
+    const currentSelected = getSelectedStyleId();
+    const selected = selectRandomStyleId();
+
+    expect(selected).toBe(currentSelected);
+    expect(getSelectedStyleId()).toBe(currentSelected);
+  });
 });
 
 describe('populateSpeakerStyleSelect', () => {
