@@ -16,6 +16,18 @@ let realtimeSegmentBuffer: Float32Array | null = null;
 let fftMagnitudeBuffer: Float32Array | null = null;
 let fftHpsBuffer: Float32Array | null = null;
 let activePlaybackStopper: (() => void) | null = null;
+type SpectrogramFrame = Float32Array;
+type OfflineSpectrogramData = {
+  frames: SpectrogramFrame[];
+  ceilingIndex: number;
+  duration: number;
+  sampleRate: number;
+  frequencies: Array<{ time: number; freq: number }>;
+  signature: string;
+};
+let cachedSpectrogramData: OfflineSpectrogramData | null = null;
+let lastSpectrogramCanvas: HTMLCanvasElement | null = null;
+let pendingSpectrogramSignature: string | null = null;
 const SPECTROGRAM_COLOR_STOPS = [
   { stop: 0, color: [0, 0, 0] }, // black
   { stop: 0.25, color: [0, 64, 192] }, // blue
@@ -204,6 +216,93 @@ function estimateFrequencySeries(
   }
 
   return grouped;
+}
+
+function computeAudioContentHash(buffer: AudioBuffer, maxSamples = 1000) {
+  const channelData = buffer.getChannelData(0);
+  const length = channelData.length;
+  if (length === 0) {
+    return 0;
+  }
+  const step = Math.max(1, Math.floor(length / maxSamples));
+  let hash = 5381;
+  for (let i = 0; i < length; i += step) {
+    const sample = channelData[i];
+    const intSample = Math.floor((sample + 1) * 32767);
+    hash = ((hash << 5) + hash) ^ intSample;
+    hash |= 0;
+  }
+  hash ^= buffer.sampleRate;
+  hash ^= buffer.numberOfChannels << 16;
+  return hash >>> 0;
+}
+
+export function buildSpectrogramSignature(buffer: AudioBuffer) {
+  const contentHash = computeAudioContentHash(buffer);
+  return `${buffer.length}:${buffer.sampleRate}:${buffer.numberOfChannels}:${contentHash}`;
+}
+
+export async function analyzeSpectrogramFrames(buffer: AudioBuffer, columnCount: number) {
+  const columns = Math.max(1, columnCount);
+  const fftSize = 1024;
+  const binCount = fftSize / 2;
+  const window = getHannWindow(fftSize);
+  const channelData = buffer.getChannelData(0);
+  const frames: SpectrogramFrame[] = [];
+  const peakMagnitudes = new Float32Array(binCount);
+  peakMagnitudes.fill(-Infinity);
+  const maxStartSample = Math.max(buffer.length - fftSize, 0);
+  const CHUNK_SIZE = 64;
+
+  const processChunk = (startColumn: number, endColumn: number) => {
+    for (let column = startColumn; column < endColumn; column++) {
+      const position = columns <= 1 ? 0 : column / (columns - 1);
+      const startSample = Math.max(0, Math.min(Math.floor(position * maxStartSample), maxStartSample));
+      const real = new Float32Array(fftSize);
+      const imag = new Float32Array(fftSize);
+      for (let i = 0; i < fftSize; i++) {
+        const sampleIndex = startSample + i;
+        real[i] = (channelData[sampleIndex] ?? 0) * window[i];
+      }
+      fftRadix2(real, imag);
+
+      const magnitudes = new Float32Array(binCount);
+      for (let i = 0; i < binCount; i++) {
+        const magnitude = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
+        const db = 20 * Math.log10(Math.max(magnitude, 1e-12));
+        magnitudes[i] = db;
+        if (db > peakMagnitudes[i]) {
+          peakMagnitudes[i] = db;
+        }
+      }
+
+      frames.push(magnitudes);
+    }
+  };
+
+  for (let column = 0; column < columns; column += CHUNK_SIZE) {
+    const endColumn = Math.min(column + CHUNK_SIZE, columns);
+    processChunk(column, endColumn);
+    if (endColumn < columns) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
+
+  const ceilingIndex = determineSpectrogramCeiling(peakMagnitudes, binCount - 1);
+  const duration = buffer.duration;
+  const sampleRate = buffer.sampleRate;
+  const frequencies = frames.map((frame, index) => ({
+    time: frames.length <= 1 ? 0 : (index / Math.max(frames.length - 1, 1)) * duration,
+    freq: estimateFundamentalFrequency(frame, sampleRate),
+  }));
+
+  return {
+    frames,
+    ceilingIndex,
+    duration,
+    sampleRate,
+    frequencies,
+  };
 }
 
 export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElement) {
@@ -525,6 +624,78 @@ function extractAlignedRealtimeSegment(values: Float32Array, targetLength: numbe
   return realtimeSegmentBuffer;
 }
 
+function drawFrequencyTrack(
+  frequencies: Array<{ time: number; freq: number }>,
+  canvas: HTMLCanvasElement,
+  duration: number,
+  sampleRate: number,
+  scale: FrequencyScale
+) {
+  if (frequencies.length === 0) return;
+  const { ctx, width, height } = prepareCanvas(canvas);
+  if (!ctx) return;
+
+  const drawableWidth = Math.max(1, width - 40);
+  const drawableHeight = height;
+  const leftMargin = 40;
+  const maxFreq = Math.max(sampleRate / 2, 1);
+  const safeDuration = Math.max(duration, 1e-6);
+  const logMax = Math.log10(Math.max(maxFreq, MIN_LOG_FREQUENCY));
+  const logMin = Math.log10(Math.max(MIN_LOG_FREQUENCY, 1));
+
+  ctx.save();
+  ctx.strokeStyle = getColorVariable('--highlight-color', '#ff9800');
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  frequencies.forEach((point, index) => {
+    const x = leftMargin + Math.min(drawableWidth, Math.max(0, (point.time / safeDuration) * drawableWidth));
+    const normalized = scale === 'log'
+      ? (point.freq <= 0
+          ? 0
+          : (Math.log10(Math.max(point.freq, MIN_LOG_FREQUENCY)) - logMin) / Math.max(logMax - logMin, 1))
+      : point.freq / maxFreq;
+    const y = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
+    if (index === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawOfflineSpectrogram(
+  data: OfflineSpectrogramData,
+  canvas: HTMLCanvasElement,
+  scale: FrequencyScale,
+  reset?: boolean
+) {
+  if (data.frames.length === 0) return;
+  let previousX = -1;
+  const totalFrames = data.frames.length;
+  let completed = false;
+  for (let i = 0; i < totalFrames; i++) {
+    const progress = totalFrames <= 1 ? 1 : i / (totalFrames - 1);
+    previousX = drawSpectrogram(
+      data.frames[i],
+      canvas,
+      progress,
+      data.ceilingIndex,
+      previousX,
+      data.sampleRate,
+      scale,
+      reset && i === 0
+    );
+  }
+  completed = true;
+  drawFrequencyTrack(data.frequencies, canvas, data.duration, data.sampleRate, scale);
+  if (completed) {
+    spectrogramNeedsReset = false;
+    lastSpectrogramScale = scale;
+  }
+}
+
 function drawSpectrogram(
   values: Float32Array,
   canvas: HTMLCanvasElement,
@@ -668,6 +839,9 @@ function drawSpectrogram(
 
 export function initializeVisualizationCanvases(options?: { preserveSpectrogram?: boolean }) {
   const preserveSpectrogram = options?.preserveSpectrogram ?? false;
+  if (!preserveSpectrogram) {
+    cachedSpectrogramData = null;
+  }
   invalidateColorVariableCache();
   ['renderedWaveform', 'realtimeWaveform', 'spectrogram'].forEach((id) => {
     const canvas = document.getElementById(id) as HTMLCanvasElement | null;
@@ -676,8 +850,11 @@ export function initializeVisualizationCanvases(options?: { preserveSpectrogram?
     const { ctx, width, height } = prepareCanvas(canvas);
     if (!ctx) return;
 
-    if (id === 'spectrogram' && preserveSpectrogram) {
-      return;
+    if (id === 'spectrogram') {
+      lastSpectrogramCanvas = canvas;
+      if (preserveSpectrogram) {
+        return;
+      }
     }
 
     ctx.clearRect(0, 0, width, height);
@@ -749,8 +926,6 @@ export async function playAudio(
   player.start();
 
   let animationId: number | null = null;
-  let spectrogramX = -1;
-  let spectrogramCeiling = fftAnalyser ? fftAnalyser.size : 0;
   const playbackDurationMs = Math.max(decodedBuffer.duration * 1000, 1);
   const sampleRate = Math.max(decodedBuffer.sampleRate, 1);
   const shouldResetSpectrogram = options?.resetSpectrogram ?? true;
@@ -758,37 +933,54 @@ export async function playAudio(
   const startTime = performance.now();
   realtimePreviousSegment = null;
   let currentEstimatedFrequency: number | null = null;
+  const spectrogramSignature = buildSpectrogramSignature(decodedBuffer);
   updateProgressLines(0);
+
+  if (spectrogramCanvas) {
+    lastSpectrogramCanvas = spectrogramCanvas;
+    const { width } = prepareCanvas(spectrogramCanvas);
+    const columnCount = Math.max(1, width - 40);
+    const shouldAnalyze = shouldResetSpectrogram
+      || !cachedSpectrogramData
+      || cachedSpectrogramData.signature !== spectrogramSignature;
+    if (shouldAnalyze) {
+      spectrogramNeedsReset = true;
+      const analysisSignature = spectrogramSignature;
+      pendingSpectrogramSignature = analysisSignature;
+      void Promise.resolve()
+        .then(async () => {
+          const analysis = await analyzeSpectrogramFrames(decodedBuffer, columnCount);
+          if (pendingSpectrogramSignature !== analysisSignature) {
+            return;
+          }
+          cachedSpectrogramData = {
+            ...analysis,
+            signature: analysisSignature,
+          };
+          pendingSpectrogramSignature = null;
+          if (lastSpectrogramCanvas && spectrogramSignature === analysisSignature) {
+            drawOfflineSpectrogram(cachedSpectrogramData, lastSpectrogramCanvas, spectrogramScale, true);
+          }
+        })
+        .catch((error) => {
+          console.error('Error during spectrogram analysis:', error);
+        });
+    } else if (spectrogramNeedsReset && cachedSpectrogramData) {
+      drawOfflineSpectrogram(cachedSpectrogramData, spectrogramCanvas, spectrogramScale, true);
+    }
+  }
 
   const render = () => {
     const elapsed = performance.now() - startTime;
     const progress = Math.min(elapsed / playbackDurationMs, 1);
 
-    if (fftAnalyser && spectrogramCanvas) {
+    if (fftAnalyser) {
       const values = fftAnalyser.getValue() as Float32Array;
       currentEstimatedFrequency = estimateFundamentalFrequency(values, sampleRate);
-      const needsReset = spectrogramNeedsReset || lastSpectrogramScale !== spectrogramScale;
-      const shouldDrawSpectrogram = shouldResetSpectrogram || needsReset;
-      if (shouldDrawSpectrogram) {
-        spectrogramCeiling = determineSpectrogramCeiling(
-          values,
-          spectrogramCeiling || values.length - 1
-        );
-        spectrogramX = drawSpectrogram(
-          values,
-          spectrogramCanvas,
-          progress,
-          spectrogramCeiling,
-          spectrogramX,
-          sampleRate,
-          spectrogramScale,
-          needsReset
-        );
-        if (needsReset) {
-          spectrogramNeedsReset = false;
-          lastSpectrogramScale = spectrogramScale;
-        }
-      }
+    }
+
+    if (spectrogramCanvas && cachedSpectrogramData && spectrogramNeedsReset) {
+      drawOfflineSpectrogram(cachedSpectrogramData, spectrogramCanvas, spectrogramScale, true);
     }
 
     if (waveformAnalyser && realtimeCanvas) {
