@@ -21,11 +21,13 @@ describe('setPlayButtonAppearance', () => {
     setPlayButtonAppearance('play');
     expect(button.getAttribute('aria-label')).toBe('Play');
     expect(button.title).toBe('Play');
-    expect(button.innerHTML).toContain('▶️');
+    expect(button.dataset.icon).toBe('play');
+    expect(button.querySelector('svg.icon--play')).not.toBeNull();
 
     setPlayButtonAppearance('stop');
     expect(button.getAttribute('aria-label')).toBe('Stop');
     expect(button.title).toBe('Stop');
-    expect(button.innerHTML).toContain('⏹️');
+    expect(button.dataset.icon).toBe('stop');
+    expect(button.querySelector('svg.icon--stop')).not.toBeNull();
   });
 });
