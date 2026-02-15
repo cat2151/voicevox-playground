@@ -4,62 +4,6 @@ import { prepareCanvas } from './canvas';
 import { getHannWindow, fftRadix2 } from './fft';
 import { drawTimeTicks } from './timeAxis';
 
-function estimateFrequencySeries(
-  channelData: Float32Array,
-  sampleRate: number,
-  maxPoints: number
-): Array<{ time: number; freq: number }> {
-  const windowSize = 2048;
-  const targetPoints = Math.max(1, Math.min(maxPoints, Math.floor(channelData.length / windowSize)));
-  const hopSize = Math.max(
-    windowSize / 2,
-    Math.floor((channelData.length - windowSize) / Math.max(targetPoints - 1, 1))
-  );
-  if (channelData.length < windowSize || sampleRate <= 0) {
-    return [];
-  }
-  const window = getHannWindow(windowSize);
-  const fftSize = 1 << Math.ceil(Math.log2(windowSize));
-  const real = new Float32Array(fftSize);
-  const imag = new Float32Array(fftSize);
-  const frequencies: Array<{ time: number; freq: number }> = [];
-
-  for (let offset = 0; offset + windowSize <= channelData.length; offset += hopSize) {
-    real.fill(0);
-    imag.fill(0);
-    for (let i = 0; i < windowSize; i++) {
-      real[i] = channelData[offset + i] * window[i];
-    }
-    fftRadix2(real, imag);
-
-    let maxMag = 0;
-    let maxIndex = 0;
-    for (let i = 0; i < fftSize / 2; i++) {
-      const mag = real[i] * real[i] + imag[i] * imag[i];
-      if (mag > maxMag) {
-        maxMag = mag;
-        maxIndex = i;
-      }
-    }
-
-    const freq = (maxIndex * sampleRate) / fftSize;
-    frequencies.push({ time: offset / sampleRate, freq });
-  }
-
-  const grouped: Array<{ time: number; freq: number }> = [];
-  const columns = Math.max(1, Math.min(frequencies.length, maxPoints));
-  const groupSize = Math.max(1, Math.floor(frequencies.length / columns));
-
-  for (let i = 0; i < frequencies.length; i += groupSize) {
-    const group = frequencies.slice(i, i + groupSize);
-    if (group.length === 0) continue;
-    const avgFreq = group.reduce((sum, item) => sum + item.freq, 0) / group.length;
-    const avgTime = group.reduce((sum, item) => sum + item.time, 0) / group.length;
-    grouped.push({ time: avgTime, freq: avgFreq });
-  }
-
-  return grouped;
-}
 
 function computeSegmentStats(buffer: Float32Array, offset: number, length: number) {
   let sum = 0;
