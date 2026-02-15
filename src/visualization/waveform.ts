@@ -1,7 +1,6 @@
 import { WAVEFORM_TARGET_RATIO } from '../config';
 import { getColorVariable } from '../status';
 import { prepareCanvas } from './canvas';
-import { getHannWindow, fftRadix2 } from './fft';
 import { drawTimeTicks } from './timeAxis';
 
 
@@ -143,7 +142,7 @@ export function drawRealtimeWaveform(
   values: Float32Array,
   canvas: HTMLCanvasElement,
   sampleRate: number,
-  currentEstimatedFrequency: number | null,
+  _currentEstimatedFrequency: number | null,
   previousSegment: Float32Array | null
 ) {
   const { ctx, width, height } = prepareCanvas(canvas);
@@ -161,26 +160,6 @@ export function drawRealtimeWaveform(
   const windowSize = Math.max(1, Math.min(channelData.length, 2048));
   const start = Math.max(0, channelData.length - windowSize);
   const windowed = channelData.slice(start, start + windowSize);
-  const window = getHannWindow(windowSize);
-
-  const fftSize = 1 << Math.ceil(Math.log2(windowSize));
-  const real = new Float32Array(fftSize);
-  const imag = new Float32Array(fftSize);
-  for (let i = 0; i < windowSize; i++) {
-    real[i] = windowed[i] * window[i];
-  }
-  fftRadix2(real, imag);
-
-  let maxMag = 0;
-  let maxIndex = 0;
-  for (let i = 0; i < fftSize / 2; i++) {
-    const mag = real[i] * real[i] + imag[i] * imag[i];
-    if (mag > maxMag) {
-      maxMag = mag;
-      maxIndex = i;
-    }
-  }
-
   const targetFreq = 440; // 周波数推定が採用できないため（周波数推定はバグって高周波）
   const cycles = Math.max(1, Math.min(4, Math.floor(sampleRate / targetFreq)));
   const targetSamples = Math.floor(cycles * (sampleRate / targetFreq));
