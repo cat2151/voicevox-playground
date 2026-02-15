@@ -1,4 +1,4 @@
-Last updated: 2026-02-15
+Last updated: 2026-02-16
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -68,6 +68,7 @@ Last updated: 2026-02-15
 <p align="left">
   <a href="README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-Japanese-red.svg" alt="Japanese"></a>
   <a href="README.md"><img src="https://img.shields.io/badge/🇺🇸-English-blue.svg" alt="English"></a>
+  <a href="https://cat2151.github.io/voicevox-playground/"><img src="https://img.shields.io/badge/Demo-brightgreen" alt="Demo"></a>
   <a href="https://deepwiki.com/cat2151/voicevox-playground"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
@@ -159,8 +160,8 @@ npm run preview
 🌐 index.html
 📁 issue-notes/
   📖 100.md
-  📖 101.md
-  📖 102.md
+  📖 107.md
+  📖 108.md
   📖 22.md
   📖 23.md
   📖 24.md
@@ -182,12 +183,7 @@ npm run preview
   📖 80.md
   📖 89.md
   📖 92.md
-  📖 93.md
-  📖 94.md
-  📖 95.md
-  📖 96.md
   📖 97.md
-  📖 98.md
   📖 99.md
 📊 package-lock.json
 📊 package.json
@@ -217,6 +213,8 @@ npm run preview
   📁 visualization/
     📘 canvas.ts
     📘 fft.ts
+    📘 fftMaxFreq.ts
+    📘 fftOverlay.ts
     📘 spectrogram.ts
     📘 timeAxis.ts
     📘 waveform.ts
@@ -227,7 +225,7 @@ npm run preview
 📘 vite.config.ts
 
 ## ファイル詳細分析
-**index.html** (170行, 7632バイト)
+**index.html** (170行, 7674バイト)
   - 関数: なし
   - インポート: なし
 
@@ -243,7 +241,7 @@ npm run preview
   - 関数: なし
   - インポート: vitest, ./intonation
 
-**src/intonation.ts** (454行, 16031バイト)
+**src/intonation.ts** (456行, 16138バイト)
   - 関数: dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, disableLoopOnIntonationEdit, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, applyPitchToQuery, applyPitchEdit, handleIntonationPointerDown, handleIntonationPointerMove, handleIntonationPointerUp, handleIntonationKeyDown, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, for, catch, if
   - インポート: ./config, ./status, ./intonationState
 
@@ -263,7 +261,7 @@ npm run preview
   - 関数: isValidAudioQueryShape, cloneAudioQuery
   - インポート: ./config
 
-**src/main.ts** (314行, 11486バイト)
+**src/main.ts** (315行, 11502バイト)
   - 関数: applyStyleSelection, applyRandomStyleSelection, saveDelimiter, scheduleSaveDelimiter, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, catch
   - インポート: ./config, ./textLists, ./state
 
@@ -271,8 +269,8 @@ npm run preview
   - 関数: なし
   - インポート: vitest, ./playback, ./visualization
 
-**src/playback.ts** (351行, 11486バイト)
-  - 関数: setLoopCheckboxElement, setPlayButtonAppearance, isPlayRequestPending, stopPlaybackAndResetLoop, getAudioCacheKey, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, confirmResetIntonationBeforePlay, handlePlayButtonClick, handlePlay, triggerPlay, cleanup, handleReset, handleCancel, if, for, catch
+**src/playback.ts** (367行, 12177バイト)
+  - 関数: setLoopCheckboxElement, setPlayButtonAppearance, isPlayRequestPending, stopPlaybackAndResetLoop, getAudioCacheKey, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, confirmResetIntonationBeforePlay, handlePlayButtonClick, handlePlay, clearRealtimeWaveformCanvas, triggerPlay, cleanup, handleReset, handleCancel, if, for, catch
   - インポート: tone, ./config, ./textLists
 
 **src/state.ts** (6行, 156バイト)
@@ -291,7 +289,7 @@ npm run preview
   - 関数: getSelectedStyleId, setSelectedStyleId, selectRandomStyleId, getStyleLabel, getStyleById, getSpeakerStylesByStyleId, resolveStyleMarker, parseDelimiterConfig, addSegment, buildTextSegments, populateStyleSelect, populateSpeakerStyleSelect, fetchVoiceStyles, if, while, catch
   - インポート: なし
 
-**src/styles/base.css** (402行, 10470バイト)
+**src/styles/base.css** (413行, 10743バイト)
   - 関数: なし
   - インポート: なし
 
@@ -323,23 +321,31 @@ npm run preview
   - 関数: getHannWindow, fftRadix2, if, for
   - インポート: なし
 
-**src/visualization/spectrogram.ts** (409行, 13643バイト)
-  - 関数: lerpColor, mapIntensityToSpectrogramColor, determineSpectrogramCeiling, estimateFundamentalFrequency, analyzeSpectrogramFrames, drawFrequencyTrack, drawSpectrogram, drawOfflineSpectrogram, computeAudioContentHash, buildSpectrogramSignature, processChunk, for, if
+**src/visualization/fftMaxFreq.ts** (66行, 2006バイト)
+  - 関数: getMaxFreqByThreshold, fftRadix2, for, if
+  - インポート: なし
+
+**src/visualization/fftOverlay.ts** (73行, 2334バイト)
+  - 関数: drawRealtimeFFT, if, for
+  - インポート: ./canvas, ../status
+
+**src/visualization/spectrogram.ts** (367行, 12165バイト)
+  - 関数: lerpColor, mapIntensityToSpectrogramColor, determineSpectrogramCeiling, estimateFundamentalFrequency, analyzeSpectrogramFrames, drawSpectrogram, drawOfflineSpectrogram, computeAudioContentHash, buildSpectrogramSignature, processChunk, for, if
   - インポート: ../config, ../status, ./canvas
 
 **src/visualization/timeAxis.ts** (66行, 2048バイト)
   - 関数: formatTimeLabel, buildTimeTicks, drawTimeTicks, if, for
   - インポート: ../status
 
-**src/visualization/waveform.ts** (298行, 10452バイト)
-  - 関数: estimateFrequencySeries, computeSegmentStats, computeSegmentCorrelation, extractAlignedRealtimeSegment, drawRenderedWaveform, drawRealtimeWaveform, if, for
+**src/visualization/waveform.ts** (200行, 7017バイト)
+  - 関数: computeSegmentStats, computeSegmentCorrelation, extractAlignedRealtimeSegment, drawRenderedWaveform, drawRealtimeWaveformBackground, drawRealtimeWaveformOnly, for, if
   - インポート: ../config, ../status, ./canvas
 
 **src/visualization.test.ts** (64行, 2271バイト)
   - 関数: constructor
   - インポート: vitest, ./visualization
 
-**src/visualization.ts** (297行, 9123バイト)
+**src/visualization.ts** (311行, 9930バイト)
   - 関数: getSpectrogramScale, setSpectrogramScale, requestSpectrogramReset, isPlaybackActive, stopActivePlayback, initializeVisualizationCanvases, playAudio, setProgressPosition, updateProgressLines, clearProgressLines, requestSpectrogramDraw, render, cleanup, finalize, stopPlayback, if
   - インポート: tone, ./config, ./status
 
@@ -422,6 +428,7 @@ npm run preview
       - setLoopCheckboxElement ()
       - setPlayButtonAppearance ()
       - isPlayRequestPending ()
+      - scheduleAutoPlay ()
       - handlePlay ()
       - getSelectedStyleId ()
       - setSelectedStyleId ()
@@ -438,9 +445,9 @@ npm run preview
     - getAudioCacheKey ()
       - setTextAndPlay ()
       - downloadLastAudio ()
-      - scheduleAutoPlay ()
       - confirmResetIntonationBeforePlay ()
       - handlePlayButtonClick ()
+      - clearRealtimeWaveformCanvas ()
       - cleanup ()
       - handleCancel ()
       - parseDelimiterConfig ()
@@ -465,12 +472,13 @@ npm run preview
   - prepareCanvas (src/visualization/canvas.ts)
   - getHannWindow (src/visualization/fft.ts)
     - fftRadix2 ()
+      - getMaxFreqByThreshold (src/visualization/fftMaxFreq.ts)
+  - drawRealtimeFFT (src/visualization/fftOverlay.ts)
   - lerpColor (src/visualization/spectrogram.ts)
     - mapIntensityToSpectrogramColor ()
       - determineSpectrogramCeiling ()
       - estimateFundamentalFrequency ()
       - analyzeSpectrogramFrames ()
-      - drawFrequencyTrack ()
       - drawSpectrogram ()
       - drawOfflineSpectrogram ()
       - computeAudioContentHash ()
@@ -479,11 +487,11 @@ npm run preview
       - drawTimeTicks ()
   - formatTimeLabel (src/visualization/timeAxis.ts)
     - buildTimeTicks ()
-  - estimateFrequencySeries (src/visualization/waveform.ts)
-    - computeSegmentStats ()
-      - computeSegmentCorrelation ()
+  - computeSegmentStats (src/visualization/waveform.ts)
+    - computeSegmentCorrelation ()
       - extractAlignedRealtimeSegment ()
-      - drawRealtimeWaveform ()
+      - drawRealtimeWaveformBackground ()
+      - drawRealtimeWaveformOnly ()
   - catch (src/audio.ts)
   - setProgressPosition ()
     - updateProgressLines ()
@@ -507,8 +515,8 @@ README.md
 biome.json
 index.html
 issue-notes/100.md
-issue-notes/101.md
-issue-notes/102.md
+issue-notes/107.md
+issue-notes/108.md
 issue-notes/22.md
 issue-notes/23.md
 issue-notes/24.md
@@ -530,7 +538,7 @@ issue-notes/79.md
 issue-notes/80.md
 issue-notes/89.md
 issue-notes/92.md
-issue-notes/93.md
+issue-notes/97.md
 package-lock.json
 
 上記の情報を基に、プロンプトで指定された形式でプロジェクト概要を生成してください。
@@ -543,4 +551,4 @@ package-lock.json
 
 
 ---
-Generated at: 2026-02-15 07:01:37 JST
+Generated at: 2026-02-16 07:01:27 JST
