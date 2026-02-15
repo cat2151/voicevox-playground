@@ -32,8 +32,8 @@ export function drawRealtimeFFT(
 
   drawFFTLine(ctx, fftValues, width, height, logMinFreq, logMaxFreq, nyquist, binCount);
   drawTopBinLine(ctx, fftValues, width, height, logMinFreq, logMaxFreq, nyquist, binCount, topBinSet);
-  if (typeof topFreq === 'number' && isFinite(topFreq)) {
-    drawPeakLabel(ctx, topFreq, height);
+  if (typeof topFreq === 'number' && isFinite(topFreq) && peakX !== undefined) {
+    drawPeakLabel(ctx, topFreq, height, peakX);
   }
   ctx.restore();
 }
@@ -175,7 +175,7 @@ function drawTopBinLine(
   if (drawing) ctx.stroke();
 }
 
-function drawPeakLabel(ctx: CanvasRenderingContext2D, topFreq: number, height: number) {
+function drawPeakLabel(ctx: CanvasRenderingContext2D, topFreq: number, height: number, x: number) {
   ctx.save();
   ctx.globalAlpha = 0.9;
   ctx.font = 'bold 12px monospace';
@@ -184,7 +184,7 @@ function drawPeakLabel(ctx: CanvasRenderingContext2D, topFreq: number, height: n
   const text = `${freqStr}Hz`;
   const padding = 6;
   ctx.textBaseline = 'bottom';
-  ctx.textAlign = 'left';
-  ctx.fillText(text, padding, height - padding);
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x, height - padding);
   ctx.restore();
 }

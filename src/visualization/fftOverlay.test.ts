@@ -1,3 +1,7 @@
+// Node環境でwindow, document, getComputedStyle参照エラーを防ぐ
+global.window = { devicePixelRatio: 1 } as any;
+global.getComputedStyle = () => ({ getPropertyValue: () => '' } as unknown as CSSStyleDeclaration);
+global.document = { documentElement: {} } as any;
 import { describe, it } from 'vitest';
 import { drawRealtimeFFT } from './fftOverlay';
 
@@ -17,10 +21,16 @@ describe('drawRealtimeFFT', () => {
       fftValues[i] = 100 + (i - minBin);
     }
     // canvasのモック
-    const canvas = { width: 512, height: 100, getContext: () => ({
-      save: () => {}, restore: () => {}, beginPath: () => {}, moveTo: () => {}, lineTo: () => {}, stroke: () => {}, fillText: () => {}, clearRect: () => {}, fillRect: () => {},
-      globalAlpha: 1, font: '', fillStyle: '', strokeStyle: '', textBaseline: '', textAlign: '',
-    }) } as unknown as HTMLCanvasElement;
+    const canvas = {
+      width: 512,
+      height: 100,
+      getContext: () => ({
+        save: () => {}, restore: () => {}, beginPath: () => {}, moveTo: () => {}, lineTo: () => {}, stroke: () => {}, fillText: () => {}, clearRect: () => {}, fillRect: () => {},
+        setTransform: () => {}, scale: () => {},
+        globalAlpha: 1, font: '', fillStyle: '', strokeStyle: '', textBaseline: '', textAlign: '',
+      }),
+      getBoundingClientRect: () => ({ left: 0, top: 0, right: 512, bottom: 100, width: 512, height: 100, x: 0, y: 0, toJSON: () => {} })
+    } as unknown as HTMLCanvasElement;
     // maxFreqはnyquist
     drawRealtimeFFT(fftValues, canvas, sampleRate, nyquist);
     // 期待値: minBin+5が推定される
