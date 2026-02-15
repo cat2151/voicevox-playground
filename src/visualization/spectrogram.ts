@@ -176,47 +176,6 @@ export async function analyzeSpectrogramFrames(buffer: AudioBuffer, columns: num
   };
 }
 
-export function drawFrequencyTrack(
-  frequencies: Array<{ time: number; freq: number }>,
-  canvas: HTMLCanvasElement,
-  duration: number,
-  sampleRate: number,
-  scale: FrequencyScale
-) {
-  if (frequencies.length === 0) return;
-  const { ctx, width, height } = prepareCanvas(canvas);
-  if (!ctx) return;
-
-  const drawableWidth = Math.max(1, width - SPECTROGRAM_LEFT_MARGIN);
-  const drawableHeight = height;
-  const leftMargin = SPECTROGRAM_LEFT_MARGIN;
-  const maxFreq = Math.max(sampleRate / 2, 1);
-  const safeDuration = Math.max(duration, 1e-6);
-  const logMax = Math.log10(Math.max(maxFreq, MIN_LOG_FREQUENCY));
-  const logMin = Math.log10(Math.max(MIN_LOG_FREQUENCY, 1));
-
-  ctx.save();
-  ctx.strokeStyle = getColorVariable('--highlight-color', '#ff9800');
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  frequencies.forEach((point, index) => {
-    const x = leftMargin + Math.min(drawableWidth, Math.max(0, (point.time / safeDuration) * drawableWidth));
-    const normalized = scale === 'log'
-      ? (point.freq <= 0
-          ? 0
-          : (Math.log10(Math.max(point.freq, MIN_LOG_FREQUENCY)) - logMin) / Math.max(logMax - logMin, 1))
-      : point.freq / maxFreq;
-    const y = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
-    if (index === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
-    }
-  });
-  ctx.stroke();
-  ctx.restore();
-}
-
 export function drawSpectrogram(
   values: Float32Array,
   canvas: HTMLCanvasElement,
@@ -371,7 +330,6 @@ export function drawOfflineSpectrogram(
     );
   }
   completed = true;
-  drawFrequencyTrack(data.frequencies, canvas, data.duration, data.sampleRate, scale);
   const { ctx, width, height } = prepareCanvas(canvas);
   if (ctx) {
     drawTimeTicks(ctx, data.duration, width, height, { leftMargin: SPECTROGRAM_LEFT_MARGIN });
