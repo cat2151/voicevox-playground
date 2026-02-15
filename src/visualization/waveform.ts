@@ -138,16 +138,10 @@ export function drawRenderedWaveform(buffer: AudioBuffer, canvas: HTMLCanvasElem
   drawTimeTicks(ctx, buffer.duration, width, height);
 }
 
-export function drawRealtimeWaveform(
-  values: Float32Array,
-  canvas: HTMLCanvasElement,
-  sampleRate: number,
-  _currentEstimatedFrequency: number | null,
-  previousSegment: Float32Array | null
-) {
-  const { ctx, width, height } = prepareCanvas(canvas);
-  if (!ctx || values.length === 0) return { previousSegment: null };
 
+export function drawRealtimeWaveformBackground(canvas: HTMLCanvasElement) {
+  const { ctx, width, height } = prepareCanvas(canvas);
+  if (!ctx) return;
   ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
   ctx.fillRect(0, 0, width, height);
   ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
@@ -155,12 +149,22 @@ export function drawRealtimeWaveform(
   ctx.moveTo(0, height / 2);
   ctx.lineTo(width, height / 2);
   ctx.stroke();
+}
+
+export function drawRealtimeWaveformOnly(
+  values: Float32Array,
+  canvas: HTMLCanvasElement,
+  sampleRate: number,
+  previousSegment: Float32Array | null,
+  targetFreq: number = 440
+) {
+  const { ctx, width, height } = prepareCanvas(canvas);
+  if (!ctx || values.length === 0) return { previousSegment: null };
 
   const channelData = values;
   const windowSize = Math.max(1, Math.min(channelData.length, 2048));
   const start = Math.max(0, channelData.length - windowSize);
   const windowed = channelData.slice(start, start + windowSize);
-  const targetFreq = 440; // 周波数推定が採用できないため（周波数推定はバグって高周波）
   const cycles = Math.max(1, Math.min(4, Math.floor(sampleRate / targetFreq)));
   const targetSamples = Math.floor(cycles * (sampleRate / targetFreq));
   const segmentLength = Math.max(1, Math.min(targetSamples, windowSize));

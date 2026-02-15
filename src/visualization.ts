@@ -2,13 +2,14 @@ import * as Tone from 'tone';
 import { FrequencyScale } from './config';
 import { getColorVariable, invalidateColorVariableCache } from './status';
 import { prepareCanvas } from './visualization/canvas';
-import { drawRenderedWaveform, drawRealtimeWaveform } from './visualization/waveform';
+import { drawRenderedWaveform, drawRealtimeWaveformBackground, drawRealtimeWaveformOnly } from './visualization/waveform';
+import { drawRealtimeFFT } from './visualization/fftOverlay';
+import { getMaxFreqByThreshold } from './visualization/fftMaxFreq';
 import {
   analyzeSpectrogramFrames,
   buildSpectrogramSignature,
   drawOfflineSpectrogram,
   drawSpectrogram,
-  estimateFundamentalFrequency,
   OfflineSpectrogramData,
 } from './visualization/spectrogram';
 import { SPECTROGRAM_LEFT_MARGIN, buildTimeTicks } from './visualization/timeAxis';
@@ -92,9 +93,12 @@ export async function playAudio(
 ): Promise<{ stopped: boolean }> {
   await Tone.start();
 
+  const sampleRate = Math.max(decodedBuffer.sampleRate, 1);
   const player = new Tone.Player(decodedBuffer);
+  const channelData = decodedBuffer.getChannelData(0);
+  const maxFreq = getMaxFreqByThreshold(channelData, sampleRate, 0.01);
   const waveformAnalyser = realtimeCanvas ? new Tone.Analyser('waveform', 1024) : null;
-  const fftAnalyser = spectrogramCanvas ? new Tone.Analyser('fft', 1024) : null;
+  const fftAnalyser = realtimeCanvas ? new Tone.Analyser('fft', 1024) : null;
   const renderedProgress = document.getElementById('renderedWaveformProgress') as HTMLDivElement | null;
   const spectrogramProgress = document.getElementById('spectrogramProgress') as HTMLDivElement | null;
   const setProgressPosition = (element: HTMLDivElement, ratio: number, leftMargin: number) => {
@@ -128,13 +132,11 @@ export async function playAudio(
   };
 
   const playbackDurationMs = Math.max(decodedBuffer.duration * 1000, 1);
-  const sampleRate = Math.max(decodedBuffer.sampleRate, 1);
   const shouldResetSpectrogram = options?.resetSpectrogram ?? true;
   spectrogramNeedsReset = shouldResetSpectrogram;
   const spectrogramSignature = buildSpectrogramSignature(decodedBuffer);
   let animationId: number | null = null;
   realtimePreviousSegment = null;
-  let currentEstimatedFrequency: number | null = null;
   let playbackStarted = false;
   let spectrogramDrawPending = false;
   const requestSpectrogramDraw = (forceReset: boolean) => {
@@ -206,19 +208,31 @@ export async function playAudio(
     const elapsed = performance.now() - startTime;
     const progress = Math.min(elapsed / playbackDurationMs, 1);
 
-    if (fftAnalyser) {
-      const values = fftAnalyser.getValue() as Float32Array;
-      currentEstimatedFrequency = estimateFundamentalFrequency(values, sampleRate);
+    if (realtimeCanvas) {
+      drawRealtimeWaveformBackground(realtimeCanvas);
+    }
+    let fftTopFreq: number | undefined = undefined;
+    if (fftAnalyser && realtimeCanvas) {
+      const fftValues = fftAnalyser.getValue() as Float32Array;
+      drawRealtimeFFT(fftValues, realtimeCanvas, sampleRate, maxFreq);
+      const binCount = fftValues.length;
+      const nyquist = sampleRate / 2;
+      const valueWithIndex = Array.from(fftValues, (v, i) => ({ v, i }));
+      valueWithIndex.sort((a, b) => b.v - a.v);
+      const topBin = valueWithIndex[0]?.i;
+      if (typeof topBin === 'number') {
+        fftTopFreq = (topBin / (binCount - 1)) * nyquist;
+      }
+    }
+    if (waveformAnalyser && realtimeCanvas) {
+      const values = waveformAnalyser.getValue() as Float32Array;
+      const targetFreq = (typeof fftTopFreq === 'number' && isFinite(fftTopFreq) && fftTopFreq > 0) ? fftTopFreq : 440;
+      const result = drawRealtimeWaveformOnly(values, realtimeCanvas, sampleRate, realtimePreviousSegment, targetFreq);
+      realtimePreviousSegment = result.previousSegment;
     }
 
     if (spectrogramNeedsReset) {
       requestSpectrogramDraw(true);
-    }
-
-    if (waveformAnalyser && realtimeCanvas) {
-      const values = waveformAnalyser.getValue() as Float32Array;
-      const result = drawRealtimeWaveform(values, realtimeCanvas, sampleRate, currentEstimatedFrequency, realtimePreviousSegment);
-      realtimePreviousSegment = result.previousSegment;
     }
 
     updateProgressLines(progress);
