@@ -234,6 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
       initializeVisualizationCanvases();
       requestSpectrogramReset();
       updateSpectrogramScaleLabel();
+      scheduleAutoPlay();
     });
   }
 
