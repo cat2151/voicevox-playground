@@ -93,7 +93,7 @@ export async function playAudio(
   await Tone.start();
 
   const player = new Tone.Player(decodedBuffer);
-  const waveformAnalyser = realtimeCanvas ? new Tone.Analyser('waveform', 4096) : null;
+  const waveformAnalyser = realtimeCanvas ? new Tone.Analyser('waveform', 1024) : null;
   const fftAnalyser = spectrogramCanvas ? new Tone.Analyser('fft', 1024) : null;
   const renderedProgress = document.getElementById('renderedWaveformProgress') as HTMLDivElement | null;
   const spectrogramProgress = document.getElementById('spectrogramProgress') as HTMLDivElement | null;

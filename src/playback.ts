@@ -8,7 +8,7 @@ import {
 } from './intonation';
 import { appState } from './state';
 import { updateExportButtonState } from './uiControls';
-import { showStatus, scheduleHideStatus } from './status';
+import { showStatus, scheduleHideStatus, getColorVariable } from './status';
 import { combineAudioBuffers, encodeAudioBufferToWav, getAudioQuery, synthesize } from './audio';
 import {
   buildTextSegments,
@@ -316,6 +316,7 @@ export async function handlePlay() {
     if (playbackResult.stopped) {
       showStatus('再生を停止しました', 'info');
       scheduleHideStatus(1500);
+      clearRealtimeWaveformCanvas(realtimeCanvas);
       return;
     }
     appState.lastSpectrogramSignature = currentSignature;
@@ -325,6 +326,7 @@ export async function handlePlay() {
     addToHistory(text);
 
     showStatus('再生完了！', 'success');
+    clearRealtimeWaveformCanvas(realtimeCanvas);
     scheduleHideStatus(3000);
 
     if (loopCheckbox?.checked) {
@@ -347,4 +349,18 @@ export async function handlePlay() {
     appState.isProcessing = false;
     updateExportButtonState(exportButton);
   }
+}
+
+function clearRealtimeWaveformCanvas(canvas: HTMLCanvasElement | null) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height / 2);
+  ctx.lineTo(canvas.width, canvas.height / 2);
+  ctx.stroke();
 }

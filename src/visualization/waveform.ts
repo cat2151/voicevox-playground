@@ -181,10 +181,9 @@ export function drawRealtimeWaveform(
     }
   }
 
-  const freq = (maxIndex * sampleRate) / fftSize;
-  const targetFreq = currentEstimatedFrequency ?? freq;
-  const cycles = Math.max(1, Math.min(4, Math.floor(sampleRate / Math.max(targetFreq, 1))));
-  const targetSamples = Math.floor(cycles * (sampleRate / Math.max(targetFreq, 1)));
+  const targetFreq = 440; // 周波数推定が採用できないため（周波数推定はバグって高周波）
+  const cycles = Math.max(1, Math.min(4, Math.floor(sampleRate / targetFreq)));
+  const targetSamples = Math.floor(cycles * (sampleRate / targetFreq));
   const segmentLength = Math.max(1, Math.min(targetSamples, windowSize));
 
   const { segment, updatedPrevious } = extractAlignedRealtimeSegment(windowed, segmentLength, previousSegment);
@@ -202,19 +201,14 @@ export function drawRealtimeWaveform(
   ctx.strokeStyle = getColorVariable('--primary-color', '#4CAF50');
   ctx.beginPath();
   for (let x = 0; x < width; x++) {
-    const startIndex = Math.floor(x * samplesPerPixel);
-    const endIndex = Math.min(Math.floor((x + 1) * samplesPerPixel), segment.length);
-    let min = Infinity;
-    let max = -Infinity;
-    for (let i = startIndex; i < endIndex; i++) {
-      const value = segment[i];
-      if (value < min) min = value;
-      if (value > max) max = value;
+    const index = Math.floor(x * samplesPerPixel);
+    const value = segment[index] ?? 0;
+    const y = height / 2 - value * amplitudeScale;
+    if (x === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
     }
-    const yMin = height / 2 - min * amplitudeScale;
-    const yMax = height / 2 - max * amplitudeScale;
-    ctx.moveTo(x, yMin);
-    ctx.lineTo(x, yMax);
   }
   ctx.stroke();
 
