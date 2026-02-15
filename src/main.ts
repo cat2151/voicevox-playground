@@ -295,10 +295,10 @@ document.addEventListener('DOMContentLoaded', () => {
     intonationCanvas.addEventListener('pointerleave', handleIntonationPointerUp);
     intonationCanvas.addEventListener('pointercancel', handleIntonationPointerUp);
     intonationCanvas.addEventListener('lostpointercapture', handleIntonationPointerUp);
-    intonationCanvas.addEventListener('keydown', handleIntonationKeyDown);
     intonationCanvas.addEventListener('focus', () => {
       refreshIntonationChart();
     });
+    window.addEventListener('keydown', handleIntonationKeyDown);
   }
   window.addEventListener('mouseup', handleIntonationPointerUp);
   window.addEventListener('pointerup', handleIntonationPointerUp);
