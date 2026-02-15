@@ -239,6 +239,8 @@ export function handleIntonationPointerMove(event: MouseEvent | PointerEvent) {
 
 export function handleIntonationPointerUp() {
   if (state.intonationDragIndex !== null) {
+    updateInitialRangeFromPoints(state.intonationPoints);
+    drawIntonationChart(state.intonationPoints);
     state.intonationDragIndex = null;
   }
   if (state.scrollLocked) {
