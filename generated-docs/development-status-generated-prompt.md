@@ -1,4 +1,4 @@
-Last updated: 2026-02-15
+Last updated: 2026-02-16
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -218,8 +218,8 @@ Last updated: 2026-02-15
 - generated-docs/project-overview-generated-prompt.md
 - index.html
 - issue-notes/100.md
-- issue-notes/101.md
-- issue-notes/102.md
+- issue-notes/107.md
+- issue-notes/108.md
 - issue-notes/22.md
 - issue-notes/23.md
 - issue-notes/24.md
@@ -241,12 +241,7 @@ Last updated: 2026-02-15
 - issue-notes/80.md
 - issue-notes/89.md
 - issue-notes/92.md
-- issue-notes/93.md
-- issue-notes/94.md
-- issue-notes/95.md
-- issue-notes/96.md
 - issue-notes/97.md
-- issue-notes/98.md
 - issue-notes/99.md
 - package-lock.json
 - package.json
@@ -273,6 +268,8 @@ Last updated: 2026-02-15
 - src/uiControls.ts
 - src/visualization/canvas.ts
 - src/visualization/fft.ts
+- src/visualization/fftMaxFreq.ts
+- src/visualization/fftOverlay.ts
 - src/visualization/spectrogram.ts
 - src/visualization/timeAxis.ts
 - src/visualization/waveform.ts
@@ -283,46 +280,31 @@ Last updated: 2026-02-15
 - vite.config.ts
 
 ## 現在のオープンIssues
-## [Issue #102](../issue-notes/102.md): README.ja.md先頭に、cat2151のほかのproject同様、live demoバッジをつける
-[issue-notes/102.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/102.md)
+## [Issue #108](../issue-notes/108.md): リアルタイムFFT欄の周波数推定は、スペクトログラムをみた感じ、100Hz以上の上位1%の最低周波数を採用するとよさそうなので試す
+[issue-notes/108.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/108.md)
 
 ...
 ラベル: 
---- issue-notes/102.md の内容 ---
+--- issue-notes/108.md の内容 ---
 
 ```markdown
-# issue README.ja.md先頭に、cat2151のほかのproject同様、live demoバッジをつける #102
-[issues #102](https://github.com/cat2151/voicevox-playground/issues/102)
+# issue リアルタイムFFT欄の周波数推定は、スペクトログラムをみた感じ、100Hz以上の上位1%の最低周波数を採用するとよさそうなので試す #108
+[issues #108](https://github.com/cat2151/voicevox-playground/issues/108)
 
 
 
 ```
 
-## [Issue #101](../issue-notes/101.md): textareaの右にある波形表示欄がエンバグでまったく表示されなくなっている。現frameの波形を上下幅90%まで拡大して表示する
-[issue-notes/101.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/101.md)
+## [Issue #107](../issue-notes/107.md): イントネーションのキーボード操作onのspace/enterで再生したときも、通常同様status欄に状況を表示する。そして再生完了したらリアルタイム波形欄だけclear
+[issue-notes/107.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/107.md)
 
 ...
 ラベル: 
---- issue-notes/101.md の内容 ---
+--- issue-notes/107.md の内容 ---
 
 ```markdown
-# issue textareaの右にある波形表示欄がエンバグでまったく表示されなくなっている。現frameの波形を上下幅90%まで拡大して表示する #101
-[issues #101](https://github.com/cat2151/voicevox-playground/issues/101)
-
-
-
-```
-
-## [Issue #100](../issue-notes/100.md): 「音声を再生中」の行の情報はまったく不要なので削除する。playボタンやstopボタンをみればわかる
-[issue-notes/100.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/100.md)
-
-...
-ラベル: 
---- issue-notes/100.md の内容 ---
-
-```markdown
-# issue 「音声を再生中」の行の情報はまったく不要なので削除する。playボタンやstopボタンをみればわかる #100
-[issues #100](https://github.com/cat2151/voicevox-playground/issues/100)
+# issue イントネーションのキーボード操作onのspace/enterで再生したときも、通常同様status欄に状況を表示する。そして再生完了したらリアルタイム波形欄だけclear #107
+[issues #107](https://github.com/cat2151/voicevox-playground/issues/107)
 
 
 
@@ -343,21 +325,6 @@ Last updated: 2026-02-15
 
 ```
 
-## [Issue #98](../issue-notes/98.md): イントネーション編集の「キーボード操作」on時は、イントネーションfocus時だけではなくブラウザ全体でキーボード操作可能にすべし
-[issue-notes/98.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/98.md)
-
-...
-ラベル: 
---- issue-notes/98.md の内容 ---
-
-```markdown
-# issue イントネーション編集の「キーボード操作」on時は、イントネーションfocus時だけではなくブラウザ全体でキーボード操作可能にすべし #98
-[issues #98](https://github.com/cat2151/voicevox-playground/issues/98)
-
-
-
-```
-
 ## [Issue #97](../issue-notes/97.md): スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す
 [issue-notes/97.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/97.md)
 
@@ -373,579 +340,7 @@ Last updated: 2026-02-15
 
 ```
 
-## [Issue #96](../issue-notes/96.md): 「対数にする」「リニアにする」ボタンを押したら自動再生すべし
-[issue-notes/96.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/96.md)
-
-...
-ラベル: 
---- issue-notes/96.md の内容 ---
-
-```markdown
-# issue 「対数にする」「リニアにする」ボタンを押したら自動再生すべし #96
-[issues #96](https://github.com/cat2151/voicevox-playground/issues/96)
-
-
-
-```
-
-## [Issue #95](../issue-notes/95.md): イントネーション編集の下0.5xボタンをクリックしても効果がないことがある。「レスポンスmin」でなく「モーラ現在pitchの最小値」を基準にせよ
-[issue-notes/95.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/95.md)
-
-...
-ラベル: 
---- issue-notes/95.md の内容 ---
-
-```markdown
-# issue イントネーション編集の下0.5xボタンをクリックしても効果がないことがある。「レスポンスmin」でなく「モーラ現在pitchの最小値」を基準にせよ #95
-[issues #95](https://github.com/cat2151/voicevox-playground/issues/95)
-
-
-
-```
-
-## [Issue #94](../issue-notes/94.md): playボタンのSVG画像が小さすぎるので、枠の95%まで拡大する。stopボタンも同様
-[issue-notes/94.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/94.md)
-
-...
-ラベル: 
---- issue-notes/94.md の内容 ---
-
-```markdown
-# issue playボタンのSVG画像が小さすぎるので、枠の95%まで拡大する。stopボタンも同様 #94
-[issues #94](https://github.com/cat2151/voicevox-playground/issues/94)
-
-
-
-```
-
-## [Issue #93](../issue-notes/93.md): スペクトログラムの折れ線グラフは不要なので削除する
-[issue-notes/93.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/93.md)
-
-...
-ラベル: 
---- issue-notes/93.md の内容 ---
-
-```markdown
-# issue スペクトログラムの折れ線グラフは不要なので削除する #93
-[issues #93](https://github.com/cat2151/voicevox-playground/issues/93)
-
-
-
-```
-
 ## ドキュメントで言及されているファイルの内容
-### .github/actions-tmp/README.ja.md
-```md
-{% raw %}
-# GitHub Actions 共通ワークフロー集
-
-このリポジトリは、**複数プロジェクトで使い回せるGitHub Actions共通ワークフロー集**です
-
-<p align="left">
-  <a href="README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-Japanese-red.svg" alt="Japanese"></a>
-  <a href="README.md"><img src="https://img.shields.io/badge/🇺🇸-English-blue.svg" alt="English"></a>
-</p>
-
-# 3行で説明
-- 🚀 プロジェクトごとのGitHub Actions管理をもっと楽に
-- 🔗 共通化されたワークフローで、どのプロジェクトからも呼ぶだけでOK
-- ✅ メンテは一括、プロジェクト開発に集中できます
-
-## Quick Links
-| 項目 | リンク |
-|------|--------|
-| 📖 プロジェクト概要 | [generated-docs/project-overview.md](generated-docs/project-overview.md) |
-| 📖 コールグラフ | [generated-docs/callgraph.html](https://cat2151.github.io/github-actions/generated-docs/callgraph.html) |
-| 📊 開発状況 | [generated-docs/development-status.md](generated-docs/development-status.md) |
-
-# notes
-- まだ共通化の作業中です
-- まだワークフロー内容を改善中です
-
-※README.md は README.ja.md を元にGeminiの翻訳でGitHub Actionsで自動生成しています
-
-{% endraw %}
-```
-
-### README.ja.md
-```md
-{% raw %}
-# voicevox-playground
-
-**VOICEVOX ローカルサーバーと連携し、テキストを音声に変換して再生するWebアプリケーションです。**
-
-<p align="left">
-  <a href="README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-Japanese-red.svg" alt="Japanese"></a>
-  <a href="README.md"><img src="https://img.shields.io/badge/🇺🇸-English-blue.svg" alt="English"></a>
-  <a href="https://deepwiki.com/cat2151/voicevox-playground"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
-</p>
-
-## 機能
-
-- ずんだもんの音声で任意のテキストを読み上げ
-    - ほかのキャラの音声も選べます
-
-## サーバー
-
-使うには、VOICEVOXのローカルサーバーを起動してください。
-
-1. [VOICEVOX](https://voicevox.hiroshiba.jp/)をダウンロードしてインストール
-2. VOICEVOXエンジンを起動（ポート50021でHTTPサーバーが起動します）。[GitHub Pages版](https://cat2151.github.io/voicevox-playground) からアクセスする場合は、CORSを許可した状態で以下のコマンドを使用してください。
-
-   ```bash
-   <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io
-   ```
-
-   開発するとき、ローカル開発サーバー（`npm run dev` が提供する `http://localhost:5173`）からも利用する場合は、上記に続けて `http://localhost:5173` も追加してください。
-
-   ```bash
-   <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173
-   ```
-
-## 使い方
-
-1. VOICEVOXを起動（前述）
-2. ブラウザで [アプリケーション](https://cat2151.github.io/voicevox-playground) を開く
-3. テキストエリアに読み上げたいテキストを入力
-4. 音声が再生されます
-5. イントネーションを編集できます
-
-## 仕組み
-- webpageをGitHub Pagesにデプロイ
-- webpageから
-  - VOICEVOXローカルHTTPサーバー（ポート50021）にリクエストを送信し、レスポンスで音声データを取得
-  - Tone.js v15を使用して音声再生
-
-## 開発
-
-```bash
-# 依存関係のインストール
-npm install
-
-# 開発サーバーの起動
-npm run dev
-
-# ビルド
-npm run build
-
-# プレビュー
-npm run preview
-```
-
-## 技術スタック
-
-- TypeScript
-- Vite
-- Tone.js v15
-- VOICEVOX API
-
-※英語版README.mdは、README.ja.mdを元にGeminiの翻訳でGitHub Actionsにより自動生成しています
-
-{% endraw %}
-```
-
-### .github/actions-tmp/issue-notes/2.md
-```md
-{% raw %}
-# issue GitHub Actions「関数コールグラフhtmlビジュアライズ生成」を共通ワークフロー化する #2
-[issues #2](https://github.com/cat2151/github-actions/issues/2)
-
-
-# prompt
-```
-あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
-このymlファイルを、以下の2つのファイルに分割してください。
-1. 共通ワークフロー       cat2151/github-actions/.github/workflows/callgraph_enhanced.yml
-2. 呼び出し元ワークフロー cat2151/github-actions/.github/workflows/call-callgraph_enhanced.yml
-まずplanしてください
-```
-
-# 結果
-- indent
-    - linter？がindentのエラーを出しているがyml内容は見た感じOK
-    - テキストエディタとagentの相性問題と判断する
-    - 別のテキストエディタでsaveしなおし、テキストエディタをreload
-    - indentのエラーは解消した
-- LLMレビュー
-    - agent以外の複数のLLMにレビューさせる
-    - prompt
-```
-あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
-以下の2つのファイルをレビューしてください。最優先で、エラーが発生するかどうかだけレビューしてください。エラー以外の改善事項のチェックをするかわりに、エラー発生有無チェックに最大限注力してください。
-
---- 共通ワークフロー
-
-# GitHub Actions Reusable Workflow for Call Graph Generation
-name: Generate Call Graph
-
-# TODO Windowsネイティブでのtestをしていた名残が残っているので、今後整理していく。今はWSL act でtestしており、Windowsネイティブ環境依存問題が解決した
-#  ChatGPTにレビューさせるとそこそこ有用そうな提案が得られたので、今後それをやる予定
-#  agentに自己チェックさせる手も、セカンドオピニオンとして選択肢に入れておく
-
-on:
-  workflow_call:
-
-jobs:
-  check-commits:
-    runs-on: ubuntu-latest
-    outputs:
-      should-run: ${{ steps.check.outputs.should-run }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 50 # 過去のコミットを取得
-
-      - name: Check for user commits in last 24 hours
-        id: check
-        run: |
-          node .github/scripts/callgraph_enhanced/check-commits.cjs
-
-  generate-callgraph:
-    needs: check-commits
-    if: needs.check-commits.outputs.should-run == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      security-events: write
-      actions: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set Git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Remove old CodeQL packages cache
-        run: rm -rf ~/.codeql/packages
-
-      - name: Check Node.js version
-        run: |
-          node .github/scripts/callgraph_enhanced/check-node-version.cjs
-
-      - name: Install CodeQL CLI
-        run: |
-          wget https://github.com/github/codeql-cli-binaries/releases/download/v2.22.1/codeql-linux64.zip
-          unzip codeql-linux64.zip
-          sudo mv codeql /opt/codeql
-          echo "/opt/codeql" >> $GITHUB_PATH
-
-      - name: Install CodeQL query packs
-        run: |
-          /opt/codeql/codeql pack install .github/codeql-queries
-
-      - name: Check CodeQL exists
-        run: |
-          node .github/scripts/callgraph_enhanced/check-codeql-exists.cjs
-
-      - name: Verify CodeQL Configuration
-        run: |
-          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs verify-config
-
-      - name: Remove existing CodeQL DB (if any)
-        run: |
-          rm -rf codeql-db
-
-      - name: Perform CodeQL Analysis
-        run: |
-          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs analyze
-
-      - name: Check CodeQL Analysis Results
-        run: |
-          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs check-results
-
-      - name: Debug CodeQL execution
-        run: |
-          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs debug
-
-      - name: Wait for CodeQL results
-        run: |
-          node -e "setTimeout(()=>{}, 10000)"
-
-      - name: Find and process CodeQL results
-        run: |
-          node .github/scripts/callgraph_enhanced/find-process-results.cjs
-
-      - name: Generate HTML graph
-        run: |
-          node .github/scripts/callgraph_enhanced/generate-html-graph.cjs
-
-      - name: Copy files to generated-docs and commit results
-        run: |
-          node .github/scripts/callgraph_enhanced/copy-commit-results.cjs
-
---- 呼び出し元
-# 呼び出し元ワークフロー: call-callgraph_enhanced.yml
-name: Call Call Graph Enhanced
-
-on:
-  schedule:
-    # 毎日午前5時(JST) = UTC 20:00前日
-    - cron: '0 20 * * *'
-  workflow_dispatch:
-
-jobs:
-  call-callgraph-enhanced:
-    # uses: cat2151/github-actions/.github/workflows/callgraph_enhanced.yml
-    uses: ./.github/workflows/callgraph_enhanced.yml # ローカルでのテスト用
-```
-
-# レビュー結果OKと判断する
-- レビュー結果を人力でレビューした形になった
-
-# test
-- #4 同様にローカル WSL + act でtestする
-- エラー。userのtest設計ミス。
-  - scriptの挙動 : src/ がある前提
-  - 今回の共通ワークフローのリポジトリ : src/ がない
-  - 今回testで実現したいこと
-    - 仮のソースでよいので、関数コールグラフを生成させる
-  - 対策
-    - src/ にダミーを配置する
-- test green
-  - ただしcommit pushはしてないので、html内容が0件NG、といったケースの検知はできない
-  - もしそうなったら別issueとしよう
-
-# test green
-
-# commit用に、yml 呼び出し元 uses をlocal用から本番用に書き換える
-
-# closeとする
-- もしhtml内容が0件NG、などになったら、別issueとするつもり
-
-{% endraw %}
-```
-
-### .github/actions-tmp/issue-notes/3.md
-```md
-{% raw %}
-# issue GitHub Actions「issue note生成」を共通ワークフロー化する #3
-[issues #3](https://github.com/cat2151/github-actions/issues/3)
-
-- 前提
-  - userは、translateのworkflowを共通ワークフロー化し、動くようにしたので、共通ワークフロー化の知識がある
-  - よって、今回は、promptでplanさせ、そのplanをuserがレビューし、planの改善を指示できるので、ハルシネーションのリスクを下げることができる
-
-- prompt
-```
-あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
-このymlはまだ共通ワークフロー化されず、
-呼び出し元からコピーされたままの状態です。
-このymlファイル名のまま、
-中身を共通ワークフロー化してください。
-呼び出し元ymlは別途書きますので気にしないでください。
-まずplanしてください
-```
-
-- plan 生成結果
-```
-共通ワークフロー化のためのplanは以下の通りです。
-
-1. 目的
-現在の issue-note.yml を「共通ワークフロー」として再設計し、他リポジトリや他ワークフローから workflow_call で呼び出せるようにする。
-2. 主な変更点
-on: トリガーを workflow_call に変更（直接イベントで起動しない）。
-必要な入力（inputs）やシークレット（secrets）を workflow_call セクションで定義。
-github.event.issue などのイベント依存部分を、inputs経由で受け取る形に修正。
-既存の処理（issueノート生成、コミット、issue body更新）はそのまま活かすが、パラメータ化する。
-3. 具体的な修正内容
-on: issues: → on: workflow_call: に変更。
-inputs で必要な値（例: issue_title, issue_number, issue_body, issue_url など）を受け取る。
-スクリプト内の ${{ github.event.issue.xxx }} を ${{ inputs.xxx }} に置換。
-github-script ステップも同様にinputsを参照。
-必要に応じて secrets も workflow_call で受け取れるようにする。
-4. ファイル名・配置
-ファイル名はそのまま issue-note.yml。
-配置場所は workflows でOK（共通ワークフローとしてもこの場所で良い）。
-5. 呼び出し元への影響
-呼び出し元ワークフローで uses: <repo>/.github/workflows/issue-note.yml@main のように参照し、inputsを渡す形になる。
-このplanで進めます。次に、実際の共通ワークフロー化のためのyml修正案を作成しますか？
-```
-
-- userがplanレビューし、OKを出した
-- agentに生成結果ymlをレビューさせた、OKとなった
-  - userはこのレビューは認知負荷が高いのでskipとする（単純な細かい間違い探し作業になるので、それはagentに任せた）
--  エラー。呼び出し元ymlのエラーがあり修正。共通ワークフローのエラー指摘があり、共通ワークフロー側の修正が必要となった
-```
-原因の分析：
-
-呼び出し元（tonejs-mml-to-jsonのissue-note.yml）は、reusable workflow（cat2151/github-actions/.github/workflows/issue-note.yml@main）をusesで呼び出し、inputsをwithで渡しています。
-共通ワークフロー（reusable workflow）は inputs を workflow_call で受け取り、各ステップで ${{ inputs.xxx }} で参照しています。
-しかし、エラーが発生したのは actions/github-script@v7 の script 内です。
-エラーの本質的な原因：
-
-actions/github-script の script: で ${{ inputs.issue_number }} のような式を直接 JavaScript テンプレートリテラル内で使っていますが、これはサポートされていません。
-script: の中は JavaScript であり、YAMLの ${{ ... }} は展開されません（または意図通りに展開されません）。
-そのため、inputs 変数は script 内の JavaScript で未定義となり、ReferenceError になります。
-正しい書き方：
-
-actions/github-script の script: でワークフローの inputs を使いたい場合は、with: で input を environment 変数や script の引数として渡し、JavaScript で process.env から取得するか、github-script の input 機能を使う必要があります。
-例（修正版）：
-
-このように、inputs の値を env で渡し、script 内では process.env で参照してください。
-
-まとめ：
-
-actions/github-script の script 内で ${{ inputs.xxx }} を直接使うと ReferenceError になる
-env: で値を渡し、process.env で参照するのが正しい
-修正が必要です。修正版のワークフローが必要な場合はお知らせください。
-```
-
-- test green
-- closeとする
-
-{% endraw %}
-```
-
-### .github/actions-tmp/issue-notes/4.md
-```md
-{% raw %}
-# issue GitHub Actions「project概要生成」を共通ワークフロー化する #4
-[issues #4](https://github.com/cat2151/github-actions/issues/4)
-
-# prompt
-```
-あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
-このymlファイルを、以下の2つのファイルに分割してください。
-1. 共通ワークフロー       cat2151/github-actions/.github/workflows/daily-project-summary.yml
-2. 呼び出し元ワークフロー cat2151/github-actions/.github/workflows/call-daily-project-summary.yml
-まずplanしてください
-```
-
-# 結果、あちこちハルシネーションのあるymlが生成された
-- agentの挙動があからさまにハルシネーション
-    - インデントが修正できない、「失敗した」という
-    - 構文誤りを認識できない
-- 人力で修正した
-
-# このagentによるセルフレビューが信頼できないため、別のLLMによるセカンドオピニオンを試す
-```
-あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
-以下の2つのファイルをレビューしてください。最優先で、エラーが発生するかどうかだけレビューてください。エラー以外の改善事項のチェックをするかわりに、エラー発生有無チェックに最大限注力してください。
-
---- 呼び出し元
-
-name: Call Daily Project Summary
-
-on:
-  schedule:
-    # 日本時間 07:00 (UTC 22:00 前日)
-    - cron: '0 22 * * *'
-  workflow_dispatch:
-
-jobs:
-  call-daily-project-summary:
-    uses: cat2151/github-actions/.github/workflows/daily-project-summary.yml
-    secrets:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-
---- 共通ワークフロー
-name: Daily Project Summary
-on:
-  workflow_call:
-
-jobs:
-  generate-summary:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      issues: read
-      pull-requests: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0  # 履歴を取得するため
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: |
-          # 一時的なディレクトリで依存関係をインストール
-          mkdir -p /tmp/summary-deps
-          cd /tmp/summary-deps
-          npm init -y
-          npm install @google/generative-ai @octokit/rest
-          # generated-docsディレクトリを作成
-          mkdir -p $GITHUB_WORKSPACE/generated-docs
-
-      - name: Generate project summary
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          NODE_PATH: /tmp/summary-deps/node_modules
-        run: |
-          node .github/scripts/generate-project-summary.cjs
-
-      - name: Check for generated summaries
-        id: check_summaries
-        run: |
-          if [ -f "generated-docs/project-overview.md" ] && [ -f "generated-docs/development-status.md" ]; then
-            echo "summaries_generated=true" >> $GITHUB_OUTPUT
-          else
-            echo "summaries_generated=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Commit and push summaries
-        if: steps.check_summaries.outputs.summaries_generated == 'true'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          # package.jsonの変更のみリセット（generated-docsは保持）
-          git restore package.json 2>/dev/null || true
-          # サマリーファイルのみを追加
-          git add generated-docs/project-overview.md
-          git add generated-docs/development-status.md
-          git commit -m "Update project summaries (overview & development status)"
-          git push
-
-      - name: Summary generation result
-        run: |
-          if [ "${{ steps.check_summaries.outputs.summaries_generated }}" == "true" ]; then
-            echo "✅ Project summaries updated successfully"
-            echo "📊 Generated: project-overview.md & development-status.md"
-          else
-            echo "ℹ️ No summaries generated (likely no user commits in the last 24 hours)"
-          fi
-```
-
-# 上記promptで、2つのLLMにレビューさせ、合格した
-
-# 細部を、先行する2つのymlを参照に手直しした
-
-# ローカルtestをしてからcommitできるとよい。方法を検討する
-- ローカルtestのメリット
-    - 素早く修正のサイクルをまわせる
-    - ムダにgit historyを汚さない
-        - これまでの事例：「実装したつもり」「エラー。修正したつもり」「エラー。修正したつもり」...（以降エラー多数）
-- 方法
-    - ※検討、WSL + act を環境構築済みである。test可能であると判断する
-    - 呼び出し元のURLをコメントアウトし、相対パス記述にする
-    - ※備考、テスト成功すると結果がcommit pushされる。それでよしとする
-- 結果
-    - OK
-    - secretsを簡略化できるか試した、できなかった、現状のsecrets記述が今わかっている範囲でベストと判断する
-    - OK
-
-# test green
-
-# commit用に、yml 呼び出し元 uses をlocal用から本番用に書き換える
-
-# closeとする
-
-{% endraw %}
-```
-
 ### .github/actions-tmp/issue-notes/7.md
 ```md
 {% raw %}
@@ -1055,77 +450,22 @@ planにおいては、修正対象のソースファイル名と関数名を、�
 {% endraw %}
 ```
 
-### issue-notes/100.md
+### issue-notes/107.md
 ```md
 {% raw %}
-# issue 「音声を再生中」の行の情報はまったく不要なので削除する。playボタンやstopボタンをみればわかる #100
-[issues #100](https://github.com/cat2151/voicevox-playground/issues/100)
+# issue イントネーションのキーボード操作onのspace/enterで再生したときも、通常同様status欄に状況を表示する。そして再生完了したらリアルタイム波形欄だけclear #107
+[issues #107](https://github.com/cat2151/voicevox-playground/issues/107)
 
 
 
 {% endraw %}
 ```
 
-### issue-notes/101.md
+### issue-notes/108.md
 ```md
 {% raw %}
-# issue textareaの右にある波形表示欄がエンバグでまったく表示されなくなっている。現frameの波形を上下幅90%まで拡大して表示する #101
-[issues #101](https://github.com/cat2151/voicevox-playground/issues/101)
-
-
-
-{% endraw %}
-```
-
-### issue-notes/102.md
-```md
-{% raw %}
-# issue README.ja.md先頭に、cat2151のほかのproject同様、live demoバッジをつける #102
-[issues #102](https://github.com/cat2151/voicevox-playground/issues/102)
-
-
-
-{% endraw %}
-```
-
-### issue-notes/93.md
-```md
-{% raw %}
-# issue スペクトログラムの折れ線グラフは不要なので削除する #93
-[issues #93](https://github.com/cat2151/voicevox-playground/issues/93)
-
-
-
-{% endraw %}
-```
-
-### issue-notes/94.md
-```md
-{% raw %}
-# issue playボタンのSVG画像が小さすぎるので、枠の95%まで拡大する。stopボタンも同様 #94
-[issues #94](https://github.com/cat2151/voicevox-playground/issues/94)
-
-
-
-{% endraw %}
-```
-
-### issue-notes/95.md
-```md
-{% raw %}
-# issue イントネーション編集の下0.5xボタンをクリックしても効果がないことがある。「レスポンスmin」でなく「モーラ現在pitchの最小値」を基準にせよ #95
-[issues #95](https://github.com/cat2151/voicevox-playground/issues/95)
-
-
-
-{% endraw %}
-```
-
-### issue-notes/96.md
-```md
-{% raw %}
-# issue 「対数にする」「リニアにする」ボタンを押したら自動再生すべし #96
-[issues #96](https://github.com/cat2151/voicevox-playground/issues/96)
+# issue リアルタイムFFT欄の周波数推定は、スペクトログラムをみた感じ、100Hz以上の上位1%の最低周波数を採用するとよさそうなので試す #108
+[issues #108](https://github.com/cat2151/voicevox-playground/issues/108)
 
 
 
@@ -1137,17 +477,6 @@ planにおいては、修正対象のソースファイル名と関数名を、�
 {% raw %}
 # issue スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す #97
 [issues #97](https://github.com/cat2151/voicevox-playground/issues/97)
-
-
-
-{% endraw %}
-```
-
-### issue-notes/98.md
-```md
-{% raw %}
-# issue イントネーション編集の「キーボード操作」on時は、イントネーションfocus時だけではなくブラウザ全体でキーボード操作可能にすべし #98
-[issues #98](https://github.com/cat2151/voicevox-playground/issues/98)
 
 
 
@@ -1167,26 +496,31 @@ planにおいては、修正対象のソースファイル名と関数名を、�
 
 ## 最近の変更（過去7日間）
 ### コミット履歴:
-d8c9d9b Auto-translate README.ja.md to README.md [auto]
-e91ff69 Revise README.ja.md for VOICEVOX usage and setup
-263317c Add issue note for #102 [auto]
-99408c4 Add issue note for #101 [auto]
-a5ea820 Add issue note for #100 [auto]
-4ea8ecf Add issue note for #99 [auto]
-9869915 Add issue note for #98 [auto]
-3b5430f Add issue note for #97 [auto]
-eedce29 Add issue note for #96 [auto]
-f8b34a0 Add issue note for #95 [auto]
+794f531 Add issue note for #108 [auto]
+60f489c Add issue note for #107 [auto]
+a147b45 fix #106
+99d3ad5 Add issue note for #106 [auto]
+e932f8a fix #105
+08d91d6 fix #101
+1e78ad5 Auto-translate README.ja.md to README.md [auto]
+101addb fix #102
+a7a225f fix #104
+6548038 fix #96
 
 ### 変更されたファイル:
-README.ja.md
 README.md
-issue-notes/100.md
 issue-notes/101.md
 issue-notes/102.md
-issue-notes/98.md
-issue-notes/99.md
+issue-notes/103.md
+issue-notes/107.md
+issue-notes/108.md
+issue-notes/96.md
+src/playback.ts
+src/visualization.ts
+src/visualization/fftMaxFreq.ts
+src/visualization/fftOverlay.ts
+src/visualization/waveform.ts
 
 
 ---
-Generated at: 2026-02-15 07:01:37 JST
+Generated at: 2026-02-16 07:01:27 JST
