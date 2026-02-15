@@ -1,3 +1,17 @@
+      .export-button {
+        padding: 8px 16px !important;
+        font-size: 16px;
+      }
+      .play-button {
+        padding: 8px !important;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       :root {
         --bg-color: #ffffff;
         --text-color: #0f172a;
@@ -136,8 +150,8 @@
         cursor: not-allowed;
       }
       .icon {
-        width: 1em;
-        height: 1em;
+        width: 40px;
+        height: 40px;
         fill: currentColor;
         display: block;
       }

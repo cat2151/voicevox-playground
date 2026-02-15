@@ -28,9 +28,9 @@ import {
 
 const audioCache = new Map<string, ArrayBuffer>();
 const PLAY_ICON_SVG =
-  '<svg class="icon icon--play" aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M7 5.5v13l11-6.5-11-6.5Z"></path></svg>';
+  '<svg class="icon icon--play" aria-hidden="true" viewBox="0 0 24 24" focusable="false" preserveAspectRatio="xMidYMid meet"><polygon points="3,2 22,12 3,22"/></svg>';
 const STOP_ICON_SVG =
-  '<svg class="icon icon--stop" aria-hidden="true" viewBox="0 0 24 24" focusable="false"><rect x="7" y="7" width="10" height="10" rx="2"></rect></svg>';
+  '<svg class="icon icon--stop" aria-hidden="true" viewBox="0 0 24 24" focusable="false" preserveAspectRatio="xMidYMid meet"><rect x="3" y="3" width="18" height="18" rx="2.5"></rect></svg>';
 let autoPlayTimer: number | null = null;
 let loopCheckboxEl: HTMLInputElement | null = null;
 let playRequestPending = false;
