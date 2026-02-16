@@ -18,7 +18,6 @@ export type OfflineSpectrogramData = {
   ceilingIndex: number;
   duration: number;
   sampleRate: number;
-  frequencies: Array<{ time: number; freq: number }>;
   signature: string;
 };
 
@@ -71,48 +70,6 @@ function determineSpectrogramCeiling(values: Float32Array, previousCeiling: numb
   return clampedCeiling;
 }
 
-export function estimateFundamentalFrequency(values: Float32Array, sampleRate: number) {
-  const magnitude = values.map((v) => 10 ** (v / 20));
-  const downSampled: number[] = [];
-  const maxIndex = values.length / 2;
-  for (let i = 1; i < maxIndex; i++) {
-    downSampled.push(magnitude[i]);
-  }
-
-  const maxLag = Math.min(1000, downSampled.length - 1);
-  const fftMagnitudeBuffer = new Float32Array(maxLag);
-  const fftHpsBuffer = new Float32Array(maxLag);
-  fftMagnitudeBuffer.fill(0);
-  fftHpsBuffer.fill(0);
-
-  for (let lag = 1; lag < maxLag; lag++) {
-    let sum = 0;
-    for (let i = 0; i < downSampled.length - lag; i++) {
-      sum += Math.abs(downSampled[i]) * Math.abs(downSampled[i + lag]);
-    }
-    fftMagnitudeBuffer[lag] = sum;
-  }
-
-  for (let harmonic = 1; harmonic <= 4; harmonic++) {
-    for (let i = 1; i < maxLag; i++) {
-      const index = Math.floor(i / harmonic);
-      if (index < fftMagnitudeBuffer.length) {
-        fftHpsBuffer[i] += fftMagnitudeBuffer[index];
-      }
-    }
-  }
-
-  let bestLag = 1;
-  let bestValue = fftHpsBuffer[1];
-  for (let i = 2; i < maxLag; i++) {
-    if (fftHpsBuffer[i] > bestValue) {
-      bestValue = fftHpsBuffer[i];
-      bestLag = i;
-    }
-  }
-
-  return sampleRate / bestLag;
-}
 
 export async function analyzeSpectrogramFrames(buffer: AudioBuffer, columns: number) {
   const frames: SpectrogramFrame[] = [];
@@ -162,17 +119,12 @@ export async function analyzeSpectrogramFrames(buffer: AudioBuffer, columns: num
   const ceilingIndex = determineSpectrogramCeiling(peakMagnitudes, binCount - 1);
   const duration = buffer.duration;
   const sampleRate = buffer.sampleRate;
-  const frequencies = frames.map((frame, index) => ({
-    time: frames.length <= 1 ? 0 : (index / Math.max(frames.length - 1, 1)) * duration,
-    freq: estimateFundamentalFrequency(frame, sampleRate),
-  }));
 
   return {
     frames,
     ceilingIndex,
     duration,
     sampleRate,
-    frequencies,
   };
 }
 

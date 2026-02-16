@@ -56,8 +56,5 @@ describe('analyzeSpectrogramFrames', () => {
     const buffer = new MockAudioBuffer(samples);
     const result = await analyzeSpectrogramFrames(buffer as unknown as AudioBuffer, 1);
     expect(result.frames).toHaveLength(1);
-    expect(result.frequencies).toHaveLength(1);
-    expect(result.frequencies[0].time).toBe(0);
-    expect(Number.isFinite(result.frequencies[0].freq)).toBe(true);
   });
 });
