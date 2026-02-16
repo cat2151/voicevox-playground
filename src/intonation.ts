@@ -264,6 +264,9 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
   }
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
+    try {
+      require('./visualization').initializeVisualizationCanvases({ preserveSpectrogram: true });
+    } catch (e) {}
     void replayCachedIntonationAudio();
     return;
   }

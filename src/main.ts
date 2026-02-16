@@ -40,7 +40,6 @@ import {
   getSpectrogramScale,
   initializeVisualizationCanvases,
   isPlaybackActive,
-  requestSpectrogramReset,
   setSpectrogramScale,
 } from './visualization';
 
@@ -231,10 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
     spectrogramScaleToggle.addEventListener('click', () => {
       const nextScale: FrequencyScale = getSpectrogramScale() === 'linear' ? 'log' : 'linear';
       setSpectrogramScale(nextScale);
-      initializeVisualizationCanvases();
-      requestSpectrogramReset();
       updateSpectrogramScaleLabel();
-      scheduleAutoPlay();
     });
   }
 
