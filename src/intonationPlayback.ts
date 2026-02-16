@@ -28,12 +28,14 @@ export function scheduleIntonationPlayback(playbackFn: () => Promise<void>) {
 }
 
 export async function replayCachedIntonationAudio() {
+  showPlaybackStatus(true);
   if (!appState.lastSynthesizedBuffer || appState.isProcessing) return false;
   const playButton = document.getElementById('playButton') as HTMLButtonElement | null;
   const exportButton = document.getElementById('exportButton') as HTMLButtonElement | null;
   const renderedCanvas = document.getElementById('renderedWaveform') as HTMLCanvasElement | null;
   const realtimeCanvas = document.getElementById('realtimeWaveform') as HTMLCanvasElement | null;
   const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
+  let playbackResult;
   try {
     appState.isProcessing = true;
     if (playButton) playButton.disabled = true;
@@ -44,7 +46,13 @@ export async function replayCachedIntonationAudio() {
     if (renderedCanvas) {
       drawRenderedWaveform(decodedBuffer, renderedCanvas);
     }
-    await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas, { resetSpectrogram: false });
+    playbackResult = await playAudio(decodedBuffer, realtimeCanvas, spectrogramCanvas, { resetSpectrogram: false });
+    if (!playbackResult?.stopped) {
+      showStatus('再生完了！', 'success');
+    } else {
+      showStatus('再生を停止しました', 'info');
+    }
+    scheduleHideStatus(2000);
     return true;
   } catch (error) {
     console.error('Intonation cache playback error:', error);
@@ -55,6 +63,10 @@ export async function replayCachedIntonationAudio() {
     if (playButton) playButton.disabled = false;
     updateExportButtonState(exportButton);
   }
+}
+
+export function showPlaybackStatus(isCache = false) {
+  showStatus(isCache ? '音声を再生中（キャッシュ）...' : '音声を再生中...', 'info');
 }
 
 export async function playUpdatedIntonation() {

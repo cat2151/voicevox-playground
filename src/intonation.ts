@@ -17,8 +17,9 @@ import {
 } from './intonationDisplay';
 import {
   playUpdatedIntonation,
-  replayCachedIntonationAudio,
   scheduleIntonationPlayback,
+  showPlaybackStatus,
+  replayCachedIntonationAudio,
 } from './intonationPlayback';
 
 export type { RangeExtra } from './intonationState';
@@ -264,9 +265,7 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
   }
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
-    try {
-      require('./visualization').initializeVisualizationCanvases({ preserveSpectrogram: true });
-    } catch (e) {}
+    showPlaybackStatus();
     void replayCachedIntonationAudio();
     return;
   }
