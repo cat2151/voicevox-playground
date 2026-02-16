@@ -4,6 +4,9 @@ import { xToFreq, freqToBinF, getInterpolatedValue, fftValueToY } from './fftUti
 
 const MIN_FREQ = 100;
 const TOP_PERCENT = 0.02; // 0.01はNGだった
+const FFT_VOLUME_DB_THRESHOLD = 30; // 48はNG。36は稀にNG。
+
+let globalFFTMax = -Infinity;
 
 export function drawRealtimeFFT(
   fftValues: Float32Array,
@@ -11,8 +14,12 @@ export function drawRealtimeFFT(
   sampleRate: number,
   maxFreq: number
 ) {
+
   const { ctx, width, height } = prepareCanvas(canvas);
   if (!ctx || fftValues.length === 0) return;
+
+  const currentMax = Math.max(...fftValues);
+  if (currentMax > globalFFTMax) globalFFTMax = currentMax;
 
   ctx.save();
   ctx.globalAlpha = 0.7;
@@ -25,15 +32,21 @@ export function drawRealtimeFFT(
   const logMinFreq = Math.log10(MIN_FREQ);
   const logMaxFreq = Math.log10(freqLimit);
 
-  const { peakX, peakY } = findPeakPosition(fftValues, minTopBin, minBin, binCount, width, logMinFreq, logMaxFreq, nyquist, height);
-  if (peakX !== undefined && peakY !== undefined) {
-    drawPeakLine(ctx, peakX, peakY, height);
-  }
+  const isFFTEmpty = fftValues.length === 0 || fftValues.every(v => v === 0);
+  const dbDiff = globalFFTMax - currentMax;
+  const isBelowThreshold = globalFFTMax !== -Infinity && dbDiff > FFT_VOLUME_DB_THRESHOLD;
 
   drawFFTLine(ctx, fftValues, width, height, logMinFreq, logMaxFreq, nyquist, binCount);
   drawTopBinLine(ctx, fftValues, width, height, logMinFreq, logMaxFreq, nyquist, binCount, topBinSet);
-  if (typeof topFreq === 'number' && isFinite(topFreq) && peakX !== undefined) {
-    drawPeakLabel(ctx, topFreq, height, peakX);
+
+  if (!isFFTEmpty && !isBelowThreshold) {
+    const { peakX, peakY } = findPeakPosition(fftValues, minTopBin, minBin, binCount, width, logMinFreq, logMaxFreq, nyquist, height);
+    if (peakX !== undefined && peakY !== undefined) {
+      drawPeakLine(ctx, peakX, peakY, height);
+    }
+    if (typeof topFreq === 'number' && isFinite(topFreq) && peakX !== undefined) {
+      drawPeakLabel(ctx, topFreq, height, peakX);
+    }
   }
   ctx.restore();
 }
