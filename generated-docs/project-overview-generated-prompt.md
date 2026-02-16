@@ -1,4 +1,4 @@
-Last updated: 2026-02-16
+Last updated: 2026-02-17
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -77,6 +77,10 @@ Last updated: 2026-02-16
 - ずんだもんの音声で任意のテキストを読み上げ
     - ほかのキャラの音声も選べます
 
+## 対象プラットフォーム
+
+- ブラウザとVOICEVOXが使える環境なら動きます
+
 ## サーバー
 
 使うには、VOICEVOXのローカルサーバーを起動してください。
@@ -131,6 +135,16 @@ npm run preview
 - Tone.js v15
 - VOICEVOX API
 
+## projectが目指すこと
+
+- webpageからVOICEVOXが動かせる！誰でも自分だけのVOICEVOXクライアントアプリを楽にバイブコーディングできる！を実証すること
+- （VOICEVOXサーバーが起動済みなら）「webpageを開いてクリックするだけですぐ音が鳴る」を実現すること
+
+## projectが目指さないこと（スコープ外）
+
+- 究極のVOICEVOXクライアントアプリ
+- 自分以外の利用者の要望を受け付けて実現
+
 ※英語版README.mdは、README.ja.mdを元にGeminiの翻訳でGitHub Actionsにより自動生成しています
 
 
@@ -161,7 +175,11 @@ npm run preview
 📁 issue-notes/
   📖 100.md
   📖 107.md
-  📖 108.md
+  📖 110.md
+  📖 111.md
+  📖 112.md
+  📖 113.md
+  📖 115.md
   📖 22.md
   📖 23.md
   📖 24.md
@@ -214,7 +232,9 @@ npm run preview
     📘 canvas.ts
     📘 fft.ts
     📘 fftMaxFreq.ts
+    📘 fftOverlay.test.ts
     📘 fftOverlay.ts
+    📘 fftUtils.ts
     📘 spectrogram.ts
     📘 timeAxis.ts
     📘 waveform.ts
@@ -241,7 +261,7 @@ npm run preview
   - 関数: なし
   - インポート: vitest, ./intonation
 
-**src/intonation.ts** (456行, 16138バイト)
+**src/intonation.ts** (458行, 16186バイト)
   - 関数: dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, disableLoopOnIntonationEdit, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, applyPitchToQuery, applyPitchEdit, handleIntonationPointerDown, handleIntonationPointerMove, handleIntonationPointerUp, handleIntonationKeyDown, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, for, catch, if
   - インポート: ./config, ./status, ./intonationState
 
@@ -249,8 +269,8 @@ npm run preview
   - 関数: getPitchRange, calculateBasePadding, getBaseDisplayRange, calculateDisplayRange, clampRangeExtra, applyRangeExtra, refreshDisplayRange, clampPitchToDisplayRange, calculateStepSize, calculateLetterKeyAdjustment, handleIntonationWheel, ensureWheelHandler, updateInitialRangeFromPoints, initializeIntonationCanvas, buildIntonationPointsFromQuery, renderIntonationLabels, drawIntonationChart, adjustIntonationScale, pitchFromY, findNearestIntonationPoint, if, for
   - インポート: ./config, ./status, ./intonationState
 
-**src/intonationPlayback.ts** (149行, 6284バイト)
-  - 関数: scheduleIntonationPlayback, replayCachedIntonationAudio, playUpdatedIntonation, fetchAndRenderIntonation, resetIntonationToInitial, if, catch
+**src/intonationPlayback.ts** (161行, 6636バイト)
+  - 関数: scheduleIntonationPlayback, replayCachedIntonationAudio, showPlaybackStatus, playUpdatedIntonation, fetchAndRenderIntonation, resetIntonationToInitial, if, catch
   - インポート: tone, ./config, ./audio
 
 **src/intonationState.ts** (84行, 2727バイト)
@@ -261,7 +281,7 @@ npm run preview
   - 関数: isValidAudioQueryShape, cloneAudioQuery
   - インポート: ./config
 
-**src/main.ts** (315行, 11502バイト)
+**src/main.ts** (311行, 11375バイト)
   - 関数: applyStyleSelection, applyRandomStyleSelection, saveDelimiter, scheduleSaveDelimiter, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, catch
   - インポート: ./config, ./textLists, ./state
 
@@ -325,12 +345,20 @@ npm run preview
   - 関数: getMaxFreqByThreshold, fftRadix2, for, if
   - インポート: なし
 
-**src/visualization/fftOverlay.ts** (73行, 2334バイト)
-  - 関数: drawRealtimeFFT, if, for
-  - インポート: ./canvas, ../status
+**src/visualization/fftOverlay.test.ts** (40行, 1729バイト)
+  - 関数: for
+  - インポート: vitest, ./fftOverlay
 
-**src/visualization/spectrogram.ts** (367行, 12165バイト)
-  - 関数: lerpColor, mapIntensityToSpectrogramColor, determineSpectrogramCeiling, estimateFundamentalFrequency, analyzeSpectrogramFrames, drawSpectrogram, drawOfflineSpectrogram, computeAudioContentHash, buildSpectrogramSignature, processChunk, for, if
+**src/visualization/fftOverlay.ts** (204行, 6340バイト)
+  - 関数: drawRealtimeFFT, getTopFreqInfo, findPeakPosition, drawPeakLine, drawFFTLine, drawTopBinLine, drawPeakLabel, if, for
+  - インポート: ./canvas, ../status, ./fftUtils
+
+**src/visualization/fftUtils.ts** (37行, 958バイト)
+  - 関数: xToFreq, freqToBinF, getInterpolatedValue, fftValueToY
+  - インポート: なし
+
+**src/visualization/spectrogram.ts** (350行, 11172バイト)
+  - 関数: lerpColor, mapIntensityToSpectrogramColor, determineSpectrogramCeiling, analyzeSpectrogramFrames, drawSpectrogram, drawSpectrogramColumn, drawOfflineSpectrogram, computeAudioContentHash, buildSpectrogramSignature, processChunk, for, if
   - インポート: ../config, ../status, ./canvas
 
 **src/visualization/timeAxis.ts** (66行, 2048バイト)
@@ -341,12 +369,12 @@ npm run preview
   - 関数: computeSegmentStats, computeSegmentCorrelation, extractAlignedRealtimeSegment, drawRenderedWaveform, drawRealtimeWaveformBackground, drawRealtimeWaveformOnly, for, if
   - インポート: ../config, ../status, ./canvas
 
-**src/visualization.test.ts** (64行, 2271バイト)
+**src/visualization.test.ts** (61行, 2107バイト)
   - 関数: constructor
   - インポート: vitest, ./visualization
 
-**src/visualization.ts** (311行, 9930バイト)
-  - 関数: getSpectrogramScale, setSpectrogramScale, requestSpectrogramReset, isPlaybackActive, stopActivePlayback, initializeVisualizationCanvases, playAudio, setProgressPosition, updateProgressLines, clearProgressLines, requestSpectrogramDraw, render, cleanup, finalize, stopPlayback, if
+**src/visualization.ts** (474行, 14722バイト)
+  - 関数: getSpectrogramScale, setSpectrogramScale, requestSpectrogramReset, isPlaybackActive, stopActivePlayback, initializeVisualizationCanvases, clearWaveformCanvas, createSpectrogramImageCache, analyzeAndCacheSpectrogram, handleSpectrogramInitialization, playAudio, setProgressPosition, updateProgressLines, clearProgressLines, drawRealtimeVisuals, handleSpectrogramDraw, cleanupPlayback, requestSpectrogramDraw, render, finalize, stopPlayback, if
   - インポート: tone, ./config, ./status
 
 **src/vite-env.d.ts** (2行, 38バイト)
@@ -399,6 +427,7 @@ npm run preview
       - findNearestIntonationPoint ()
       - scheduleIntonationPlayback ()
       - replayCachedIntonationAudio ()
+      - showPlaybackStatus ()
       - playUpdatedIntonation ()
       - updateIntonationTiming ()
       - isValidAudioQueryShape ()
@@ -428,7 +457,6 @@ npm run preview
       - setLoopCheckboxElement ()
       - setPlayButtonAppearance ()
       - isPlayRequestPending ()
-      - scheduleAutoPlay ()
       - handlePlay ()
       - getSelectedStyleId ()
       - setSelectedStyleId ()
@@ -439,12 +467,12 @@ npm run preview
       - initializeTextLists ()
       - getSpectrogramScale ()
       - setSpectrogramScale ()
-      - requestSpectrogramReset ()
       - isPlaybackActive ()
   - stopPlaybackAndResetLoop ()
     - getAudioCacheKey ()
       - setTextAndPlay ()
       - downloadLastAudio ()
+      - scheduleAutoPlay ()
       - confirmResetIntonationBeforePlay ()
       - handlePlayButtonClick ()
       - clearRealtimeWaveformCanvas ()
@@ -473,13 +501,23 @@ npm run preview
   - getHannWindow (src/visualization/fft.ts)
     - fftRadix2 ()
       - getMaxFreqByThreshold (src/visualization/fftMaxFreq.ts)
-  - drawRealtimeFFT (src/visualization/fftOverlay.ts)
+  - drawRealtimeFFT ()
+    - getTopFreqInfo ()
+      - findPeakPosition ()
+      - drawPeakLine ()
+      - drawFFTLine ()
+      - drawTopBinLine ()
+      - drawPeakLabel ()
+      - xToFreq ()
+      - freqToBinF ()
+      - getInterpolatedValue ()
+      - fftValueToY ()
   - lerpColor (src/visualization/spectrogram.ts)
     - mapIntensityToSpectrogramColor ()
       - determineSpectrogramCeiling ()
-      - estimateFundamentalFrequency ()
       - analyzeSpectrogramFrames ()
       - drawSpectrogram ()
+      - drawSpectrogramColumn ()
       - drawOfflineSpectrogram ()
       - computeAudioContentHash ()
       - buildSpectrogramSignature ()
@@ -493,19 +531,27 @@ npm run preview
       - drawRealtimeWaveformBackground ()
       - drawRealtimeWaveformOnly ()
   - catch (src/audio.ts)
-  - setProgressPosition ()
-    - updateProgressLines ()
+  - requestSpectrogramReset ()
+    - clearWaveformCanvas ()
+      - createSpectrogramImageCache ()
+      - analyzeAndCacheSpectrogram ()
+      - handleSpectrogramInitialization ()
+      - setProgressPosition ()
+      - updateProgressLines ()
       - clearProgressLines ()
+      - drawRealtimeVisuals ()
+      - handleSpectrogramDraw ()
+      - cleanupPlayback ()
       - requestSpectrogramDraw ()
       - render ()
       - finalize ()
+      - stopPlayback ()
 - for (src/audio.ts)
 - saveDelimiter (src/main.ts)
 - scheduleSaveDelimiter (src/main.ts)
 - triggerPlay (src/playback.ts)
 - handleReset (src/playback.ts)
 - while (src/styleManager.ts)
-- stopPlayback (src/visualization.ts)
 
 
 ## プロジェクト構造（ファイル一覧）
@@ -516,7 +562,11 @@ biome.json
 index.html
 issue-notes/100.md
 issue-notes/107.md
-issue-notes/108.md
+issue-notes/110.md
+issue-notes/111.md
+issue-notes/112.md
+issue-notes/113.md
+issue-notes/115.md
 issue-notes/22.md
 issue-notes/23.md
 issue-notes/24.md
@@ -535,10 +585,6 @@ issue-notes/68.md
 issue-notes/72.md
 issue-notes/74.md
 issue-notes/79.md
-issue-notes/80.md
-issue-notes/89.md
-issue-notes/92.md
-issue-notes/97.md
 package-lock.json
 
 上記の情報を基に、プロンプトで指定された形式でプロジェクト概要を生成してください。
@@ -551,4 +597,4 @@ package-lock.json
 
 
 ---
-Generated at: 2026-02-16 07:01:27 JST
+Generated at: 2026-02-17 07:03:12 JST
