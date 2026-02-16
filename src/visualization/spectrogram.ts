@@ -166,38 +166,74 @@ export function drawSpectrogram(
   ctx.globalAlpha = 1;
   if (drawRange) {
     for (let x = drawRange.start; x <= drawRange.end; x++) {
-      const columnX = leftMargin + x;
-      for (let bin = 0; bin < values.length; bin++) {
-        const magnitudeDb = values[bin];
-        const clampedDb = Math.max(MIN_DB, Math.min(MAX_DB, magnitudeDb));
-        const intensity = (clampedDb - MIN_DB) / (MAX_DB - MIN_DB);
-        if (intensity <= 0) continue;
+      drawSpectrogramColumn({
+        ctx,
+        x: leftMargin + x,
+        values,
+        ceilingIndex,
+        scale,
+        drawableHeight,
+        minLogFreq,
+        maxFreq,
+        MIN_DB,
+        MAX_DB,
+      });
+    }
+  }
+  function drawSpectrogramColumn(params: {
+    ctx: CanvasRenderingContext2D;
+    x: number;
+    values: Float32Array;
+    ceilingIndex: number;
+    scale: FrequencyScale;
+    drawableHeight: number;
+    minLogFreq: number;
+    maxFreq: number;
+    MIN_DB: number;
+    MAX_DB: number;
+  }) {
+    const {
+      ctx,
+      x,
+      values,
+      ceilingIndex,
+      scale,
+      drawableHeight,
+      minLogFreq,
+      maxFreq,
+      MIN_DB,
+      MAX_DB,
+    } = params;
+    for (let bin = 0; bin < values.length; bin++) {
+      const magnitudeDb = values[bin];
+      const clampedDb = Math.max(MIN_DB, Math.min(MAX_DB, magnitudeDb));
+      const intensity = (clampedDb - MIN_DB) / (MAX_DB - MIN_DB);
+      if (intensity <= 0) continue;
 
-        const freq = (bin / ceilingIndex) * maxFreq;
-        const normalized = scale === 'log'
-          ? (freq <= 0
-              ? 0
-              : (Math.log10(Math.max(freq, minLogFreq)) - Math.log10(minLogFreq)) /
-                Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
-          : freq / maxFreq;
+      const freq = (bin / ceilingIndex) * maxFreq;
+      const normalized = scale === 'log'
+        ? (freq <= 0
+            ? 0
+            : (Math.log10(Math.max(freq, minLogFreq)) - Math.log10(minLogFreq)) /
+              Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
+        : freq / maxFreq;
 
-        const nextBin = bin + 1;
-        const nextFreq = nextBin > ceilingIndex ? maxFreq : (nextBin / ceilingIndex) * maxFreq;
-        const nextNormalized = scale === 'log'
-          ? (nextFreq <= 0
-              ? 0
-              : (Math.log10(Math.max(nextFreq, minLogFreq)) - Math.log10(minLogFreq)) /
-                Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
-          : nextFreq / maxFreq;
+      const nextBin = bin + 1;
+      const nextFreq = nextBin > ceilingIndex ? maxFreq : (nextBin / ceilingIndex) * maxFreq;
+      const nextNormalized = scale === 'log'
+        ? (nextFreq <= 0
+            ? 0
+            : (Math.log10(Math.max(nextFreq, minLogFreq)) - Math.log10(minLogFreq)) /
+              Math.max(Math.log10(maxFreq) - Math.log10(minLogFreq), 1))
+        : nextFreq / maxFreq;
 
-        const yTop = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
-        const yBottom = drawableHeight - Math.min(nextNormalized * drawableHeight, drawableHeight);
-        const rectY = Math.min(yTop, yBottom);
-        const rectHeight = Math.max(1, Math.abs(yBottom - yTop));
+      const yTop = drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
+      const yBottom = drawableHeight - Math.min(nextNormalized * drawableHeight, drawableHeight);
+      const rectY = Math.min(yTop, yBottom);
+      const rectHeight = Math.max(1, Math.abs(yBottom - yTop));
 
-        ctx.fillStyle = mapIntensityToSpectrogramColor(intensity);
-        ctx.fillRect(columnX, rectY, 1, rectHeight);
-      }
+      ctx.fillStyle = mapIntensityToSpectrogramColor(intensity);
+      ctx.fillRect(x, rectY, 1, rectHeight);
     }
   }
   ctx.restore();
