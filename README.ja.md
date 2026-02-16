@@ -14,6 +14,10 @@
 - ずんだもんの音声で任意のテキストを読み上げ
     - ほかのキャラの音声も選べます
 
+## 対象プラットフォーム
+
+- ブラウザとVOICEVOXが使える環境なら動きます
+
 ## サーバー
 
 使うには、VOICEVOXのローカルサーバーを起動してください。
@@ -67,5 +71,15 @@ npm run preview
 - Vite
 - Tone.js v15
 - VOICEVOX API
+
+## projectが目指すこと
+
+- webpageからVOICEVOXが動かせる！誰でも自分だけのVOICEVOXクライアントアプリを楽にバイブコーディングできる！を実証すること
+- （VOICEVOXサーバーが起動済みなら）「webpageを開いてクリックするだけですぐ音が鳴る」を実現すること
+
+## projectが目指さないこと（スコープ外）
+
+- 究極のVOICEVOXクライアントアプリ
+- 自分以外の利用者の要望を受け付けて実現
 
 ※英語版README.mdは、README.ja.mdを元にGeminiの翻訳でGitHub Actionsにより自動生成しています
