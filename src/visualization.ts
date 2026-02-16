@@ -95,19 +95,10 @@ export function initializeVisualizationCanvases(options?: { preserveSpectrogram?
   ['renderedWaveform', 'realtimeWaveform', 'spectrogram'].forEach((id) => {
     const canvas = document.getElementById(id) as HTMLCanvasElement | null;
     if (!canvas) return;
-
-    const { ctx, width, height } = prepareCanvas(canvas);
-    if (!ctx) return;
-
     if (id === 'spectrogram' && preserveSpectrogram) {
       return;
     }
-
-    ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
-    ctx.fillRect(0, 0, width, height);
-    ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
-
+    clearWaveformCanvas(canvas);
     if (id === 'spectrogram') {
       drawSpectrogram(
         new Float32Array([0, 0]),
@@ -123,6 +114,19 @@ export function initializeVisualizationCanvases(options?: { preserveSpectrogram?
       cachedSpectrogramImage[spectrogramScale] = null;
     }
   });
+}
+
+function clearWaveformCanvas(canvas: HTMLCanvasElement) {
+  const { ctx, width, height } = prepareCanvas(canvas);
+  if (!ctx) return;
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = getColorVariable('--bg-color', '#ffffff');
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = getColorVariable('--border-color', '#e0e0e0');
+  ctx.beginPath();
+  ctx.moveTo(0, height / 2);
+  ctx.lineTo(width, height / 2);
+  ctx.stroke();
 }
 
 function createSpectrogramImageCache(canvas: HTMLCanvasElement, scale: FrequencyScale) {
@@ -417,6 +421,9 @@ export async function playAudio(
       });
       if (activePlaybackStopper === stopPlayback) {
         activePlaybackStopper = null;
+      }
+      if (realtimeCanvas) {
+        clearWaveformCanvas(realtimeCanvas);
       }
     }
 
