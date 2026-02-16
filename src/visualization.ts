@@ -23,6 +23,11 @@ type SpectrogramCache = {
   log: OfflineSpectrogramData | null;
 };
 let cachedSpectrogramData: SpectrogramCache = { linear: null, log: null };
+type SpectrogramImageCache = {
+  linear: ImageBitmap | null;
+  log: ImageBitmap | null;
+};
+let cachedSpectrogramImage: SpectrogramImageCache = { linear: null, log: null };
 let pendingSpectrogramSignature: string | null = null;
 
 export function getSpectrogramScale() {
@@ -34,6 +39,15 @@ export function setSpectrogramScale(scale: FrequencyScale) {
   spectrogramNeedsReset = true;
   const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
   if (spectrogramCanvas) {
+    if (cachedSpectrogramImage[spectrogramScale]) {
+      const { ctx, width, height } = prepareCanvas(spectrogramCanvas);
+      if (ctx) {
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(cachedSpectrogramImage[spectrogramScale]!, 0, 0, width, height);
+      }
+      spectrogramNeedsReset = false;
+      return;
+    }
     if (cachedSpectrogramData[spectrogramScale]) {
       drawOfflineSpectrogram(
         cachedSpectrogramData[spectrogramScale]!,
@@ -41,6 +55,7 @@ export function setSpectrogramScale(scale: FrequencyScale) {
         spectrogramScale,
         true
       );
+      createSpectrogramImageCache(spectrogramCanvas, spectrogramScale);
       spectrogramNeedsReset = false;
     } else {
       const { ctx, width, height } = prepareCanvas(spectrogramCanvas);
@@ -74,6 +89,7 @@ export function initializeVisualizationCanvases(options?: { preserveSpectrogram?
   const preserveSpectrogram = options?.preserveSpectrogram ?? false;
   if (!preserveSpectrogram) {
     cachedSpectrogramData = { linear: null, log: null };
+    cachedSpectrogramImage = { linear: null, log: null };
   }
   invalidateColorVariableCache();
   ['renderedWaveform', 'realtimeWaveform', 'spectrogram'].forEach((id) => {
@@ -104,11 +120,23 @@ export function initializeVisualizationCanvases(options?: { preserveSpectrogram?
         true
       );
       spectrogramNeedsReset = false;
-    } else {
-      ctx.beginPath();
-      ctx.moveTo(0, height / 2);
-      ctx.lineTo(width, height / 2);
-      ctx.stroke();
+      cachedSpectrogramImage[spectrogramScale] = null;
+    }
+  });
+}
+
+function createSpectrogramImageCache(canvas: HTMLCanvasElement, scale: FrequencyScale) {
+  if (!window.createImageBitmap) return;
+  window.createImageBitmap(canvas).then((bitmap) => {
+    cachedSpectrogramImage[scale] = bitmap;
+    const spectrogramCanvas = document.getElementById('spectrogram') as HTMLCanvasElement | null;
+    if (spectrogramCanvas && spectrogramScale === scale) {
+      const { ctx, width, height } = prepareCanvas(spectrogramCanvas);
+      if (ctx) {
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(bitmap, 0, 0, width, height);
+      }
+      spectrogramNeedsReset = false;
     }
   });
 }
@@ -176,6 +204,7 @@ export async function playAudio(
       return;
     }
     drawOfflineSpectrogram(cache, spectrogramCanvas, spectrogramScale, forceReset);
+    createSpectrogramImageCache(spectrogramCanvas, spectrogramScale);
     spectrogramNeedsReset = false;
     spectrogramDrawPending = false;
   };
@@ -192,6 +221,7 @@ export async function playAudio(
       spectrogramNeedsReset = true;
       const analysisSignature = spectrogramSignature;
       pendingSpectrogramSignature = analysisSignature;
+      cachedSpectrogramImage = { linear: null, log: null };
       void Promise.resolve()
         .then(async () => {
           const [linear, log] = await Promise.all([

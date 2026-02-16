@@ -315,7 +315,6 @@ export function drawOfflineSpectrogram(
   if (data.frames.length === 0) return;
   let previousX = -1;
   const totalFrames = data.frames.length;
-  let completed = false;
   for (let i = 0; i < totalFrames; i++) {
     const progress = totalFrames <= 1 ? 1 : i / (totalFrames - 1);
     previousX = drawSpectrogram(
@@ -329,13 +328,9 @@ export function drawOfflineSpectrogram(
       reset && i === 0
     );
   }
-  completed = true;
   const { ctx, width, height } = prepareCanvas(canvas);
   if (ctx) {
     drawTimeTicks(ctx, data.duration, width, height, { leftMargin: SPECTROGRAM_LEFT_MARGIN });
-  }
-  if (completed) {
-    return;
   }
 }
 
