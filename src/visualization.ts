@@ -141,6 +141,74 @@ function createSpectrogramImageCache(canvas: HTMLCanvasElement, scale: Frequency
   });
 }
 
+function analyzeAndCacheSpectrogram({
+  decodedBuffer,
+  columnCount,
+  analysisSignature,
+  requestSpectrogramDraw,
+}: {
+  decodedBuffer: AudioBuffer;
+  columnCount: number;
+  analysisSignature: string;
+  requestSpectrogramDraw: (forceReset: boolean) => void;
+}) {
+  spectrogramNeedsReset = true;
+  pendingSpectrogramSignature = analysisSignature;
+  cachedSpectrogramImage = { linear: null, log: null };
+  void Promise.resolve()
+    .then(async () => {
+      const [linear, log] = await Promise.all([
+        analyzeSpectrogramFrames(decodedBuffer, columnCount),
+        analyzeSpectrogramFrames(decodedBuffer, columnCount),
+      ]);
+      if (pendingSpectrogramSignature !== analysisSignature) {
+        return;
+      }
+      cachedSpectrogramData = {
+        linear: { ...linear, signature: analysisSignature },
+        log: { ...log, signature: analysisSignature },
+      };
+      pendingSpectrogramSignature = null;
+      spectrogramNeedsReset = true;
+      requestSpectrogramDraw(true);
+    })
+    .catch((error) => {
+      console.error('Error during spectrogram analysis:', error);
+    });
+}
+
+function handleSpectrogramInitialization({
+  decodedBuffer,
+  spectrogramCanvas,
+  shouldResetSpectrogram,
+  spectrogramSignature,
+  requestSpectrogramDraw,
+}: {
+  decodedBuffer: AudioBuffer;
+  spectrogramCanvas: HTMLCanvasElement;
+  shouldResetSpectrogram: boolean;
+  spectrogramSignature: string;
+  requestSpectrogramDraw: (forceReset: boolean) => void;
+}) {
+  const { width } = prepareCanvas(spectrogramCanvas);
+  const columnCount = Math.max(1, width - SPECTROGRAM_LEFT_MARGIN);
+  const shouldAnalyze = shouldResetSpectrogram
+    || !cachedSpectrogramData.linear
+    || !cachedSpectrogramData.log
+    || cachedSpectrogramData.linear.signature !== spectrogramSignature
+    || cachedSpectrogramData.log.signature !== spectrogramSignature;
+  if (shouldAnalyze) {
+    analyzeAndCacheSpectrogram({
+      decodedBuffer,
+      columnCount,
+      analysisSignature: spectrogramSignature,
+      requestSpectrogramDraw,
+    });
+  } else if (spectrogramNeedsReset && (cachedSpectrogramData.linear || cachedSpectrogramData.log)) {
+    requestSpectrogramDraw(true);
+  }
+}
+
 export async function playAudio(
   decodedBuffer: AudioBuffer,
   realtimeCanvas?: HTMLCanvasElement | null,
@@ -157,7 +225,7 @@ export async function playAudio(
   const fftAnalyser = realtimeCanvas ? new Tone.Analyser('fft', 1024) : null;
   const renderedProgress = document.getElementById('renderedWaveformProgress') as HTMLDivElement | null;
   const spectrogramProgress = document.getElementById('spectrogramProgress') as HTMLDivElement | null;
-  const setProgressPosition = (element: HTMLDivElement, ratio: number, leftMargin: number) => {
+  function setProgressPosition(element: HTMLDivElement, ratio: number, leftMargin: number) {
     const parent = element.parentElement;
     const width = parent?.clientWidth ?? 0;
     const clamped = Math.min(Math.max(ratio, 0), 1);
@@ -170,104 +238,38 @@ export async function playAudio(
       element.style.left = `${clamped * 100}%`;
     }
     element.classList.add('is-active');
-  };
-  const updateProgressLines = (ratio: number) => {
+  }
+
+  function updateProgressLines(ratio: number) {
     if (renderedProgress) {
       setProgressPosition(renderedProgress, ratio, 0);
     }
     if (spectrogramProgress) {
       setProgressPosition(spectrogramProgress, ratio, SPECTROGRAM_LEFT_MARGIN);
     }
-  };
-  const clearProgressLines = () => {
+  }
+
+  function clearProgressLines() {
     [renderedProgress, spectrogramProgress].forEach((el) => {
       if (el) {
         el.classList.remove('is-active');
       }
     });
-  };
-
-  const playbackDurationMs = Math.max(decodedBuffer.duration * 1000, 1);
-  const shouldResetSpectrogram = options?.resetSpectrogram ?? true;
-  spectrogramNeedsReset = shouldResetSpectrogram;
-  const spectrogramSignature = buildSpectrogramSignature(decodedBuffer);
-  let animationId: number | null = null;
-  realtimePreviousSegment = null;
-  let playbackStarted = false;
-  let spectrogramDrawPending = false;
-  const requestSpectrogramDraw = (forceReset: boolean) => {
-    if (!spectrogramCanvas) return;
-    const cache = cachedSpectrogramData[spectrogramScale];
-    if (!cache || cache.signature !== spectrogramSignature) return;
-    if (!playbackStarted) {
-      spectrogramDrawPending = true;
-      return;
-    }
-    drawOfflineSpectrogram(cache, spectrogramCanvas, spectrogramScale, forceReset);
-    createSpectrogramImageCache(spectrogramCanvas, spectrogramScale);
-    spectrogramNeedsReset = false;
-    spectrogramDrawPending = false;
-  };
-
-  if (spectrogramCanvas) {
-    const { width } = prepareCanvas(spectrogramCanvas);
-    const columnCount = Math.max(1, width - SPECTROGRAM_LEFT_MARGIN);
-    const shouldAnalyze = shouldResetSpectrogram
-      || !cachedSpectrogramData.linear
-      || !cachedSpectrogramData.log
-      || cachedSpectrogramData.linear.signature !== spectrogramSignature
-      || cachedSpectrogramData.log.signature !== spectrogramSignature;
-    if (shouldAnalyze) {
-      spectrogramNeedsReset = true;
-      const analysisSignature = spectrogramSignature;
-      pendingSpectrogramSignature = analysisSignature;
-      cachedSpectrogramImage = { linear: null, log: null };
-      void Promise.resolve()
-        .then(async () => {
-          const [linear, log] = await Promise.all([
-            analyzeSpectrogramFrames(decodedBuffer, columnCount),
-            analyzeSpectrogramFrames(decodedBuffer, columnCount),
-          ]);
-          if (pendingSpectrogramSignature !== analysisSignature) {
-            return;
-          }
-          cachedSpectrogramData = {
-            linear: { ...linear, signature: analysisSignature },
-            log: { ...log, signature: analysisSignature },
-          };
-          pendingSpectrogramSignature = null;
-          spectrogramNeedsReset = true;
-          requestSpectrogramDraw(true);
-        })
-        .catch((error) => {
-          console.error('Error during spectrogram analysis:', error);
-        });
-    } else if (spectrogramNeedsReset && (cachedSpectrogramData.linear || cachedSpectrogramData.log)) {
-      requestSpectrogramDraw(true);
-    }
   }
 
-  if (waveformAnalyser) {
-    player.connect(waveformAnalyser);
-  }
-
-  if (fftAnalyser) {
-    player.connect(fftAnalyser);
-  }
-
-  player.toDestination();
-  player.start();
-  const startTime = performance.now();
-  playbackStarted = true;
-  updateProgressLines(0);
-  if (spectrogramDrawPending) {
-    requestSpectrogramDraw(true);
-  }
-
-  const render = () => {
-    const elapsed = performance.now() - startTime;
-    const progress = Math.min(elapsed / playbackDurationMs, 1);
-
+  function drawRealtimeVisuals({
+    waveformAnalyser,
+    fftAnalyser,
+    realtimeCanvas,
+    sampleRate,
+    maxFreq,
+  }: {
+    waveformAnalyser: Tone.Analyser | null;
+    fftAnalyser: Tone.Analyser | null;
+    realtimeCanvas: HTMLCanvasElement | null | undefined;
+    sampleRate: number;
+    maxFreq: number;
+  }): number | undefined {
     if (realtimeCanvas) {
       drawRealtimeWaveformBackground(realtimeCanvas);
     }
@@ -290,14 +292,113 @@ export async function playAudio(
       const result = drawRealtimeWaveformOnly(values, realtimeCanvas, sampleRate, realtimePreviousSegment, targetFreq);
       realtimePreviousSegment = result.previousSegment;
     }
+    return fftTopFreq;
+  }
 
+  function handleSpectrogramDraw({
+    spectrogramCanvas,
+    cache,
+    scale,
+    forceReset,
+  }: {
+    spectrogramCanvas: HTMLCanvasElement;
+    cache: OfflineSpectrogramData;
+    scale: FrequencyScale;
+    forceReset: boolean;
+  }) {
+    drawOfflineSpectrogram(cache, spectrogramCanvas, scale, forceReset);
+    createSpectrogramImageCache(spectrogramCanvas, scale);
+    spectrogramNeedsReset = false;
+    spectrogramDrawPending = false;
+  }
+
+  function cleanupPlayback({
+    animationId,
+    waveformAnalyser,
+    fftAnalyser,
+    player,
+  }: {
+    animationId: number | null;
+    waveformAnalyser: Tone.Analyser | null;
+    fftAnalyser: Tone.Analyser | null;
+    player: Tone.Player;
+  }) {
+    if (animationId !== null) {
+      cancelAnimationFrame(animationId);
+    }
+    clearProgressLines();
+    waveformAnalyser?.dispose();
+    fftAnalyser?.dispose();
+    player.dispose();
+  }
+
+  const playbackDurationMs = Math.max(decodedBuffer.duration * 1000, 1);
+  const shouldResetSpectrogram = options?.resetSpectrogram ?? true;
+  spectrogramNeedsReset = shouldResetSpectrogram;
+  const spectrogramSignature = buildSpectrogramSignature(decodedBuffer);
+  let animationId: number | null = null;
+  realtimePreviousSegment = null;
+  let playbackStarted = false;
+  let spectrogramDrawPending = false;
+  function requestSpectrogramDraw(forceReset: boolean) {
+    if (!spectrogramCanvas) return;
+    const cache = cachedSpectrogramData[spectrogramScale];
+    if (!cache || cache.signature !== spectrogramSignature) return;
+    if (!playbackStarted) {
+      spectrogramDrawPending = true;
+      return;
+    }
+    handleSpectrogramDraw({
+      spectrogramCanvas,
+      cache,
+      scale: spectrogramScale,
+      forceReset,
+    });
+  }
+
+  if (spectrogramCanvas) {
+    handleSpectrogramInitialization({
+      decodedBuffer,
+      spectrogramCanvas,
+      shouldResetSpectrogram,
+      spectrogramSignature,
+      requestSpectrogramDraw,
+    });
+  }
+
+  if (waveformAnalyser) {
+    player.connect(waveformAnalyser);
+  }
+
+  if (fftAnalyser) {
+    player.connect(fftAnalyser);
+  }
+
+  player.toDestination();
+  player.start();
+  const startTime = performance.now();
+  playbackStarted = true;
+  updateProgressLines(0);
+  if (spectrogramDrawPending) {
+    requestSpectrogramDraw(true);
+  }
+
+  function render() {
+    const elapsed = performance.now() - startTime;
+    const progress = Math.min(elapsed / playbackDurationMs, 1);
+    drawRealtimeVisuals({
+      waveformAnalyser,
+      fftAnalyser,
+      realtimeCanvas,
+      sampleRate,
+      maxFreq,
+    });
     if (spectrogramNeedsReset) {
       requestSpectrogramDraw(true);
     }
-
     updateProgressLines(progress);
     animationId = requestAnimationFrame(render);
-  };
+  }
 
   if (waveformAnalyser || fftAnalyser) {
     render();
@@ -307,24 +408,19 @@ export async function playAudio(
     let resolved = false;
     let stoppedByUser = false;
 
-    const cleanup = () => {
-      if (animationId !== null) {
-        cancelAnimationFrame(animationId);
-      }
-      clearProgressLines();
-      waveformAnalyser?.dispose();
-      fftAnalyser?.dispose();
-      player.dispose();
-    };
-
-    const finalize = () => {
-      cleanup();
+    function finalize() {
+      cleanupPlayback({
+        animationId,
+        waveformAnalyser,
+        fftAnalyser,
+        player,
+      });
       if (activePlaybackStopper === stopPlayback) {
         activePlaybackStopper = null;
       }
-    };
+    }
 
-    const stopPlayback = () => {
+    function stopPlayback() {
       if (resolved) return;
       resolved = true;
       stoppedByUser = true;
@@ -333,7 +429,7 @@ export async function playAudio(
       }
       finalize();
       resolve({ stopped: stoppedByUser });
-    };
+    }
 
     const previousStopper = activePlaybackStopper;
     activePlaybackStopper = stopPlayback;
