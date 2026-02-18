@@ -1,4 +1,4 @@
-Last updated: 2026-02-17
+Last updated: 2026-02-19
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -174,12 +174,17 @@ npm run preview
 🌐 index.html
 📁 issue-notes/
   📖 100.md
-  📖 107.md
   📖 110.md
   📖 111.md
-  📖 112.md
   📖 113.md
   📖 115.md
+  📖 116.md
+  📖 117.md
+  📖 118.md
+  📖 119.md
+  📖 120.md
+  📖 121.md
+  📖 122.md
   📖 22.md
   📖 23.md
   📖 24.md
@@ -561,12 +566,17 @@ README.md
 biome.json
 index.html
 issue-notes/100.md
-issue-notes/107.md
 issue-notes/110.md
 issue-notes/111.md
-issue-notes/112.md
 issue-notes/113.md
 issue-notes/115.md
+issue-notes/116.md
+issue-notes/117.md
+issue-notes/118.md
+issue-notes/119.md
+issue-notes/120.md
+issue-notes/121.md
+issue-notes/122.md
 issue-notes/22.md
 issue-notes/23.md
 issue-notes/24.md
@@ -580,11 +590,6 @@ issue-notes/62.md
 issue-notes/64.md
 issue-notes/65.md
 issue-notes/66.md
-issue-notes/67.md
-issue-notes/68.md
-issue-notes/72.md
-issue-notes/74.md
-issue-notes/79.md
 package-lock.json
 
 上記の情報を基に、プロンプトで指定された形式でプロジェクト概要を生成してください。
@@ -597,4 +602,4 @@ package-lock.json
 
 
 ---
-Generated at: 2026-02-17 07:03:12 JST
+Generated at: 2026-02-19 07:05:54 JST

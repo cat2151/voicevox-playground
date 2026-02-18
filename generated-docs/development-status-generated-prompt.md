@@ -1,4 +1,4 @@
-Last updated: 2026-02-17
+Last updated: 2026-02-19
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -218,12 +218,17 @@ Last updated: 2026-02-17
 - generated-docs/project-overview-generated-prompt.md
 - index.html
 - issue-notes/100.md
-- issue-notes/107.md
 - issue-notes/110.md
 - issue-notes/111.md
-- issue-notes/112.md
 - issue-notes/113.md
 - issue-notes/115.md
+- issue-notes/116.md
+- issue-notes/117.md
+- issue-notes/118.md
+- issue-notes/119.md
+- issue-notes/120.md
+- issue-notes/121.md
+- issue-notes/122.md
 - issue-notes/22.md
 - issue-notes/23.md
 - issue-notes/24.md
@@ -286,6 +291,137 @@ Last updated: 2026-02-17
 - vite.config.ts
 
 ## 現在のオープンIssues
+## [Issue #122](../issue-notes/122.md): 「エラーが発生しました: Failed to fetch」が、知らない人にはわかりづらい
+[issue-notes/122.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/122.md)
+
+...
+ラベル: 
+--- issue-notes/122.md の内容 ---
+
+```markdown
+# issue 「エラーが発生しました: Failed to fetch」が、知らない人にはわかりづらい #122
+[issues #122](https://github.com/cat2151/voicevox-playground/issues/122)
+
+- 案
+    - その前にstyleの取得に失敗し「未取得」となった時点で、
+    - 「ローカルVOICEVOXサーバーを起動してください」をダイアログ表示する
+    - 一方で、styleの取得に成功したら、既存のstatus表示欄に、「ローカルサーバーとの通信成功。音声合成の準備ができました」を表示する
+
+```
+
+## [Issue #121](../issue-notes/121.md): イントネーション付きお気に入りのexportとimportをできるようにする
+[issue-notes/121.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/121.md)
+
+...
+ラベル: 
+--- issue-notes/121.md の内容 ---
+
+```markdown
+# issue イントネーション付きお気に入りのexportとimportをできるようにする #121
+[issues #121](https://github.com/cat2151/voicevox-playground/issues/121)
+
+- 「イントネーション付きお気に入り」の見出しの右に、exportボタンとimportボタンをつける
+- exportもimportも、「イントネーション付きお気に入り」のlocal storageに保存される内容そのもの（複数まるごと）、とする
+- ひとまず複数まるごとでUX検証とする
+
+```
+
+## [Issue #120](../issue-notes/120.md): キーボード操作モードonのとき、textarea編集時に意図しないa-zやplayができてしまい混乱する
+[issue-notes/120.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/120.md)
+
+...
+ラベル: 
+--- issue-notes/120.md の内容 ---
+
+```markdown
+# issue キーボード操作モードonのとき、textarea編集時に意図しないa-zやplayができてしまい混乱する #120
+[issues #120](https://github.com/cat2151/voicevox-playground/issues/120)
+
+- 対策
+    - textarea編集時は、キーボード操作モードonであっても、キーボード操作onモード特有のキー（a-zやspaceとenter）を素通りさせる
+    - かわりに、キーボード操作モードon/offに関わらず、どの状況であっても、SHIFT+ENTERとCTRL+ENTERを、playキーとする
+
+```
+
+## [Issue #119](../issue-notes/119.md): キャラ&styleプルダウンを選んだら、自動再生する
+[issue-notes/119.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/119.md)
+
+...
+ラベル: 
+--- issue-notes/119.md の内容 ---
+
+```markdown
+# issue キャラ&styleプルダウンを選んだら、自動再生する #119
+[issues #119](https://github.com/cat2151/voicevox-playground/issues/119)
+
+# 自動再生を追加する対象
+- キャラ&styleプルダウン
+- styleプルダウン
+- ランダムstyleチェックボックス
+
+# あわせて、以下も行う
+- お気に入り再生をクリックしたとき、もしloop再生中だったなら、loop再生をやめ、stopして、お気に入り再生を鳴らす
+  - 今は、loop再生中だと、お気に入り再生をクリックしても何も起きないのでuserが混乱する
+
+```
+
+## [Issue #118](../issue-notes/118.md): VOICEVOX Nemo も再生できるようにする
+[issue-notes/118.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/118.md)
+
+...
+ラベル: 
+--- issue-notes/118.md の内容 ---
+
+```markdown
+# issue VOICEVOX Nemo も再生できるようにする #118
+[issues #118](https://github.com/cat2151/voicevox-playground/issues/118)
+
+- VOICEVOX Nemo-engine ローカルサーバー port 50121 からもspeakers取得を試みて、
+    - 取得できたなら、それもキャラ&styleプルダウンに含める
+
+- user向け備忘
+    - nemo
+        - 仕組み
+            - local nemo engineは、voicevox engineと別サーバである。デフォ port 50121 で動作する
+        - もし今すぐnemoだけでいいので鳴らしたいなら
+            - dir
+                - 当該nemoのdirは、voicevoxアプリの設定のengine管理を見るとわかる
+            - run
+                - nemoもvoicevox-engine同様、runがあるので、それを`--port 50021`にすれば鳴らせる
+
+```
+
+## [Issue #117](../issue-notes/117.md): イントネーション編集後や、イントネーション付きお気に入りを再生したあと、playボタンを押すと、警告なしにイントネーションが初期化されてしまう
+[issue-notes/117.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/117.md)
+
+...
+ラベル: 
+--- issue-notes/117.md の内容 ---
+
+```markdown
+# issue イントネーション編集後や、イントネーション付きお気に入りを再生したあと、playボタンを押すと、警告なしにイントネーションが初期化されてしまう #117
+[issues #117](https://github.com/cat2151/voicevox-playground/issues/117)
+
+- userがほしいのは、その状況であれば、イントネーションを維持したまま再生、である
+
+
+```
+
+## [Issue #116](../issue-notes/116.md): demoの利用方法欄に、ローカルPCにVOICEVOXをinstallしてください、を書く
+[issue-notes/116.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/116.md)
+
+...
+ラベル: 
+--- issue-notes/116.md の内容 ---
+
+```markdown
+# issue demoの利用方法欄に、ローカルPCにVOICEVOXをinstallしてください、を書く #116
+[issues #116](https://github.com/cat2151/voicevox-playground/issues/116)
+
+- 書く内容については、README.ja.mdを参考にすること
+
+```
+
 ## [Issue #115](../issue-notes/115.md): （保留中）スペクトログラムについて、リニア表示たと、上半分が真っ暗で、メインの部分が狭くなってしまっている
 [issue-notes/115.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/115.md)
 
@@ -360,83 +496,128 @@ Last updated: 2026-02-17
 
 ```
 
-## [Issue #110](../issue-notes/110.md): 画面の右上に「設定」ボタンを配置し、折りたたみで設定が開くようにし、port番号「50021」と、周波数推定対象上位%「2」、を設定可能にしlocal storage保存と復帰できるようにする
-[issue-notes/110.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/110.md)
-
-...
-ラベル: 
---- issue-notes/110.md の内容 ---
-
-```markdown
-# issue 画面の右上に「設定」ボタンを配置し、折りたたみで設定が開くようにし、port番号「50021」と、周波数推定対象上位%「2」、を設定可能にする #110
-[issues #110](https://github.com/cat2151/voicevox-playground/issues/110)
-
-
-
-```
-
-## [Issue #99](../issue-notes/99.md): イントネーションのモーラの左のa-zガイド表示は、長文で重なって見づらいので、a-zガイドはモーラの下に表示にすべし
-[issue-notes/99.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/99.md)
-
-...
-ラベル: 
---- issue-notes/99.md の内容 ---
-
-```markdown
-# issue イントネーションのモーラの左のa-zガイド表示は、長文で重なって見づらいので、a-zガイドはモーラの下に表示にすべし #99
-[issues #99](https://github.com/cat2151/voicevox-playground/issues/99)
-
-
-
-```
-
-## [Issue #97](../issue-notes/97.md): スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す
-[issue-notes/97.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/97.md)
-
-...
-ラベル: 
---- issue-notes/97.md の内容 ---
-
-```markdown
-# issue スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す #97
-[issues #97](https://github.com/cat2151/voicevox-playground/issues/97)
-
-
-
-```
-
 ## ドキュメントで言及されているファイルの内容
-### .github/actions-tmp/issue-notes/10.md
+### .github/actions-tmp/README.ja.md
 ```md
 {% raw %}
-# issue callgraph を他projectから使いやすくする #10
-[issues #10](https://github.com/cat2151/github-actions/issues/10)
+# GitHub Actions 共通ワークフロー集
 
-# ブレインストーミング
-- 洗い出し
-    - 他projectから使う場合の問題を洗い出す、今見えている範囲で、手早く、このnoteに可視化する
-    - 洗い出したものは、一部は別issueに切り分ける
-- close条件
-    - [x] まずは4つそれぞれを個別のdirに切り分けてtest greenとなること、とするつもり
-        - 別issueに切り分けるつもり
-- 切り分け
-    - 別dirに切り分ける
-        - [x] 課題、`codeql-queries/` が `.github/` 配下にある。対策、`.github_automation/callgraph/codeql-queries/` とする
-        - [x] 課題、scriptも、`.github/`配下にある。対策、移動する
-        - 方法、agentを試し、ハルシネーションで時間が取られるなら人力に切り替える
-- test
-    - local WSL + act でtestする
-- 名前
-    - [x] 課題、名前 enhanced が不要。対策、名前から enhanced を削除してymlなどもそれぞれ同期して修正すべし
-- docs
-    - [x] call導入手順を書く
+このリポジトリは、**複数プロジェクトで使い回せるGitHub Actions共通ワークフロー集**です
 
-# 状況
-- 実際に他project tonejs-mml-to-json リポジトリにて使うことができている
-    - その際に発生した運用ミスは、
-        - call導入手順のメンテを行ったので、改善された、と判断する
+<p align="left">
+  <a href="README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-Japanese-red.svg" alt="Japanese"></a>
+  <a href="README.md"><img src="https://img.shields.io/badge/🇺🇸-English-blue.svg" alt="English"></a>
+</p>
 
-# closeとする
+# 3行で説明
+- 🚀 プロジェクトごとのGitHub Actions管理をもっと楽に
+- 🔗 共通化されたワークフローで、どのプロジェクトからも呼ぶだけでOK
+- ✅ メンテは一括、プロジェクト開発に集中できます
+
+## Quick Links
+| 項目 | リンク |
+|------|--------|
+| 📖 プロジェクト概要 | [generated-docs/project-overview.md](generated-docs/project-overview.md) |
+| 📖 コールグラフ | [generated-docs/callgraph.html](https://cat2151.github.io/github-actions/generated-docs/callgraph.html) |
+| 📊 開発状況 | [generated-docs/development-status.md](generated-docs/development-status.md) |
+
+# notes
+- まだ共通化の作業中です
+- まだワークフロー内容を改善中です
+
+※README.md は README.ja.md を元にGeminiの翻訳でGitHub Actionsで自動生成しています
+
+{% endraw %}
+```
+
+### README.ja.md
+```md
+{% raw %}
+# voicevox-playground
+
+**VOICEVOX ローカルサーバーと連携し、テキストを音声に変換して再生するWebアプリケーションです。**
+
+<p align="left">
+  <a href="README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-Japanese-red.svg" alt="Japanese"></a>
+  <a href="README.md"><img src="https://img.shields.io/badge/🇺🇸-English-blue.svg" alt="English"></a>
+  <a href="https://cat2151.github.io/voicevox-playground/"><img src="https://img.shields.io/badge/Demo-brightgreen" alt="Demo"></a>
+  <a href="https://deepwiki.com/cat2151/voicevox-playground"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+</p>
+
+## 機能
+
+- ずんだもんの音声で任意のテキストを読み上げ
+    - ほかのキャラの音声も選べます
+
+## 対象プラットフォーム
+
+- ブラウザとVOICEVOXが使える環境なら動きます
+
+## サーバー
+
+使うには、VOICEVOXのローカルサーバーを起動してください。
+
+1. [VOICEVOX](https://voicevox.hiroshiba.jp/)をダウンロードしてインストール
+2. VOICEVOXエンジンを起動（ポート50021でHTTPサーバーが起動します）。[GitHub Pages版](https://cat2151.github.io/voicevox-playground) からアクセスする場合は、CORSを許可した状態で以下のコマンドを使用してください。
+
+   ```bash
+   <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io
+   ```
+
+   開発するとき、ローカル開発サーバー（`npm run dev` が提供する `http://localhost:5173`）からも利用する場合は、上記に続けて `http://localhost:5173` も追加してください。
+
+   ```bash
+   <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173
+   ```
+
+## 使い方
+
+1. VOICEVOXを起動（前述）
+2. ブラウザで [アプリケーション](https://cat2151.github.io/voicevox-playground) を開く
+3. テキストエリアに読み上げたいテキストを入力
+4. 音声が再生されます
+5. イントネーションを編集できます
+
+## 仕組み
+- webpageをGitHub Pagesにデプロイ
+- webpageから
+  - VOICEVOXローカルHTTPサーバー（ポート50021）にリクエストを送信し、レスポンスで音声データを取得
+  - Tone.js v15を使用して音声再生
+
+## 開発
+
+```bash
+# 依存関係のインストール
+npm install
+
+# 開発サーバーの起動
+npm run dev
+
+# ビルド
+npm run build
+
+# プレビュー
+npm run preview
+```
+
+## 技術スタック
+
+- TypeScript
+- Vite
+- Tone.js v15
+- VOICEVOX API
+
+## projectが目指すこと
+
+- webpageからVOICEVOXが動かせる！誰でも自分だけのVOICEVOXクライアントアプリを楽にバイブコーディングできる！を実証すること
+- （VOICEVOXサーバーが起動済みなら）「webpageを開いてクリックするだけですぐ音が鳴る」を実現すること
+
+## projectが目指さないこと（スコープ外）
+
+- 究極のVOICEVOXクライアントアプリ
+- 自分以外の利用者の要望を受け付けて実現
+
+※英語版README.mdは、README.ja.mdを元にGeminiの翻訳でGitHub Actionsにより自動生成しています
 
 {% endraw %}
 ```
@@ -613,6 +794,563 @@ Last updated: 2026-02-17
 {% endraw %}
 ```
 
+### .github/actions-tmp/issue-notes/16.md
+```md
+{% raw %}
+# issue issue-note / project-summary / translate / callgraph をtonejs-mml-to-jsonから呼び出す #16
+[issues #16](https://github.com/cat2151/github-actions/issues/16)
+
+# これまでの課題
+- issue-note / project-summary / translate / callgraph は、github-actions リポジトリ上ではtest greenである。
+- だが他のリポジトリにおいて動作するか？が可視化不足である。
+
+# 対策
+- issue-note / project-summary / translate / callgraph をtonejs-mml-to-jsonから呼び出す
+- 詳しく
+    - まず、現状、tonejs-mml-to-json でその4つのworkflowがどうなっているか、このmdに可視化する
+    - 例えば、既に呼び出している、呼び出していない、tonejs-mml-to-jsonにある古いworkflowを呼び出している
+
+# 調査結果
+- まず、現状、tonejs-mml-to-json でその4つのworkflowがどうなっているか、このmdに可視化する
+    - 結果：
+        - issue-note
+            - tonejs-mml-to-jsonにある古いworkflowを呼び出している
+        - project-summary
+            - tonejs-mml-to-jsonにある古いworkflowを呼び出している
+        - translate
+            - tonejs-mml-to-jsonにある古いworkflowを呼び出している
+        - callgraph
+            - tonejs-mml-to-jsonにある古いworkflowを呼び出している
+
+# どうする？
+- issue-note
+    - github-actions リポジトリにある、call-issue-note.yml をcpして使うようにする、まず単純cpして動くかを確認する
+- project-summary
+    - github-actions リポジトリにある、call-daily-project-summary.yml をcpして使うようにする、まず単純cpして動くかを確認する
+- translate
+    - github-actions リポジトリにある、call-translate-readme.yml をcpして使うようにする、まず単純cpして動くかを確認する
+- callgraph
+    - github-actions リポジトリにある、call-callgraph.yml をcpして使うようにする、まず単純cpして動くかを確認する
+
+# 状況
+- issue-note
+    - tonejs-mml-to-jsonリポジトリにて、test green
+    - issue-noteについては当issueのタスクは完了した、と判断する
+- project-summary
+    - tonejs-mml-to-jsonリポジトリにて、test green
+    - project-summaryについては当issueのタスクは完了した、と判断する
+
+# 状況
+- translate
+    - github-actions リポジトリにある、call-translate-readme.yml をcpして使うようにする、まず単純cpして動くかを確認する
+        - 状況
+            - 単純cpした
+            - ソース机上レビューした。OK
+            - トリガーはREADME.ja.mdのcommit
+            - testは省略とする
+            - もし今後README.ja.mdのcommit時にうまく動作しないとしても、そのとき対処すればOK、と判断する
+    - translateについては当issueのタスクは完了した、と判断する
+
+# どうする？
+- callgraph
+    - github-actions リポジトリにある、call-callgraph.yml をcpして使うようにする、まず単純cpして動くかを確認する
+
+# 結果
+- callgraph
+    - tonejs-mml-to-jsonリポジトリにて、test red
+    - logをみても情報不足なため、まずloggerを修正する
+    - 結果、わかった、運用ミス、対象srcの指定の考慮漏れ
+    - どうする？
+        - 対象srcを指定する。tonejs-mml-to-jsonリポジトリにて進める
+    - 結果
+        - test green
+    - callgraphについては当issueのタスクは完了した、と判断する
+
+# 状況
+- github-actions以外のリポジトリとして、
+    - tonejs-mml-to-jsonリポジトリにおいて、
+        - issue-note / project-summary / translate / callgraph がtest greenとなった。
+        - closeできる、と判断する。
+
+# closeとする
+
+{% endraw %}
+```
+
+### .github/actions-tmp/issue-notes/17.md
+```md
+{% raw %}
+# issue development-status が生成したmdに誤りがある。issue-note へのlinkがURL誤りで、404となってしまう #17
+[issues #17](https://github.com/cat2151/github-actions/issues/17)
+
+# 事例
+- 生成したmdのURL：
+    - https://github.com/cat2151/github-actions/blob/main/generated-docs/development-status.md
+- そのmdをGitHub上でdecodeして閲覧したときのURL、404である：
+    - https://github.com/cat2151/github-actions/blob/main/generated-docs/issue-notes/16.md
+- そのmdに実際に含まれるURL：
+    - issue-notes/16.md
+- あるべきURL：
+    - https://github.com/cat2151/github-actions/blob/main/issue-notes/16.md
+- あるべきURLがmdにどう含まれているべきか：
+    - ../issue-notes/16.md
+
+# どうする？
+- 案
+    - promptを修正する
+    - promptの場所は：
+        - .github_automation/project_summary/scripts/development/DevelopmentStatusGenerator.cjs
+    - 備考、cjs内にpromptがハードコーディングされており、promptをメンテしづらいので別途対処する : [issues #18](https://github.com/cat2151/github-actions/issues/18)
+
+# 結果
+- agentにpromptを投げた
+    - ※promptは、development-statusで生成したもの
+- レビューした
+    - agentがフルパスで実装した、ことがわかった
+- userが分析し、 ../ のほうが適切と判断した
+    - ※「事例」コーナーを、あわせて修正した
+- そのように指示してagentに修正させた
+- testする
+
+# 結果
+- test green
+- closeする
+
+{% endraw %}
+```
+
+### .github/actions-tmp/issue-notes/18.md
+```md
+{% raw %}
+# issue DevelopmentStatusGenerator.cjs 内に、Geminiに与えるpromptがハードコーディングされてしまっている #18
+[issues #18](https://github.com/cat2151/github-actions/issues/18)
+
+# 何が困るの？
+- project把握しづらい。どこにpromptが書いてあるのか、把握しづらい。
+- prompts/ にほかのpromptがあるため、方針がブレていると、読みづらい。
+- 備忘、いくらテンプレートリテラルとプレースホルダーで密結合しているからとはいえ、ハードコーディングはNG。
+    - それらはreplaceを使う等で楽に切り出しできるので。
+
+# 問題のcjsの場所は？
+- ファイルパス : .github_automation/project_summary/scripts/development/DevelopmentStatusGenerator.cjs
+- 関数 : generateDevelopmentStatus
+
+# 結果
+- Geminiに生成させたpromptを、agentに投げて、リファクタリングさせてみた
+- ハルシネーションした。使い物にならなかった
+- 人力でやる
+
+# 結果
+- test green
+
+# closeとする
+
+
+{% endraw %}
+```
+
+### .github/actions-tmp/issue-notes/19.md
+```md
+{% raw %}
+# issue project-summary の development-status 生成時、issue-notes/ 配下のmdファイルの内容を参照させる #19
+[issues #19](https://github.com/cat2151/github-actions/issues/19)
+
+# 何が困るの？
+- issue解決に向けての次の一手の内容が実態に即していないことが多い。
+
+# 対策案
+- issue-notes/ 配下のmdファイルの内容を参照させる
+
+# 備考
+- さらにmd内に書かれているfileも、project内をcjsに検索させて添付させると、よりGeminiの生成品質が向上する可能性がある。
+    - [issues #20](https://github.com/cat2151/github-actions/issues/20)
+- さらにproject overviewでGeminiがまとめたmdも、Geminiに与えると、よりGeminiの生成品質が向上する可能性がある。
+    - [issues #21](https://github.com/cat2151/github-actions/issues/21)
+- さらに、Geminiに与えたpromptをfileにしてcommit pushしておくと、デバッグに役立つ可能性がある。
+    - [issues #22](https://github.com/cat2151/github-actions/issues/22)
+
+# close条件
+- issues #22 がcloseされること。
+- commitされたpromptを確認し、issue-notes/ 配下のmdファイルがpromptに添付されていること、が確認できること。
+
+# 状況
+- 課題、実装したがtestができていない
+- 対策、issues #22 が実装されれば、testができる
+- 対策、issues #22 のcloseを待つ
+
+# 状況
+- issues #22 がcloseされた
+- testできるようになった
+- commitされたpromptを確認した。issue-notes/ 配下のmdファイルがpromptに添付されていること、が確認できた
+
+# closeする
+
+{% endraw %}
+```
+
+### .github/actions-tmp/issue-notes/2.md
+```md
+{% raw %}
+# issue GitHub Actions「関数コールグラフhtmlビジュアライズ生成」を共通ワークフロー化する #2
+[issues #2](https://github.com/cat2151/github-actions/issues/2)
+
+
+# prompt
+```
+あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
+このymlファイルを、以下の2つのファイルに分割してください。
+1. 共通ワークフロー       cat2151/github-actions/.github/workflows/callgraph_enhanced.yml
+2. 呼び出し元ワークフロー cat2151/github-actions/.github/workflows/call-callgraph_enhanced.yml
+まずplanしてください
+```
+
+# 結果
+- indent
+    - linter？がindentのエラーを出しているがyml内容は見た感じOK
+    - テキストエディタとagentの相性問題と判断する
+    - 別のテキストエディタでsaveしなおし、テキストエディタをreload
+    - indentのエラーは解消した
+- LLMレビュー
+    - agent以外の複数のLLMにレビューさせる
+    - prompt
+```
+あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
+以下の2つのファイルをレビューしてください。最優先で、エラーが発生するかどうかだけレビューしてください。エラー以外の改善事項のチェックをするかわりに、エラー発生有無チェックに最大限注力してください。
+
+--- 共通ワークフロー
+
+# GitHub Actions Reusable Workflow for Call Graph Generation
+name: Generate Call Graph
+
+# TODO Windowsネイティブでのtestをしていた名残が残っているので、今後整理していく。今はWSL act でtestしており、Windowsネイティブ環境依存問題が解決した
+#  ChatGPTにレビューさせるとそこそこ有用そうな提案が得られたので、今後それをやる予定
+#  agentに自己チェックさせる手も、セカンドオピニオンとして選択肢に入れておく
+
+on:
+  workflow_call:
+
+jobs:
+  check-commits:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.check.outputs.should-run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50 # 過去のコミットを取得
+
+      - name: Check for user commits in last 24 hours
+        id: check
+        run: |
+          node .github/scripts/callgraph_enhanced/check-commits.cjs
+
+  generate-callgraph:
+    needs: check-commits
+    if: needs.check-commits.outputs.should-run == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      security-events: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Remove old CodeQL packages cache
+        run: rm -rf ~/.codeql/packages
+
+      - name: Check Node.js version
+        run: |
+          node .github/scripts/callgraph_enhanced/check-node-version.cjs
+
+      - name: Install CodeQL CLI
+        run: |
+          wget https://github.com/github/codeql-cli-binaries/releases/download/v2.22.1/codeql-linux64.zip
+          unzip codeql-linux64.zip
+          sudo mv codeql /opt/codeql
+          echo "/opt/codeql" >> $GITHUB_PATH
+
+      - name: Install CodeQL query packs
+        run: |
+          /opt/codeql/codeql pack install .github/codeql-queries
+
+      - name: Check CodeQL exists
+        run: |
+          node .github/scripts/callgraph_enhanced/check-codeql-exists.cjs
+
+      - name: Verify CodeQL Configuration
+        run: |
+          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs verify-config
+
+      - name: Remove existing CodeQL DB (if any)
+        run: |
+          rm -rf codeql-db
+
+      - name: Perform CodeQL Analysis
+        run: |
+          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs analyze
+
+      - name: Check CodeQL Analysis Results
+        run: |
+          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs check-results
+
+      - name: Debug CodeQL execution
+        run: |
+          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs debug
+
+      - name: Wait for CodeQL results
+        run: |
+          node -e "setTimeout(()=>{}, 10000)"
+
+      - name: Find and process CodeQL results
+        run: |
+          node .github/scripts/callgraph_enhanced/find-process-results.cjs
+
+      - name: Generate HTML graph
+        run: |
+          node .github/scripts/callgraph_enhanced/generate-html-graph.cjs
+
+      - name: Copy files to generated-docs and commit results
+        run: |
+          node .github/scripts/callgraph_enhanced/copy-commit-results.cjs
+
+--- 呼び出し元
+# 呼び出し元ワークフロー: call-callgraph_enhanced.yml
+name: Call Call Graph Enhanced
+
+on:
+  schedule:
+    # 毎日午前5時(JST) = UTC 20:00前日
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+jobs:
+  call-callgraph-enhanced:
+    # uses: cat2151/github-actions/.github/workflows/callgraph_enhanced.yml
+    uses: ./.github/workflows/callgraph_enhanced.yml # ローカルでのテスト用
+```
+
+# レビュー結果OKと判断する
+- レビュー結果を人力でレビューした形になった
+
+# test
+- #4 同様にローカル WSL + act でtestする
+- エラー。userのtest設計ミス。
+  - scriptの挙動 : src/ がある前提
+  - 今回の共通ワークフローのリポジトリ : src/ がない
+  - 今回testで実現したいこと
+    - 仮のソースでよいので、関数コールグラフを生成させる
+  - 対策
+    - src/ にダミーを配置する
+- test green
+  - ただしcommit pushはしてないので、html内容が0件NG、といったケースの検知はできない
+  - もしそうなったら別issueとしよう
+
+# test green
+
+# commit用に、yml 呼び出し元 uses をlocal用から本番用に書き換える
+
+# closeとする
+- もしhtml内容が0件NG、などになったら、別issueとするつもり
+
+{% endraw %}
+```
+
+### .github/actions-tmp/issue-notes/20.md
+```md
+{% raw %}
+# issue project-summary の development-status 生成時、issue-notes/ 配下のmdにファイル名が書いてあれば、そのファイル内容もpromptに添付、を試す #20
+[issues #20](https://github.com/cat2151/github-actions/issues/20)
+
+# 何が困るの？
+- Geminiに次の一手を生成させるとき、cjsの内容も添付したほうが、生成品質が改善できる可能性がある。
+
+# 案
+## outputのimage
+- promptが言及するfilename、について、そのfileの内容もすべてpromptに含める。
+    - 軸は、projectのfilename一覧である。
+        - 一覧それぞれのfilenameについて、promptで言及されているものをfile内容埋め込み、とする。
+- 方向性
+    - シンプルで明確なルール、曖昧さのないルールで、メンテを楽にすることを優先する
+    - 余分なファイルが出てしまうが割り切ってOKとし、欠落リスクを減らせることを優先する
+- 備考
+    - 曖昧でメンテが必要な「documentからのfilename抽出」をやめ、
+        - かわりに、逆に、「今のprojectにあるfileすべてのうち、promptで言及されているもの」を軸とする
+## 実現方法の案
+- project全体について、filenameと、filepath配列（複数ありうる）、のmapを取得する。そういう関数Aをまず実装する。
+    - filepathは、agentが扱えるよう、github上のworkの絶対pathではなく、projectRootからの相対パス表記とする。
+- そして、そのfilenameにmatchするfilepath配列について、filepathとファイル内容を記したmarkdown文字列を返却、という関数Bを実装する。
+- さらに、Geminiにわたすpromptについて、前述の関数Aのfilenameそれぞれについて、prompt内を検索し、filenameが存在する場合は、そのfilenameについて、関数Bを用いてmarkdown文字列を取得する。そうして得られたmarkdown文字列群を返却する、という関数Cを実装する。
+- さらに、promptの末尾に書いてあるプレースホルダー「`${file_contents}`」を、関数Cの結果で置き換える、という関数Dを実装する。
+- 実際には、Geminiにわたすpromptのプレースホルダー展開は、2回にわたる必要がある。1回目でissues-note内容をpromptに埋め込む。2回目でそのpromptに対して関数Dを適用する。
+## 備忘
+- 上記は、agentにplanさせてレビューし、context不足と感じたら上記をメンテ、というサイクルで書いた。
+
+# どうする？
+- 上記をagentに投げる。documentやtestについてのplanもしてくるかもしれないがそこは時間の都合で省略して実施させるつもり。
+- 投げた、実装させた、レビューして人力リファクタリングした
+- testする
+
+# 結果
+- バグ
+    - この20.mdにあるプレースホルダーが置換されてしまっている
+    - issue-notesで言及されていないfileまで添付されてしまっている
+- 分析
+    - この20.mdにあるプレースホルダーが置換されてしまっている
+        - 原因
+            - 20.mdにあるプレースホルダーまで置換対象としてしまっていたため。
+            - prompt全体のプレースホルダーを置換対象としてしまっていたため。
+            - issue-notesを埋め込んだあとでの、プレースホルダー処理だったので、
+                - 20.md が置換対象となってしまったため。
+        - 対策案
+            - プレースホルダーはすべて、「行頭と行末で囲まれている」ときだけ置換対象とする。
+                - つまり文中やcode中のプレースホルダーは置換対象外とする。
+            - さらに、2つ以上プレースホルダーが出たら想定外なので早期エラー終了させ、検知させる。
+    - issue-notesで言及されていないfileまで添付されてしまっている
+        - 原因
+            - promptに、既にprojectの全file listが書き込まれたあとなので、
+                - issue-noteで言及されていなくても、
+                - promptの全file listを対象に検索してしまっている
+        - 対策案の候補
+            - プレースホルダー置換の順番を変更し、全file listは最後に置換する
+            - file添付の対象を変更し、promptでなく、issue-notesとする
+                - これが範囲が絞られているので安全である、と考える
+        - 備忘
+            - 全fileの対象は、リモートリポジトリ側のfileなので、secretsの心配はないし、実際に検索して確認済み
+
+# どうする？
+- agent半分、人力が半分（agentがハルシネーションでソース破壊したので、関数切り分けしたり、リファクタリングしたり）。
+- で実装した。
+- testする
+
+# 結果
+- test green
+
+# closeとする
+
+{% endraw %}
+```
+
+### .github/actions-tmp/issue-notes/21.md
+```md
+{% raw %}
+# issue project-summary の development-status 生成時、project-overviewが生成済みのproject-overview.mdもpromptに添付、を試す #21
+[issues #21](https://github.com/cat2151/github-actions/issues/21)
+
+# 何が困るの？
+- project-overview.mdがpromptに添付されていたほうが、Geminiの生成品質が改善できる可能性がある。
+    - メリットは、ファイル一覧、関数一覧、をGeminiにわたせること
+
+# 検討事項
+- 課題、その一覧に付記されている「ファイルや関数の要約」は、Geminiが「ファイル名や関数名を元に生成しただけ」で、「ファイル内容や関数内容を参照せずに生成した」可能性が高い
+    - 対策、project-overview.mdに依存しない。
+        - 方法、新規関数をagentに実装させる
+            - 新規関数で、ファイル一覧と関数一覧を生成する
+        - 根拠、そのほうが、シンプルに目的を達成できる可能性が高そう。
+        - 根拠、project-overview.mdだと、不具合として.github 配下のymlがlistに含まれておらず、ymlに関するissue、に関する生成、をするとき不具合の可能性がありそう。そういった、別機能の不具合に影響されがち。
+- 課題、早期に実施したほうが毎日好影響が出る可能性がある
+    - 対策、上記検討事項の対処は後回しにして、先に実装してみる
+    - agentに投げる
+- 課題、ProjectSummaryCoordinator をみたところ、並列処理されている
+    - なので、project-overview.mdを参照したいときに、まだ生成されていない、という可能性が高い
+    - 対策、前述の、新規関数で、ファイル一覧と関数一覧を生成させる
+
+# agentに投げるための整理
+- 編集対象ファイル
+    - prompt
+        - .github_automation/project_summary/prompts/development-status-prompt.md
+        - 編集内容
+            - projectのファイル一覧を埋め込む用の、プレースホルダーを追加する
+    - source
+        - .github_automation/project_summary/scripts/development/DevelopmentStatusGenerator.cjs
+        - 編集内容
+            - projectのファイル一覧を生成する関数、を実装し、
+            - それを前述のプレースホルダーに埋め込む
+
+# agentに投げて実装させた
+
+# test結果
+- 以下が不要
+    - .git/
+    - node_modules/
+
+# どうする？
+- agentに上記を変更させた
+- testする
+
+# 結果
+- test greenとなった
+
+# まとめ
+- issueのtitleからは仕様変更した。
+    - projectのfile一覧をpromptに含める、とした。
+    - そのほうがpromptとして、よい生成結果が期待できる、と判断した。
+- test greenとなった
+
+# closeとする
+
+{% endraw %}
+```
+
+### .github/actions-tmp/issue-notes/22.md
+```md
+{% raw %}
+# issue project-summary の development-status 生成時、Geminiに与えたprompt、もcommit push、を試す #22
+[issues #22](https://github.com/cat2151/github-actions/issues/22)
+
+# 何が困るの？
+- 生成された development-status.md の妥当性がわかりづらいし、バグった場合の原因調査がしづらい
+
+# 対策案
+- Geminiに与えたpromptをfileにしてcommit pushしておくと、デバッグに役立つ可能性がある。
+
+# 方法案
+- Geminiに与えるprompt を生成時、それをfileにsaveし、commit push対象にする。
+- ひとまずgenerated-docs/ に保存する。落ち着いたら移動先を検討する。
+    - generated-docs/ 配下のまま、も有力な候補である。
+        - なぜなら、cjsによってgenerateされたdocなので。
+
+# 日次バッチでpromptを生成させ、agentに投げた
+- レビューした
+- 修正させた
+
+# 結果
+- エラー。pathのミス。呼び出し元側に保存したいのに、共通ワークフロー側に保存となってしまった。
+- 対策、ymlで引数を指定するようにした。
+- testする。
+
+# 結果
+- test green。呼び出し元側にcommitされていることを確認した。
+- 20Kbytesである
+    - Geminiにわたすサイズとしても許容範囲内と判断する
+        - token数から概算して100Kbytes～1Mbytes程度を想定
+
+# closeとする
+
+{% endraw %}
+```
+
+### issue-notes/22.md
+```md
+{% raw %}
+# issue スペクトログラムの左に表示されるHz文字列が重なりすぎて見えないので、表示時にy座標と文字列の縦幅を参照し、間引いて表示する #22
+[issues #22](https://github.com/cat2151/voicevox-playground/issues/22)
+
+- 合わせて、レイアウト改善。
+    - 「音声を再生中」欄が、loop再生ごとに欄そのものがトルツメされたり増えたりして、以降のエリアが激しく上下して見づらいので、そこはトルツメでなく空を表示とする
+
+
+
+{% endraw %}
+```
+
 ### .github/actions-tmp/issue-notes/3.md
 ```md
 {% raw %}
@@ -706,6 +1444,85 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
+### .github/actions-tmp/issue-notes/8.md
+```md
+{% raw %}
+# issue 関数コールグラフhtmlビジュアライズ生成の対象ソースファイルを、呼び出し元ymlで指定できるようにする #8
+[issues #8](https://github.com/cat2151/github-actions/issues/8)
+
+# これまでの課題
+- 以下が決め打ちになっていた
+```
+  const allowedFiles = [
+    'src/main.js',
+    'src/mml2json.js',
+    'src/play.js'
+  ];
+```
+
+# 対策
+- 呼び出し元ymlで指定できるようにする
+
+# agent
+- agentにやらせることができれば楽なので、初手agentを試した
+- 失敗
+    - ハルシネーションしてscriptを大量破壊した
+- 分析
+    - 修正対象scriptはagentが生成したもの
+    - 低品質な生成結果でありソースが巨大
+    - ハルシネーションで破壊されやすいソース
+    - AIの生成したソースは、必ずしもAIフレンドリーではない
+
+# 人力リファクタリング
+- 低品質コードを、最低限agentが扱えて、ハルシネーションによる大量破壊を防止できる内容、にする
+- 手短にやる
+    - そもそもビジュアライズは、agentに雑に指示してやらせたもので、
+    - 今後別のビジュアライザを選ぶ可能性も高い
+    - 今ここで手間をかけすぎてコンコルド効果（サンクコストバイアス）を増やすのは、project群をトータルで俯瞰して見たとき、損
+- 対象
+    - allowedFiles のあるソース
+        - callgraph-utils.cjs
+            - たかだか300行未満のソースである
+            - この程度でハルシネーションされるのは予想外
+            - やむなし、リファクタリングでソース分割を進める
+
+# agentに修正させる
+## prompt
+```
+allowedFilesを引数で受け取るようにしたいです。
+ないならエラー。
+最終的に呼び出し元すべてに波及して修正したいです。
+
+呼び出し元をたどってエントリポイントも見つけて、
+エントリポイントにおいては、
+引数で受け取ったjsonファイル名 allowedFiles.js から
+jsonファイル allowedFiles.jsonの内容をreadして
+変数 allowedFilesに格納、
+後続処理に引き渡す、としたいです。
+
+まずplanしてください。
+planにおいては、修正対象のソースファイル名と関数名を、呼び出し元を遡ってすべて特定し、listしてください。
+```
+
+# 修正が順調にできた
+- コマンドライン引数から受け取る作りになっていなかったので、そこだけ指示して修正させた
+- yml側は人力で修正した
+
+# 他のリポジトリから呼び出した場合にバグらないよう修正する
+- 気付いた
+    - 共通ワークフローとして他のリポジトリから使った場合はバグるはず。
+        - ymlから、共通ワークフロー側リポジトリのcheckoutが漏れているので。
+- 他のyml同様に修正する
+- あわせて全体にymlをリファクタリングし、修正しやすくし、今後のyml読み書きの学びにしやすくする
+
+# local WSL + act : test green
+
+# closeとする
+- もし生成されたhtmlがNGの場合は、別issueとするつもり
+
+{% endraw %}
+```
+
 ### .github/actions-tmp/issue-notes/9.md
 ```md
 {% raw %}
@@ -720,17 +1537,6 @@ env: で値を渡し、process.env で参照するのが正しい
 # test green
 
 # closeとする
-
-{% endraw %}
-```
-
-### issue-notes/110.md
-```md
-{% raw %}
-# issue 画面の右上に「設定」ボタンを配置し、折りたたみで設定が開くようにし、port番号「50021」と、周波数推定対象上位%「2」、を設定可能にする #110
-[issues #110](https://github.com/cat2151/voicevox-playground/issues/110)
-
-
 
 {% endraw %}
 ```
@@ -797,51 +1603,128 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### issue-notes/97.md
+### issue-notes/116.md
 ```md
 {% raw %}
-# issue スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す #97
-[issues #97](https://github.com/cat2151/voicevox-playground/issues/97)
+# issue demoの利用方法欄に、ローカルPCにVOICEVOXをinstallしてください、を書く #116
+[issues #116](https://github.com/cat2151/voicevox-playground/issues/116)
 
+- 書く内容については、README.ja.mdを参考にすること
+
+{% endraw %}
+```
+
+### issue-notes/117.md
+```md
+{% raw %}
+# issue イントネーション編集後や、イントネーション付きお気に入りを再生したあと、playボタンを押すと、警告なしにイントネーションが初期化されてしまう #117
+[issues #117](https://github.com/cat2151/voicevox-playground/issues/117)
+
+- userがほしいのは、その状況であれば、イントネーションを維持したまま再生、である
 
 
 {% endraw %}
 ```
 
-### issue-notes/99.md
+### issue-notes/118.md
 ```md
 {% raw %}
-# issue イントネーションのモーラの左のa-zガイド表示は、長文で重なって見づらいので、a-zガイドはモーラの下に表示にすべし #99
-[issues #99](https://github.com/cat2151/voicevox-playground/issues/99)
+# issue VOICEVOX Nemo も再生できるようにする #118
+[issues #118](https://github.com/cat2151/voicevox-playground/issues/118)
 
+- VOICEVOX Nemo-engine ローカルサーバー port 50121 からもspeakers取得を試みて、
+    - 取得できたなら、それもキャラ&styleプルダウンに含める
 
+- user向け備忘
+    - nemo
+        - 仕組み
+            - local nemo engineは、voicevox engineと別サーバである。デフォ port 50121 で動作する
+        - もし今すぐnemoだけでいいので鳴らしたいなら
+            - dir
+                - 当該nemoのdirは、voicevoxアプリの設定のengine管理を見るとわかる
+            - run
+                - nemoもvoicevox-engine同様、runがあるので、それを`--port 50021`にすれば鳴らせる
+
+{% endraw %}
+```
+
+### issue-notes/119.md
+```md
+{% raw %}
+# issue キャラ&styleプルダウンを選んだら、自動再生する #119
+[issues #119](https://github.com/cat2151/voicevox-playground/issues/119)
+
+# 自動再生を追加する対象
+- キャラ&styleプルダウン
+- styleプルダウン
+- ランダムstyleチェックボックス
+
+# あわせて、以下も行う
+- お気に入り再生をクリックしたとき、もしloop再生中だったなら、loop再生をやめ、stopして、お気に入り再生を鳴らす
+  - 今は、loop再生中だと、お気に入り再生をクリックしても何も起きないのでuserが混乱する
+
+{% endraw %}
+```
+
+### issue-notes/120.md
+```md
+{% raw %}
+# issue キーボード操作モードonのとき、textarea編集時に意図しないa-zやplayができてしまい混乱する #120
+[issues #120](https://github.com/cat2151/voicevox-playground/issues/120)
+
+- 対策
+    - textarea編集時は、キーボード操作モードonであっても、キーボード操作onモード特有のキー（a-zやspaceとenter）を素通りさせる
+    - かわりに、キーボード操作モードon/offに関わらず、どの状況であっても、SHIFT+ENTERとCTRL+ENTERを、playキーとする
+
+{% endraw %}
+```
+
+### issue-notes/121.md
+```md
+{% raw %}
+# issue イントネーション付きお気に入りのexportとimportをできるようにする #121
+[issues #121](https://github.com/cat2151/voicevox-playground/issues/121)
+
+- 「イントネーション付きお気に入り」の見出しの右に、exportボタンとimportボタンをつける
+- exportもimportも、「イントネーション付きお気に入り」のlocal storageに保存される内容そのもの（複数まるごと）、とする
+- ひとまず複数まるごとでUX検証とする
+
+{% endraw %}
+```
+
+### issue-notes/122.md
+```md
+{% raw %}
+# issue 「エラーが発生しました: Failed to fetch」が、知らない人にはわかりづらい #122
+[issues #122](https://github.com/cat2151/voicevox-playground/issues/122)
+
+- 案
+    - その前にstyleの取得に失敗し「未取得」となった時点で、
+    - 「ローカルVOICEVOXサーバーを起動してください」をダイアログ表示する
+    - 一方で、styleの取得に成功したら、既存のstatus表示欄に、「ローカルサーバーとの通信成功。音声合成の準備ができました」を表示する
 
 {% endraw %}
 ```
 
 ## 最近の変更（過去7日間）
 ### コミット履歴:
-3212605 Update issue notes with GPT-5 mini observations
-744b1c8 Auto-translate README.ja.md to README.md [auto]
-7c10a4e Update README.ja.md with platform and project goals
-06f39e3 fix #107
-46457c6 #107 イントネーションのキーボード操作onのspace/enterで再生したときも、通常同様に再生完了したときリアルタイム波形欄だけclear
-b02e3c3 ハルシネーション対策でリファクタリング、関数分割
-7b3dfb8 ハルシネーション対策でリファクタリング。ハルシネーションでagentが実装していた誤った周波数推定のデッドコードを削除
-683a90d ハルシネーション対策でリファクタリング
-3e521b5 fix #112 cacheはbufferでなくpixelとし、切り替えごとに1秒かかっていたのを0.1s未満で切り替えできるようパフォーマンス改善
-be6cc9f fix #112
+2178044 Update issue notes for error handling suggestions
+033055b Add issue note for #122 [auto]
+a927642 Add export and import buttons for favorites
+73fb38f Add issue note for #121 [auto]
+6116c0f Clarify keyboard operation mode behavior in issue #120
+0856767 Add issue note for #120 [auto]
+ded1343 Update issue notes for auto-play feature #119
+901d340 Add issue note for #119 [auto]
+8fdb2b2 Enhance issue notes with Nemo engine usage details
+9bd9a6d Update issue notes for VOICEVOX Nemo playback
 
 ### 変更されたファイル:
-README.ja.md
-README.md
-issue-notes/111.md
-src/intonation.ts
-src/intonationPlayback.ts
-src/visualization.test.ts
-src/visualization.ts
-src/visualization/spectrogram.ts
+issue-notes/119.md
+issue-notes/120.md
+issue-notes/121.md
+issue-notes/122.md
 
 
 ---
-Generated at: 2026-02-17 07:03:12 JST
+Generated at: 2026-02-19 07:05:55 JST
