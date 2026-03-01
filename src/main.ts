@@ -33,6 +33,7 @@ import {
 import { appState } from "./state";
 import { updateExportButtonState } from "./uiControls";
 import {
+	clearAudioCache,
 	downloadLastAudio,
 	handlePlay,
 	handlePlayButtonClick,
@@ -163,6 +164,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	};
 	applySettingsToInputs();
 
+	const refreshStylesAfterPortChange = () => {
+		clearAudioCache();
+		void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null);
+	};
+
 	if (settingsToggleButton && settingsPanel) {
 		settingsToggleButton.addEventListener("click", () => {
 			const isHidden = settingsPanel.hidden;
@@ -176,6 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			const port = Number(voicevoxPortInput.value);
 			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
 				setVoicevoxPort(port);
+				refreshStylesAfterPortChange();
 			} else {
 				applySettingsToInputs();
 			}
@@ -187,6 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			const port = Number(voicevoxNemoPortInput.value);
 			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
 				setVoicevoxNemoPort(port);
+				refreshStylesAfterPortChange();
 			} else {
 				applySettingsToInputs();
 			}
@@ -208,6 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		settingsResetButton.addEventListener("click", () => {
 			resetSettings();
 			applySettingsToInputs();
+			refreshStylesAfterPortChange();
 		});
 	}
 

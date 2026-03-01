@@ -30,6 +30,7 @@ export interface VoiceStyleOption {
 	name: string;
 	speakerName: string;
 	apiBase: string;
+	engine: "voicevox" | "nemo";
 }
 
 export interface VoiceVoxSpeaker {

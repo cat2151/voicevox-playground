@@ -33,6 +33,10 @@ import {
 } from "./visualization";
 
 const audioCache = new Map<string, ArrayBuffer>();
+
+export function clearAudioCache(): void {
+	audioCache.clear();
+}
 const PLAY_ICON_SVG =
 	'<svg class="icon icon--play" aria-hidden="true" viewBox="0 0 24 24" focusable="false" preserveAspectRatio="xMidYMid meet"><polygon points="3,2 22,12 3,22"/></svg>';
 const STOP_ICON_SVG =

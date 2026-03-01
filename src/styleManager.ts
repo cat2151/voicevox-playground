@@ -39,7 +39,11 @@ function getStyleById(id: number) {
 }
 
 export function getApiBaseForStyleId(styleId: number): string {
-	return getStyleById(styleId)?.apiBase ?? getVoicevoxApiBase();
+	const style = getStyleById(styleId);
+	if (!style) return getVoicevoxApiBase();
+	return style.engine === "nemo"
+		? getVoicevoxNemoApiBase()
+		: getVoicevoxApiBase();
 }
 
 function getSpeakerStylesByStyleId(styleId: number) {
@@ -212,11 +216,20 @@ export async function fetchVoiceStyles(
 ): Promise<boolean> {
 	const voicevoxApiBase = getVoicevoxApiBase();
 	const voicevoxNemoApiBase = getVoicevoxNemoApiBase();
-	const endpoints = [
-		{ url: `${voicevoxApiBase}/speakers`, apiBase: voicevoxApiBase },
+	const endpoints: Array<{
+		url: string;
+		apiBase: string;
+		engine: "voicevox" | "nemo";
+	}> = [
+		{
+			url: `${voicevoxApiBase}/speakers`,
+			apiBase: voicevoxApiBase,
+			engine: "voicevox",
+		},
 		{
 			url: `${voicevoxNemoApiBase}/speakers`,
 			apiBase: voicevoxNemoApiBase,
+			engine: "nemo",
 		},
 	];
 
@@ -248,7 +261,7 @@ export async function fetchVoiceStyles(
 
 	for (let i = 0; i < results.length; i++) {
 		const result = results[i];
-		const { url, apiBase } = endpoints[i];
+		const { url, apiBase, engine } = endpoints[i];
 		if (result.status === "fulfilled") {
 			anySuccess = true;
 			const { speakers } = result.value;
@@ -261,6 +274,7 @@ export async function fetchVoiceStyles(
 							name: style.name,
 							speakerName: speaker.name,
 							apiBase,
+							engine,
 						});
 					}
 				}
@@ -282,6 +296,7 @@ export async function fetchVoiceStyles(
 				name: "未取得",
 				speakerName: "デフォルト",
 				apiBase: getVoicevoxApiBase(),
+				engine: "voicevox",
 			},
 		];
 	}
