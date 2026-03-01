@@ -1,11 +1,10 @@
 import {
 	REQUEST_TIMEOUT_MS,
-	VOICEVOX_API_BASE,
-	VOICEVOX_NEMO_API_BASE,
 	VoiceStyleOption,
 	VoiceVoxSpeaker,
 	ZUNDAMON_SPEAKER_ID,
 } from "./config";
+import { getVoicevoxApiBase, getVoicevoxNemoApiBase } from "./settings";
 
 export type DelimiterConfig = { start: string; end: string };
 export type TextSegment = { text: string; styleId: number };
@@ -40,7 +39,7 @@ function getStyleById(id: number) {
 }
 
 export function getApiBaseForStyleId(styleId: number): string {
-	return getStyleById(styleId)?.apiBase ?? VOICEVOX_API_BASE;
+	return getStyleById(styleId)?.apiBase ?? getVoicevoxApiBase();
 }
 
 function getSpeakerStylesByStyleId(styleId: number) {
@@ -211,11 +210,13 @@ export async function fetchVoiceStyles(
 	styleSelect: HTMLSelectElement | null,
 	speakerStyleSelect?: HTMLSelectElement | null,
 ): Promise<boolean> {
+	const voicevoxApiBase = getVoicevoxApiBase();
+	const voicevoxNemoApiBase = getVoicevoxNemoApiBase();
 	const endpoints = [
-		{ url: `${VOICEVOX_API_BASE}/speakers`, apiBase: VOICEVOX_API_BASE },
+		{ url: `${voicevoxApiBase}/speakers`, apiBase: voicevoxApiBase },
 		{
-			url: `${VOICEVOX_NEMO_API_BASE}/speakers`,
-			apiBase: VOICEVOX_NEMO_API_BASE,
+			url: `${voicevoxNemoApiBase}/speakers`,
+			apiBase: voicevoxNemoApiBase,
 		},
 	];
 
@@ -280,7 +281,7 @@ export async function fetchVoiceStyles(
 				id: ZUNDAMON_SPEAKER_ID,
 				name: "未取得",
 				speakerName: "デフォルト",
-				apiBase: VOICEVOX_API_BASE,
+				apiBase: getVoicevoxApiBase(),
 			},
 		];
 	}

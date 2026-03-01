@@ -6,9 +6,9 @@ import {
 	getInterpolatedValue,
 	fftValueToY,
 } from "./fftUtils";
+import { getFrequencyTopPercent } from "../settings";
 
 const MIN_FREQ = 100;
-const TOP_PERCENT = 0.02; // 0.01はNGだった
 const FFT_VOLUME_DB_THRESHOLD = 30; // 48はNG。36は稀にNG。
 
 let globalFFTMax = -Infinity;
@@ -110,7 +110,7 @@ function getTopFreqInfo(
 	if (valueWithIndex.length > 0) {
 		const topCount = Math.max(
 			1,
-			Math.floor(valueWithIndex.length * TOP_PERCENT),
+			Math.floor(valueWithIndex.length * getFrequencyTopPercent()),
 		);
 		const topBins = valueWithIndex.slice(0, topCount).map(({ i }) => i);
 		const topBinSet: Set<number> = new Set<number>(topBins);

@@ -4,6 +4,14 @@ import {
 	DELIMITER_STORAGE_KEY,
 	FrequencyScale,
 } from "./config";
+import {
+	getCurrentSettings,
+	loadSettings,
+	resetSettings,
+	setFrequencyTopPercent,
+	setVoicevoxNemoPort,
+	setVoicevoxPort,
+} from "./settings";
 import { initializeTextLists } from "./textLists";
 import {
 	adjustIntonationScale,
@@ -53,6 +61,7 @@ import { showStatus, scheduleHideStatus } from "./status";
 let delimiterSaveTimer: number | null = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+	loadSettings();
 	const playButton = document.getElementById(
 		"playButton",
 	) as HTMLButtonElement | null;
@@ -126,6 +135,81 @@ document.addEventListener("DOMContentLoaded", () => {
 		"loopCheckbox",
 	) as HTMLInputElement | null;
 	setLoopCheckboxElement(loopCheckboxEl);
+
+	const settingsToggleButton = document.getElementById(
+		"settingsToggleButton",
+	) as HTMLButtonElement | null;
+	const settingsPanel = document.getElementById("settingsPanel");
+	const voicevoxPortInput = document.getElementById(
+		"voicevoxPortInput",
+	) as HTMLInputElement | null;
+	const voicevoxNemoPortInput = document.getElementById(
+		"voicevoxNemoPortInput",
+	) as HTMLInputElement | null;
+	const frequencyTopPercentInput = document.getElementById(
+		"frequencyTopPercentInput",
+	) as HTMLInputElement | null;
+	const settingsResetButton = document.getElementById(
+		"settingsResetButton",
+	) as HTMLButtonElement | null;
+
+	const applySettingsToInputs = () => {
+		const s = getCurrentSettings();
+		if (voicevoxPortInput) voicevoxPortInput.value = String(s.voicevoxPort);
+		if (voicevoxNemoPortInput)
+			voicevoxNemoPortInput.value = String(s.voicevoxNemoPort);
+		if (frequencyTopPercentInput)
+			frequencyTopPercentInput.value = String(s.frequencyTopPercent);
+	};
+	applySettingsToInputs();
+
+	if (settingsToggleButton && settingsPanel) {
+		settingsToggleButton.addEventListener("click", () => {
+			const isHidden = settingsPanel.hidden;
+			settingsPanel.hidden = !isHidden;
+			settingsToggleButton.setAttribute("aria-expanded", String(isHidden));
+		});
+	}
+
+	if (voicevoxPortInput) {
+		voicevoxPortInput.addEventListener("change", () => {
+			const port = Number(voicevoxPortInput.value);
+			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
+				setVoicevoxPort(port);
+			} else {
+				applySettingsToInputs();
+			}
+		});
+	}
+
+	if (voicevoxNemoPortInput) {
+		voicevoxNemoPortInput.addEventListener("change", () => {
+			const port = Number(voicevoxNemoPortInput.value);
+			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
+				setVoicevoxNemoPort(port);
+			} else {
+				applySettingsToInputs();
+			}
+		});
+	}
+
+	if (frequencyTopPercentInput) {
+		frequencyTopPercentInput.addEventListener("change", () => {
+			const pct = Number(frequencyTopPercentInput.value);
+			if (Number.isFinite(pct) && pct >= 0.1 && pct <= 100) {
+				setFrequencyTopPercent(pct);
+			} else {
+				applySettingsToInputs();
+			}
+		});
+	}
+
+	if (settingsResetButton) {
+		settingsResetButton.addEventListener("click", () => {
+			resetSettings();
+			applySettingsToInputs();
+		});
+	}
 
 	const applyStyleSelection = (styleId: number) => {
 		setSelectedStyleId(styleId);
