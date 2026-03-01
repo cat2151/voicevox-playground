@@ -245,10 +245,12 @@ export async function fetchVoiceStyles(
 	const newStyles: VoiceStyleOption[] = [];
 	let anySuccess = false;
 
-	for (const result of results) {
+	for (let i = 0; i < results.length; i++) {
+		const result = results[i];
+		const { url, apiBase } = endpoints[i];
 		if (result.status === "fulfilled") {
 			anySuccess = true;
-			const { speakers, apiBase } = result.value;
+			const { speakers } = result.value;
 			for (const speaker of speakers) {
 				for (const style of speaker.styles) {
 					if (!seenIds.has(style.id)) {
@@ -263,7 +265,10 @@ export async function fetchVoiceStyles(
 				}
 			}
 		} else {
-			console.error("Failed to fetch speaker styles:", result.reason);
+			console.error(
+				`Failed to fetch speaker styles from ${url}:`,
+				result.reason,
+			);
 		}
 	}
 
