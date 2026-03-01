@@ -40,6 +40,7 @@ export interface IntonationState {
   wheelHandlerAttached: boolean;
   scrollLocked: boolean;
   previousBodyOverflow: string | null;
+  intonationHoverIndex: number | null;
 }
 
 export const intonationState: IntonationState = {
@@ -74,6 +75,7 @@ export const intonationState: IntonationState = {
   wheelHandlerAttached: false,
   scrollLocked: false,
   previousBodyOverflow: null,
+  intonationHoverIndex: null,
 };
 
 export function updateIntonationTiming(message: string) {

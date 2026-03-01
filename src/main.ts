@@ -5,6 +5,8 @@ import {
   adjustIntonationScale,
   getIntonationKeyboardEnabled,
   handleIntonationKeyDown,
+  handleIntonationMouseLeave,
+  handleIntonationMouseMove,
   handleIntonationPointerDown,
   handleIntonationPointerMove,
   handleIntonationPointerUp,
@@ -292,6 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
     intonationCanvas.addEventListener('pointerleave', handleIntonationPointerUp);
     intonationCanvas.addEventListener('pointercancel', handleIntonationPointerUp);
     intonationCanvas.addEventListener('lostpointercapture', handleIntonationPointerUp);
+    intonationCanvas.addEventListener('mousemove', handleIntonationMouseMove);
+    intonationCanvas.addEventListener('mouseleave', handleIntonationMouseLeave);
     intonationCanvas.addEventListener('focus', () => {
       refreshIntonationChart();
     });

@@ -207,9 +207,13 @@ function renderIntonationLabels(points: IntonationPoint[]) {
     const pos = state.intonationPointPositions[index];
     const span = document.createElement('span');
     span.classList.add('intonation-label');
+    span.dataset.moraIndex = String(index);
     if (pos) {
       const clamped = Math.min(1, Math.max(0, pos.x / Math.max(width, 1)));
       span.style.left = `${clamped * 100}%`;
+    }
+    if (state.intonationHoverIndex === index) {
+      span.classList.add('intonation-label--hover');
     }
     const keySpan = document.createElement('span');
     keySpan.classList.add('intonation-label__key');
@@ -220,6 +224,26 @@ function renderIntonationLabels(points: IntonationPoint[]) {
     textSpan.textContent = point.label;
     span.appendChild(textSpan);
     state.intonationLabelsEl?.appendChild(span);
+  });
+}
+
+export function updateHoveredLabel(index: number | null) {
+  if (!state.intonationLabelsEl) {
+    if (state.intonationHoverIndex !== null) {
+      state.intonationHoverIndex = null;
+    }
+    return;
+  }
+  if (state.intonationHoverIndex === index) return;
+  state.intonationHoverIndex = index;
+  const spans = state.intonationLabelsEl.querySelectorAll<HTMLElement>('.intonation-label');
+  spans.forEach((span) => {
+    const spanIndex = span.dataset.moraIndex != null ? Number(span.dataset.moraIndex) : -1;
+    if (index !== null && spanIndex === index) {
+      span.classList.add('intonation-label--hover');
+    } else {
+      span.classList.remove('intonation-label--hover');
+    }
   });
 }
 
@@ -309,6 +333,20 @@ export function drawIntonationChart(points: IntonationPoint[]) {
       ctx.stroke();
     }
   });
+
+  ctx.save();
+  ctx.lineWidth = 1;
+  state.intonationPointPositions.forEach((pos, index) => {
+    const color = MONOKAI_COLORS[index % MONOKAI_COLORS.length];
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.4;
+    ctx.setLineDash([3, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y + 4);
+    ctx.lineTo(pos.x, height);
+    ctx.stroke();
+  });
+  ctx.restore();
 
   renderIntonationLabels(points);
 }
