@@ -58,7 +58,7 @@
 }
 .intonation-labels {
 	position: relative;
-	min-height: 24px;
+	min-height: 36px;
 	font-weight: 600;
 	color: var(--muted-text);
 }
@@ -68,12 +68,15 @@
 	transform: translateX(-50%);
 	white-space: nowrap;
 	font-size: 14px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 }
 .intonation-label__key {
-	margin-right: 6px;
 	color: var(--muted-text);
 	opacity: 0.6;
 	font-weight: 700;
+	font-size: 11px;
 }
 .intonation-label--hover {
 	color: var(--text-color);
