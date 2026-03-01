@@ -243,14 +243,14 @@ function renderIntonationLabels(points: IntonationPoint[]) {
 		if (state.intonationHoverIndex === index) {
 			span.classList.add("intonation-label--hover");
 		}
+		const textSpan = document.createElement("span");
+		textSpan.textContent = point.label;
+		span.appendChild(textSpan);
+
 		const keySpan = document.createElement("span");
 		keySpan.classList.add("intonation-label__key");
 		keySpan.textContent = String.fromCharCode("a".charCodeAt(0) + (index % 26));
 		span.appendChild(keySpan);
-
-		const textSpan = document.createElement("span");
-		textSpan.textContent = point.label;
-		span.appendChild(textSpan);
 		state.intonationLabelsEl?.appendChild(span);
 	});
 }
