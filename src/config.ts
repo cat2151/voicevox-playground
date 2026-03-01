@@ -1,4 +1,5 @@
 export const VOICEVOX_API_BASE = "http://localhost:50021";
+export const VOICEVOX_NEMO_API_BASE = "http://localhost:50121";
 export const ZUNDAMON_SPEAKER_ID = 3; // ずんだもんのスピーカーID
 export const REQUEST_TIMEOUT_MS = 10000; // 10 second timeout
 export const AUTO_PLAY_DEBOUNCE_MS = 700;
@@ -28,6 +29,7 @@ export interface VoiceStyleOption {
 	id: number;
 	name: string;
 	speakerName: string;
+	apiBase: string;
 }
 
 export interface VoiceVoxSpeaker {

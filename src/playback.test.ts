@@ -49,6 +49,7 @@ vi.mock("./uiControls", () => ({
 vi.mock("./styleManager", () => ({
 	buildTextSegments: vi.fn(() => [{ text: "hello", styleId: 1 }]),
 	getSelectedStyleId: vi.fn(() => 1),
+	getApiBaseForStyleId: vi.fn(() => "http://localhost:50021"),
 	parseDelimiterConfig: vi.fn(() => ({})),
 	setSelectedStyleId: vi.fn(),
 }));

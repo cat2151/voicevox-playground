@@ -1,9 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { JSDOM } from "jsdom";
-import { ZUNDAMON_SPEAKER_ID } from "./config";
+import {
+	VOICEVOX_API_BASE,
+	VOICEVOX_NEMO_API_BASE,
+	ZUNDAMON_SPEAKER_ID,
+} from "./config";
 import {
 	buildTextSegments,
 	fetchVoiceStyles,
+	getApiBaseForStyleId,
 	getSelectedStyleId,
 	parseDelimiterConfig,
 	populateSpeakerStyleSelect,
@@ -54,6 +59,48 @@ describe("fetchVoiceStyles", () => {
 		const result = await fetchVoiceStyles(null);
 
 		expect(result).toBe(false);
+	});
+
+	it("returns true when only the Nemo fetch succeeds", async () => {
+		const nemoResponse = [
+			{ name: "NemoChar", styles: [{ id: 100, name: "ノーマル" }] },
+		];
+		const fetchMock = vi
+			.fn()
+			.mockRejectedValueOnce(new Error("Failed to fetch"))
+			.mockResolvedValueOnce({ ok: true, json: async () => nemoResponse });
+		vi.stubGlobal("fetch", fetchMock);
+
+		const result = await fetchVoiceStyles(null);
+
+		expect(result).toBe(true);
+		expect(getApiBaseForStyleId(100)).toBe(VOICEVOX_NEMO_API_BASE);
+	});
+
+	it("includes styles from both engines when both succeed", async () => {
+		const voicevoxResponse = [
+			{ name: "VVChar", styles: [{ id: 1, name: "ノーマル" }] },
+		];
+		const nemoResponse = [
+			{ name: "NemoChar", styles: [{ id: 200, name: "ノーマル" }] },
+		];
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce({ ok: true, json: async () => voicevoxResponse })
+			.mockResolvedValueOnce({ ok: true, json: async () => nemoResponse });
+		vi.stubGlobal("fetch", fetchMock);
+
+		const result = await fetchVoiceStyles(null);
+
+		expect(result).toBe(true);
+		expect(getApiBaseForStyleId(1)).toBe(VOICEVOX_API_BASE);
+		expect(getApiBaseForStyleId(200)).toBe(VOICEVOX_NEMO_API_BASE);
+	});
+});
+
+describe("getApiBaseForStyleId", () => {
+	it("returns the default VOICEVOX API base for unknown style IDs", () => {
+		expect(getApiBaseForStyleId(99999)).toBe(VOICEVOX_API_BASE);
 	});
 });
 

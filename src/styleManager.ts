@@ -1,6 +1,7 @@
 import {
 	REQUEST_TIMEOUT_MS,
 	VOICEVOX_API_BASE,
+	VOICEVOX_NEMO_API_BASE,
 	VoiceStyleOption,
 	VoiceVoxSpeaker,
 	ZUNDAMON_SPEAKER_ID,
@@ -36,6 +37,10 @@ function getStyleLabel(style: VoiceStyleOption) {
 
 function getStyleById(id: number) {
 	return availableStyles.find((style) => style.id === id) ?? null;
+}
+
+export function getApiBaseForStyleId(styleId: number): string {
+	return getStyleById(styleId)?.apiBase ?? VOICEVOX_API_BASE;
 }
 
 function getSpeakerStylesByStyleId(styleId: number) {
@@ -206,40 +211,82 @@ export async function fetchVoiceStyles(
 	styleSelect: HTMLSelectElement | null,
 	speakerStyleSelect?: HTMLSelectElement | null,
 ): Promise<boolean> {
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-	let success = false;
+	const endpoints = [
+		{ url: `${VOICEVOX_API_BASE}/speakers`, apiBase: VOICEVOX_API_BASE },
+		{
+			url: `${VOICEVOX_NEMO_API_BASE}/speakers`,
+			apiBase: VOICEVOX_NEMO_API_BASE,
+		},
+	];
 
-	try {
-		const response = await fetch(`${VOICEVOX_API_BASE}/speakers`, {
-			signal: controller.signal,
-		});
-		if (!response.ok) {
-			throw new Error(
-				`Failed to fetch styles: ${response.status} ${response.statusText}`,
+	const results = await Promise.allSettled(
+		endpoints.map(async ({ url, apiBase }) => {
+			const controller = new AbortController();
+			const timeoutId = setTimeout(
+				() => controller.abort(),
+				REQUEST_TIMEOUT_MS,
+			);
+			try {
+				const response = await fetch(url, { signal: controller.signal });
+				if (!response.ok) {
+					throw new Error(
+						`Failed to fetch styles: ${response.status} ${response.statusText}`,
+					);
+				}
+				const speakers = (await response.json()) as VoiceVoxSpeaker[];
+				return { speakers, apiBase };
+			} finally {
+				clearTimeout(timeoutId);
+			}
+		}),
+	);
+
+	const seenIds = new Set<number>();
+	const newStyles: VoiceStyleOption[] = [];
+	let anySuccess = false;
+
+	for (let i = 0; i < results.length; i++) {
+		const result = results[i];
+		const { url, apiBase } = endpoints[i];
+		if (result.status === "fulfilled") {
+			anySuccess = true;
+			const { speakers } = result.value;
+			for (const speaker of speakers) {
+				for (const style of speaker.styles) {
+					if (!seenIds.has(style.id)) {
+						seenIds.add(style.id);
+						newStyles.push({
+							id: style.id,
+							name: style.name,
+							speakerName: speaker.name,
+							apiBase,
+						});
+					}
+				}
+			}
+		} else {
+			console.error(
+				`Failed to fetch speaker styles from ${url}:`,
+				result.reason,
 			);
 		}
-		const speakers = (await response.json()) as VoiceVoxSpeaker[];
-		availableStyles = speakers.flatMap((speaker) =>
-			speaker.styles.map((style) => ({
-				id: style.id,
-				name: style.name,
-				speakerName: speaker.name,
-			})),
-		);
-		success = true;
-	} catch (error) {
-		console.error("Failed to fetch speaker styles:", error);
-		if (availableStyles.length === 0) {
-			availableStyles = [
-				{ id: ZUNDAMON_SPEAKER_ID, name: "未取得", speakerName: "デフォルト" },
-			];
-		}
-	} finally {
-		clearTimeout(timeoutId);
-		populateStyleSelect(styleSelect);
-		populateSpeakerStyleSelect(speakerStyleSelect ?? null, selectedStyleId);
 	}
 
-	return success;
+	if (anySuccess) {
+		availableStyles = newStyles;
+	} else if (availableStyles.length === 0) {
+		availableStyles = [
+			{
+				id: ZUNDAMON_SPEAKER_ID,
+				name: "未取得",
+				speakerName: "デフォルト",
+				apiBase: VOICEVOX_API_BASE,
+			},
+		];
+	}
+
+	populateStyleSelect(styleSelect);
+	populateSpeakerStyleSelect(speakerStyleSelect ?? null, selectedStyleId);
+
+	return anySuccess;
 }
