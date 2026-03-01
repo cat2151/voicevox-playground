@@ -228,9 +228,14 @@ function renderIntonationLabels(points: IntonationPoint[]) {
 }
 
 export function updateHoveredLabel(index: number | null) {
+  if (!state.intonationLabelsEl) {
+    if (state.intonationHoverIndex !== null) {
+      state.intonationHoverIndex = null;
+    }
+    return;
+  }
   if (state.intonationHoverIndex === index) return;
   state.intonationHoverIndex = index;
-  if (!state.intonationLabelsEl) return;
   const spans = state.intonationLabelsEl.querySelectorAll<HTMLElement>('.intonation-label');
   spans.forEach((span) => {
     const spanIndex = span.dataset.moraIndex != null ? Number(span.dataset.moraIndex) : -1;
