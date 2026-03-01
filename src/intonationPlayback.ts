@@ -19,6 +19,7 @@ import {
 	drawIntonationChart,
 	updateInitialRangeFromPoints,
 } from "./intonationDisplay";
+import { getApiBaseForStyleId } from "./styleManager";
 
 export function scheduleIntonationPlayback(playbackFn: () => Promise<void>) {
 	if (state.intonationDebounceTimer !== null) {
@@ -127,6 +128,7 @@ export async function playUpdatedIntonation() {
 		const audioBuffer = await synthesize(
 			state.currentIntonationQuery,
 			state.currentIntonationStyleId,
+			getApiBaseForStyleId(state.currentIntonationStyleId),
 		);
 		const synthesisElapsed = performance.now() - synthesisStart;
 		updateIntonationTiming(
@@ -166,7 +168,11 @@ export async function fetchAndRenderIntonation(text: string, styleId: number) {
 	if (!state.intonationCanvas) return;
 	const start = performance.now();
 	try {
-		const query = await getAudioQuery(text, styleId);
+		const query = await getAudioQuery(
+			text,
+			styleId,
+			getApiBaseForStyleId(styleId),
+		);
 		const elapsed = performance.now() - start;
 		state.intonationInitialQuery = cloneAudioQuery(query);
 		state.currentIntonationQuery = cloneAudioQuery(query);

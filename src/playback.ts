@@ -18,6 +18,7 @@ import {
 import {
 	buildTextSegments,
 	getSelectedStyleId,
+	getApiBaseForStyleId,
 	parseDelimiterConfig,
 	populateSpeakerStyleSelect,
 	selectRandomStyleId,
@@ -317,9 +318,17 @@ export async function handlePlay() {
 			} else {
 				allSegmentsCached = false;
 				showStatus("音声クエリを作成中...", "info");
-				const audioQuery = await getAudioQuery(segment.text, segment.styleId);
+				const audioQuery = await getAudioQuery(
+					segment.text,
+					segment.styleId,
+					getApiBaseForStyleId(segment.styleId),
+				);
 				showStatus("音声を生成中...", "info");
-				audioBuffer = await synthesize(audioQuery, segment.styleId);
+				audioBuffer = await synthesize(
+					audioQuery,
+					segment.styleId,
+					getApiBaseForStyleId(segment.styleId),
+				);
 				if (!bypassCache) {
 					if (audioCache.size >= AUDIO_CACHE_LIMIT) {
 						const oldest = audioCache.keys().next().value;

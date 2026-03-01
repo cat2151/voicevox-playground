@@ -3,13 +3,14 @@ import { AudioQuery, REQUEST_TIMEOUT_MS, VOICEVOX_API_BASE } from "./config";
 export async function getAudioQuery(
 	text: string,
 	speakerId: number,
+	apiBase = VOICEVOX_API_BASE,
 ): Promise<AudioQuery> {
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
 	try {
 		const response = await fetch(
-			`${VOICEVOX_API_BASE}/audio_query?text=${encodeURIComponent(text)}&speaker=${speakerId}`,
+			`${apiBase}/audio_query?text=${encodeURIComponent(text)}&speaker=${speakerId}`,
 			{
 				method: "POST",
 				signal: controller.signal,
@@ -38,22 +39,20 @@ export async function getAudioQuery(
 export async function synthesize(
 	audioQuery: AudioQuery,
 	speakerId: number,
+	apiBase = VOICEVOX_API_BASE,
 ): Promise<ArrayBuffer> {
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
 	try {
-		const response = await fetch(
-			`${VOICEVOX_API_BASE}/synthesis?speaker=${speakerId}`,
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(audioQuery),
-				signal: controller.signal,
+		const response = await fetch(`${apiBase}/synthesis?speaker=${speakerId}`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
 			},
-		);
+			body: JSON.stringify(audioQuery),
+			signal: controller.signal,
+		});
 
 		if (!response.ok) {
 			throw new Error(
