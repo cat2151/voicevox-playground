@@ -3,8 +3,8 @@ import { AUDIO_CACHE_LIMIT, AUTO_PLAY_DEBOUNCE_MS } from "./config";
 import { addToHistory } from "./textLists";
 import {
 	fetchAndRenderIntonation,
-	isIntonationDirty,
-	resetIntonationState,
+	hasActiveIntonationQuery,
+	playUpdatedIntonation,
 } from "./intonation";
 import { appState } from "./state";
 import { updateExportButtonState } from "./uiControls";
@@ -149,57 +149,6 @@ export function scheduleAutoPlay() {
 	autoPlayTimer = window.setTimeout(triggerPlay, AUTO_PLAY_DEBOUNCE_MS);
 }
 
-async function confirmResetIntonationBeforePlay() {
-	const dialog = document.getElementById("playConfirmDialog");
-	const resetButton = document.getElementById("playConfirmReset");
-	const cancelButton = document.getElementById("playConfirmCancel");
-	if (!dialog || !resetButton || !cancelButton) {
-		return window.confirm(
-			"イントネーションの編集内容が破棄されます。再生してよろしいですか？",
-		);
-	}
-	const previousActiveElement = document.activeElement as HTMLElement | null;
-	dialog.removeAttribute("hidden");
-	let settled = false;
-	(resetButton as HTMLElement).focus();
-	return new Promise<boolean>((resolve) => {
-		let keydownHandler: ((event: KeyboardEvent) => void) | null = null;
-		const cleanup = () => {
-			if (settled) return;
-			settled = true;
-			dialog.setAttribute("hidden", "true");
-			if (keydownHandler) {
-				dialog.removeEventListener("keydown", keydownHandler);
-			}
-			resetButton.removeEventListener("click", handleReset);
-			cancelButton.removeEventListener("click", handleCancel);
-			if (
-				previousActiveElement &&
-				typeof previousActiveElement.focus === "function"
-			) {
-				previousActiveElement.focus();
-			}
-		};
-		const handleReset = () => {
-			cleanup();
-			resolve(true);
-		};
-		const handleCancel = () => {
-			cleanup();
-			resolve(false);
-		};
-		keydownHandler = (event: KeyboardEvent) => {
-			if (event.key === "Escape" || event.key === "Esc") {
-				event.preventDefault();
-				handleCancel();
-			}
-		};
-		dialog.addEventListener("keydown", keydownHandler);
-		resetButton.addEventListener("click", handleReset, { once: true });
-		cancelButton.addEventListener("click", handleCancel, { once: true });
-	});
-}
-
 export function handlePlayButtonClick() {
 	if (stopInProgress) {
 		return;
@@ -292,13 +241,20 @@ export async function handlePlay() {
 
 	playRequestPending = true;
 
-	if (isIntonationDirty()) {
-		const shouldReset = await confirmResetIntonationBeforePlay();
-		if (!shouldReset) {
+	if (hasActiveIntonationQuery(text, getSelectedStyleId())) {
+		try {
+			await playUpdatedIntonation();
+		} finally {
 			playRequestPending = false;
-			return;
 		}
-		resetIntonationState();
+		if (loopCheckbox?.checked) {
+			setTimeout(() => {
+				if (loopCheckbox?.checked) {
+					void handlePlay();
+				}
+			}, 0);
+		}
+		return;
 	}
 
 	appState.isProcessing = true;

@@ -38,8 +38,8 @@ vi.mock("./textLists", () => ({
 
 vi.mock("./intonation", () => ({
 	fetchAndRenderIntonation: vi.fn(),
-	isIntonationDirty: vi.fn(() => false),
-	resetIntonationState: vi.fn(),
+	hasActiveIntonationQuery: vi.fn(() => false),
+	playUpdatedIntonation: vi.fn(async () => {}),
 }));
 
 vi.mock("./uiControls", () => ({
@@ -176,5 +176,35 @@ describe("setTextAndPlay", () => {
 			vi.useRealTimers();
 			setLoopCheckboxElement(null);
 		}
+	});
+});
+
+describe("handlePlay with active intonation", () => {
+	it("calls playUpdatedIntonation instead of re-synthesizing when intonation is active", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const { hasActiveIntonationQuery, playUpdatedIntonation } = await import(
+			"./intonation"
+		);
+		const { getAudioQuery } = await import("./audio");
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
+
+		await handlePlay();
+
+		expect(playUpdatedIntonation).toHaveBeenCalledTimes(1);
+		expect(getAudioQuery).not.toHaveBeenCalled();
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
 	});
 });
