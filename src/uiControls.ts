@@ -1,7 +1,10 @@
-import { appState } from './state';
+import { appState } from "./state";
 
-export function updateExportButtonState(exportButton?: HTMLButtonElement | null) {
-  if (exportButton) {
-    exportButton.disabled = appState.isProcessing || !appState.lastSynthesizedBuffer;
-  }
+export function updateExportButtonState(
+	exportButton?: HTMLButtonElement | null,
+) {
+	if (exportButton) {
+		exportButton.disabled =
+			appState.isProcessing || !appState.lastSynthesizedBuffer;
+	}
 }
