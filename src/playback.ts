@@ -93,6 +93,9 @@ export function setTextAndPlay(text: string) {
 		window.clearTimeout(autoPlayTimer);
 		autoPlayTimer = null;
 	}
+	if (isPlaybackActive()) {
+		stopPlaybackAndResetLoop();
+	}
 	scheduleAutoPlay();
 }
 

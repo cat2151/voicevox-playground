@@ -44,13 +44,11 @@ describe("fetchVoiceStyles", () => {
 	it("returns false when the response is not ok", async () => {
 		vi.stubGlobal(
 			"fetch",
-			vi
-				.fn()
-				.mockResolvedValue({
-					ok: false,
-					status: 500,
-					statusText: "Internal Server Error",
-				}),
+			vi.fn().mockResolvedValue({
+				ok: false,
+				status: 500,
+				statusText: "Internal Server Error",
+			}),
 		);
 
 		const result = await fetchVoiceStyles(null);

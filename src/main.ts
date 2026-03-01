@@ -178,6 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			const parsed = Number(styleSelect.value);
 			if (!Number.isNaN(parsed)) {
 				applyStyleSelection(parsed);
+				scheduleAutoPlay();
 			}
 		});
 		applyStyleSelection(getSelectedStyleId());
@@ -188,6 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			if (randomStyleCheckbox.checked) {
 				applyRandomStyleSelection();
 			}
+			scheduleAutoPlay();
 		});
 	}
 
@@ -196,6 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			const parsed = Number(speakerStyleSelect.value);
 			if (!Number.isNaN(parsed)) {
 				applyStyleSelection(parsed);
+				scheduleAutoPlay();
 			}
 		});
 	}
