@@ -1,4 +1,4 @@
-Last updated: 2026-02-20
+Last updated: 2026-03-02
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -104,6 +104,7 @@ Last updated: 2026-02-20
 
 ## プロジェクトのファイル一覧
 - .github/actions-tmp/.github/workflows/call-callgraph.yml
+- .github/actions-tmp/.github/workflows/call-check-large-files.yml
 - .github/actions-tmp/.github/workflows/call-daily-project-summary.yml
 - .github/actions-tmp/.github/workflows/call-issue-note.yml
 - .github/actions-tmp/.github/workflows/call-rust-windows-check.yml
@@ -133,7 +134,7 @@ Last updated: 2026-02-20
 - .github/actions-tmp/.github_automation/callgraph/scripts/generate-html-graph.cjs
 - .github/actions-tmp/.github_automation/callgraph/scripts/generateHTML.cjs
 - .github/actions-tmp/.github_automation/check-large-files/README.md
-- .github/actions-tmp/.github_automation/check-large-files/check-large-files.toml.example
+- .github/actions-tmp/.github_automation/check-large-files/check-large-files.toml.default
 - .github/actions-tmp/.github_automation/check-large-files/scripts/check_large_files.py
 - .github/actions-tmp/.github_automation/check_recent_human_commit/scripts/check-recent-human-commit.cjs
 - .github/actions-tmp/.github_automation/project_summary/docs/daily-summary-setup.md
@@ -195,14 +196,14 @@ Last updated: 2026-02-20
 - .github/actions-tmp/issue-notes/38.md
 - .github/actions-tmp/issue-notes/4.md
 - .github/actions-tmp/issue-notes/40.md
-- .github/actions-tmp/issue-notes/42.md
+- .github/actions-tmp/issue-notes/44.md
+- .github/actions-tmp/issue-notes/46.md
 - .github/actions-tmp/issue-notes/7.md
 - .github/actions-tmp/issue-notes/8.md
 - .github/actions-tmp/issue-notes/9.md
 - .github/actions-tmp/package-lock.json
 - .github/actions-tmp/package.json
 - .github/actions-tmp/src/main.js
-- .github/check-large-files.toml
 - .github/workflows/call-check-large-files.yml
 - .github/workflows/call-daily-project-summary.yml
 - .github/workflows/call-issue-note.yml
@@ -230,6 +231,7 @@ Last updated: 2026-02-20
 - issue-notes/121.md
 - issue-notes/122.md
 - issue-notes/123.md
+- issue-notes/127.md
 - issue-notes/22.md
 - issue-notes/23.md
 - issue-notes/24.md
@@ -260,12 +262,15 @@ Last updated: 2026-02-20
 - src/intonation.test.ts
 - src/intonation.ts
 - src/intonationDisplay.ts
+- src/intonationHandlers.ts
 - src/intonationPlayback.ts
 - src/intonationState.ts
 - src/intonationUtils.ts
 - src/main.ts
 - src/playback.test.ts
 - src/playback.ts
+- src/settings.test.ts
+- src/settings.ts
 - src/state.ts
 - src/status.ts
 - src/styleManager.test.ts
@@ -283,6 +288,7 @@ Last updated: 2026-02-20
 - src/visualization/fftOverlay.ts
 - src/visualization/fftUtils.ts
 - src/visualization/spectrogram.ts
+- src/visualization/spectrogramCache.ts
 - src/visualization/timeAxis.ts
 - src/visualization/waveform.ts
 - src/visualization.test.ts
@@ -292,38 +298,39 @@ Last updated: 2026-02-20
 - vite.config.ts
 
 ## 現在のオープンIssues
-## [Issue #123](../issue-notes/123.md): イントネーション編集で、モーラのポイント表示と、モーラ名称表示を結ぶ、縦線を表示する
-[issue-notes/123.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/123.md)
+## [Issue #136](../issue-notes/136.md): 大きなファイルの検出: 1個のファイルが500行を超えています
+以下のファイルが500行を超えています。リファクタリングを検討してください。
 
-...
-ラベル: 
---- issue-notes/123.md の内容 ---
+## 検出されたファイル
+
+| ファイル | 行数 | 超過行数 |
+|---------|------|----------|
+| `src/main.ts` | 502 | +2 |
+
+## テスト実施のお願い
+
+- リファクタリング前後にテストを実行し、それぞれのテスト失敗件数を報告してください
+- リファクタリング前後のどちらかでテストがredの場合、まず別issueでtest greenにしてからリファクタリングしてください
+
+## 推奨事項
+
+1. ファイルを機能ごとに分割する
+2. 共通ロジックを別モ...
+ラベル: refactoring, code-quality, automated
+--- issue-notes/136.md の内容 ---
 
 ```markdown
-# issue イントネーション編集で、モーラのポイント表示と、モーラ名称表示を結ぶ、縦線を表示する #123
-[issues #123](https://github.com/cat2151/voicevox-playground/issues/123)
-
-- あわせて、マウスポインタが「編集可能なモーラ領域上にhoverしている場合」、
-  - それに紐付くモーラ名を一時的に明るく目立たせる
-  - ※マウスポインタが今どのモーラに紐ついているか？の判定関数を共用する想定
 
 ```
 
-## [Issue #122](../issue-notes/122.md): 「エラーが発生しました: Failed to fetch」が、知らない人にはわかりづらい
-[issue-notes/122.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/122.md)
-
-...
+## [Issue #135](../issue-notes/135.md): Fix: play button preserves active intonation instead of silently resetting it
+- [x] Understand the issue: pressing play button resets intonation without warning after editing or applying favorites
+- [x] Add `currentIntonationText` tracking to `intonationState`
+- [x] Set `currentIntonationText` in `fetchAndRenderIntonation()` and `applyIntonationFavorite()`; clear in reset fun...
 ラベル: 
---- issue-notes/122.md の内容 ---
+--- issue-notes/135.md の内容 ---
 
 ```markdown
-# issue 「エラーが発生しました: Failed to fetch」が、知らない人にはわかりづらい #122
-[issues #122](https://github.com/cat2151/voicevox-playground/issues/122)
-
-- 案
-    - その前にstyleの取得に失敗し「未取得」となった時点で、
-    - 「ローカルVOICEVOXサーバーを起動してください」をダイアログ表示する
-    - 一方で、styleの取得に成功したら、既存のstatus表示欄に、「ローカルサーバーとの通信成功。音声合成の準備ができました」を表示する
 
 ```
 
@@ -361,54 +368,6 @@ Last updated: 2026-02-20
 
 ```
 
-## [Issue #119](../issue-notes/119.md): キャラ&styleプルダウンを選んだら、自動再生する
-[issue-notes/119.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/119.md)
-
-...
-ラベル: 
---- issue-notes/119.md の内容 ---
-
-```markdown
-# issue キャラ&styleプルダウンを選んだら、自動再生する #119
-[issues #119](https://github.com/cat2151/voicevox-playground/issues/119)
-
-# 自動再生を追加する対象
-- キャラ&styleプルダウン
-- styleプルダウン
-- ランダムstyleチェックボックス
-
-# あわせて、以下も行う
-- お気に入り再生をクリックしたとき、もしloop再生中だったなら、loop再生をやめ、stopして、お気に入り再生を鳴らす
-  - 今は、loop再生中だと、お気に入り再生をクリックしても何も起きないのでuserが混乱する
-
-```
-
-## [Issue #118](../issue-notes/118.md): VOICEVOX Nemo も再生できるようにする
-[issue-notes/118.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/118.md)
-
-...
-ラベル: 
---- issue-notes/118.md の内容 ---
-
-```markdown
-# issue VOICEVOX Nemo も再生できるようにする #118
-[issues #118](https://github.com/cat2151/voicevox-playground/issues/118)
-
-- VOICEVOX Nemo-engine ローカルサーバー port 50121 からもspeakers取得を試みて、
-    - 取得できたなら、それもキャラ&styleプルダウンに含める
-
-- user向け備忘
-    - nemo
-        - 仕組み
-            - local nemo engineは、voicevox engineと別サーバである。デフォ port 50121 で動作する
-        - もし今すぐnemoだけでいいので鳴らしたいなら
-            - dir
-                - 当該nemoのdirは、voicevoxアプリの設定のengine管理を見るとわかる
-            - run
-                - nemoもvoicevox-engine同様、runがあるので、それを`--port 50021`にすれば鳴らせる
-
-```
-
 ## [Issue #117](../issue-notes/117.md): イントネーション編集後や、イントネーション付きお気に入りを再生したあと、playボタンを押すと、警告なしにイントネーションが初期化されてしまう
 [issue-notes/117.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/117.md)
 
@@ -422,21 +381,7 @@ Last updated: 2026-02-20
 
 - userがほしいのは、その状況であれば、イントネーションを維持したまま再生、である
 
-
-```
-
-## [Issue #116](../issue-notes/116.md): demoの利用方法欄に、ローカルPCにVOICEVOXをinstallしてください、を書く
-[issue-notes/116.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/116.md)
-
-...
-ラベル: 
---- issue-notes/116.md の内容 ---
-
-```markdown
-# issue demoの利用方法欄に、ローカルPCにVOICEVOXをinstallしてください、を書く #116
-[issues #116](https://github.com/cat2151/voicevox-playground/issues/116)
-
-- 書く内容については、README.ja.mdを参考にすること
+- 類似の不具合として、ループ再生チェックボックスonのまま、イントネーション付きお気に入りを再生したときも、イントネーションが初期化された状態で再生されてしまう
 
 ```
 
@@ -495,128 +440,63 @@ Last updated: 2026-02-20
 
 ```
 
+## [Issue #111](../issue-notes/111.md): （保留中）リアルタイムFFT表示は、リニアと対数をボタンで選べるようにする。ボタンの見た目はスペクトログラムのものを参考にせよ
+[issue-notes/111.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/111.md)
+
+...
+ラベル: 
+--- issue-notes/111.md の内容 ---
+
+```markdown
+# issue リアルタイムFFT表示は、リニアと対数を、スペクトログラムと同様に選べてlocal storage保存と起動時復帰できるようにする #111
+[issues #111](https://github.com/cat2151/voicevox-playground/issues/111)
+
+# GPT-5 mini に投げてみた
+- ハルシネーションで同じ回答を連発
+- さらに続けたところ、コード破壊（既存機能を削除）
+- どうする？
+  - 待ち。Opus4.6以上かCodex 5.1以上が使えるようになるまで待ち
+
+```
+
+## [Issue #97](../issue-notes/97.md): スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す
+[issue-notes/97.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/97.md)
+
+...
+ラベル: 
+--- issue-notes/97.md の内容 ---
+
+```markdown
+# issue スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す #97
+[issues #97](https://github.com/cat2151/voicevox-playground/issues/97)
+
+
+
+```
+
 ## ドキュメントで言及されているファイルの内容
-### .github/actions-tmp/README.ja.md
+### .github/actions-tmp/issue-notes/11.md
 ```md
 {% raw %}
-# GitHub Actions 共通ワークフロー集
+# issue translate を他projectから使いやすくする #11
+[issues #11](https://github.com/cat2151/github-actions/issues/11)
 
-このリポジトリは、**複数プロジェクトで使い回せるGitHub Actions共通ワークフロー集**です
+# ブレインストーミング
+- 課題、個別dirへの移動が必要。
+    - scripts
+- 課題、promptをハードコーディングでなく、promptsに切り出す。
+    - さらに、呼び出し元ymlから任意のpromptsを指定できるようにする。
+- 済、課題、README以外のtranslateも可能にするか検討する
+    - 対策、シンプル優先でREADME決め打ちにする
+        - 理由、README以外の用途となると、複数ファイルをどうGemini APIにわたすか？等、仕様が爆発的にふくらんでいくリスクがある
+        - README以外の用途が明確でないうちは、README決め打ちにするほうがよい
+- docs
+    - call導入手順を書く
 
-<p align="left">
-  <a href="README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-Japanese-red.svg" alt="Japanese"></a>
-  <a href="README.md"><img src="https://img.shields.io/badge/🇺🇸-English-blue.svg" alt="English"></a>
-</p>
-
-# 3行で説明
-- 🚀 プロジェクトごとのGitHub Actions管理をもっと楽に
-- 🔗 共通化されたワークフローで、どのプロジェクトからも呼ぶだけでOK
-- ✅ メンテは一括、プロジェクト開発に集中できます
-
-## Quick Links
-| 項目 | リンク |
-|------|--------|
-| 📖 プロジェクト概要 | [generated-docs/project-overview.md](generated-docs/project-overview.md) |
-| 📖 コールグラフ | [generated-docs/callgraph.html](https://cat2151.github.io/github-actions/generated-docs/callgraph.html) |
-| 📊 開発状況 | [generated-docs/development-status.md](generated-docs/development-status.md) |
-
-# notes
-- まだ共通化の作業中です
-- まだワークフロー内容を改善中です
-
-※README.md は README.ja.md を元にGeminiの翻訳でGitHub Actionsで自動生成しています
-
-{% endraw %}
-```
-
-### README.ja.md
-```md
-{% raw %}
-# voicevox-playground
-
-**VOICEVOX ローカルサーバーと連携し、テキストを音声に変換して再生するWebアプリケーションです。**
-
-<p align="left">
-  <a href="README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-Japanese-red.svg" alt="Japanese"></a>
-  <a href="README.md"><img src="https://img.shields.io/badge/🇺🇸-English-blue.svg" alt="English"></a>
-  <a href="https://cat2151.github.io/voicevox-playground/"><img src="https://img.shields.io/badge/Demo-brightgreen" alt="Demo"></a>
-  <a href="https://deepwiki.com/cat2151/voicevox-playground"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
-</p>
-
-## 機能
-
-- ずんだもんの音声で任意のテキストを読み上げ
-    - ほかのキャラの音声も選べます
-
-## 対象プラットフォーム
-
-- ブラウザとVOICEVOXが使える環境なら動きます
-
-## サーバー
-
-使うには、VOICEVOXのローカルサーバーを起動してください。
-
-1. [VOICEVOX](https://voicevox.hiroshiba.jp/)をダウンロードしてインストール
-2. VOICEVOXエンジンを起動（ポート50021でHTTPサーバーが起動します）。[GitHub Pages版](https://cat2151.github.io/voicevox-playground) からアクセスする場合は、CORSを許可した状態で以下のコマンドを使用してください。
-
-   ```bash
-   <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io
-   ```
-
-   開発するとき、ローカル開発サーバー（`npm run dev` が提供する `http://localhost:5173`）からも利用する場合は、上記に続けて `http://localhost:5173` も追加してください。
-
-   ```bash
-   <your VOICEVOX directory>/vv-engine/run --cors_policy_mode all --allow_origin https://cat2151.github.io http://localhost:5173
-   ```
-
-## 使い方
-
-1. VOICEVOXを起動（前述）
-2. ブラウザで [アプリケーション](https://cat2151.github.io/voicevox-playground) を開く
-3. テキストエリアに読み上げたいテキストを入力
-4. 音声が再生されます
-5. イントネーションを編集できます
-
-## 仕組み
-- webpageをGitHub Pagesにデプロイ
-- webpageから
-  - VOICEVOXローカルHTTPサーバー（ポート50021）にリクエストを送信し、レスポンスで音声データを取得
-  - Tone.js v15を使用して音声再生
-
-## 開発
-
-```bash
-# 依存関係のインストール
-npm install
-
-# 開発サーバーの起動
-npm run dev
-
-# ビルド
-npm run build
-
-# プレビュー
-npm run preview
-```
-
-## 技術スタック
-
-- TypeScript
-- Vite
-- Tone.js v15
-- VOICEVOX API
-
-## projectが目指すこと
-
-- webpageからVOICEVOXが動かせる！誰でも自分だけのVOICEVOXクライアントアプリを楽にバイブコーディングできる！を実証すること
-- （VOICEVOXサーバーが起動済みなら）「webpageを開いてクリックするだけですぐ音が鳴る」を実現すること
-
-## projectが目指さないこと（スコープ外）
-
-- 究極のVOICEVOXクライアントアプリ
-- 自分以外の利用者の要望を受け付けて実現
-
-※英語版README.mdは、README.ja.mdを元にGeminiの翻訳でGitHub Actionsにより自動生成しています
+# 状況
+- 上記のうち、別dirへの切り分け等は実施済みのはず
+- どうする？
+    - それをここに可視化する。
 
 {% endraw %}
 ```
@@ -767,89 +647,6 @@ npm run preview
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/16.md
-```md
-{% raw %}
-# issue issue-note / project-summary / translate / callgraph をtonejs-mml-to-jsonから呼び出す #16
-[issues #16](https://github.com/cat2151/github-actions/issues/16)
-
-# これまでの課題
-- issue-note / project-summary / translate / callgraph は、github-actions リポジトリ上ではtest greenである。
-- だが他のリポジトリにおいて動作するか？が可視化不足である。
-
-# 対策
-- issue-note / project-summary / translate / callgraph をtonejs-mml-to-jsonから呼び出す
-- 詳しく
-    - まず、現状、tonejs-mml-to-json でその4つのworkflowがどうなっているか、このmdに可視化する
-    - 例えば、既に呼び出している、呼び出していない、tonejs-mml-to-jsonにある古いworkflowを呼び出している
-
-# 調査結果
-- まず、現状、tonejs-mml-to-json でその4つのworkflowがどうなっているか、このmdに可視化する
-    - 結果：
-        - issue-note
-            - tonejs-mml-to-jsonにある古いworkflowを呼び出している
-        - project-summary
-            - tonejs-mml-to-jsonにある古いworkflowを呼び出している
-        - translate
-            - tonejs-mml-to-jsonにある古いworkflowを呼び出している
-        - callgraph
-            - tonejs-mml-to-jsonにある古いworkflowを呼び出している
-
-# どうする？
-- issue-note
-    - github-actions リポジトリにある、call-issue-note.yml をcpして使うようにする、まず単純cpして動くかを確認する
-- project-summary
-    - github-actions リポジトリにある、call-daily-project-summary.yml をcpして使うようにする、まず単純cpして動くかを確認する
-- translate
-    - github-actions リポジトリにある、call-translate-readme.yml をcpして使うようにする、まず単純cpして動くかを確認する
-- callgraph
-    - github-actions リポジトリにある、call-callgraph.yml をcpして使うようにする、まず単純cpして動くかを確認する
-
-# 状況
-- issue-note
-    - tonejs-mml-to-jsonリポジトリにて、test green
-    - issue-noteについては当issueのタスクは完了した、と判断する
-- project-summary
-    - tonejs-mml-to-jsonリポジトリにて、test green
-    - project-summaryについては当issueのタスクは完了した、と判断する
-
-# 状況
-- translate
-    - github-actions リポジトリにある、call-translate-readme.yml をcpして使うようにする、まず単純cpして動くかを確認する
-        - 状況
-            - 単純cpした
-            - ソース机上レビューした。OK
-            - トリガーはREADME.ja.mdのcommit
-            - testは省略とする
-            - もし今後README.ja.mdのcommit時にうまく動作しないとしても、そのとき対処すればOK、と判断する
-    - translateについては当issueのタスクは完了した、と判断する
-
-# どうする？
-- callgraph
-    - github-actions リポジトリにある、call-callgraph.yml をcpして使うようにする、まず単純cpして動くかを確認する
-
-# 結果
-- callgraph
-    - tonejs-mml-to-jsonリポジトリにて、test red
-    - logをみても情報不足なため、まずloggerを修正する
-    - 結果、わかった、運用ミス、対象srcの指定の考慮漏れ
-    - どうする？
-        - 対象srcを指定する。tonejs-mml-to-jsonリポジトリにて進める
-    - 結果
-        - test green
-    - callgraphについては当issueのタスクは完了した、と判断する
-
-# 状況
-- github-actions以外のリポジトリとして、
-    - tonejs-mml-to-jsonリポジトリにおいて、
-        - issue-note / project-summary / translate / callgraph がtest greenとなった。
-        - closeできる、と判断する。
-
-# closeとする
-
-{% endraw %}
-```
-
 ### .github/actions-tmp/issue-notes/17.md
 ```md
 {% raw %}
@@ -888,250 +685,6 @@ npm run preview
 # 結果
 - test green
 - closeする
-
-{% endraw %}
-```
-
-### .github/actions-tmp/issue-notes/18.md
-```md
-{% raw %}
-# issue DevelopmentStatusGenerator.cjs 内に、Geminiに与えるpromptがハードコーディングされてしまっている #18
-[issues #18](https://github.com/cat2151/github-actions/issues/18)
-
-# 何が困るの？
-- project把握しづらい。どこにpromptが書いてあるのか、把握しづらい。
-- prompts/ にほかのpromptがあるため、方針がブレていると、読みづらい。
-- 備忘、いくらテンプレートリテラルとプレースホルダーで密結合しているからとはいえ、ハードコーディングはNG。
-    - それらはreplaceを使う等で楽に切り出しできるので。
-
-# 問題のcjsの場所は？
-- ファイルパス : .github_automation/project_summary/scripts/development/DevelopmentStatusGenerator.cjs
-- 関数 : generateDevelopmentStatus
-
-# 結果
-- Geminiに生成させたpromptを、agentに投げて、リファクタリングさせてみた
-- ハルシネーションした。使い物にならなかった
-- 人力でやる
-
-# 結果
-- test green
-
-# closeとする
-
-
-{% endraw %}
-```
-
-### .github/actions-tmp/issue-notes/19.md
-```md
-{% raw %}
-# issue project-summary の development-status 生成時、issue-notes/ 配下のmdファイルの内容を参照させる #19
-[issues #19](https://github.com/cat2151/github-actions/issues/19)
-
-# 何が困るの？
-- issue解決に向けての次の一手の内容が実態に即していないことが多い。
-
-# 対策案
-- issue-notes/ 配下のmdファイルの内容を参照させる
-
-# 備考
-- さらにmd内に書かれているfileも、project内をcjsに検索させて添付させると、よりGeminiの生成品質が向上する可能性がある。
-    - [issues #20](https://github.com/cat2151/github-actions/issues/20)
-- さらにproject overviewでGeminiがまとめたmdも、Geminiに与えると、よりGeminiの生成品質が向上する可能性がある。
-    - [issues #21](https://github.com/cat2151/github-actions/issues/21)
-- さらに、Geminiに与えたpromptをfileにしてcommit pushしておくと、デバッグに役立つ可能性がある。
-    - [issues #22](https://github.com/cat2151/github-actions/issues/22)
-
-# close条件
-- issues #22 がcloseされること。
-- commitされたpromptを確認し、issue-notes/ 配下のmdファイルがpromptに添付されていること、が確認できること。
-
-# 状況
-- 課題、実装したがtestができていない
-- 対策、issues #22 が実装されれば、testができる
-- 対策、issues #22 のcloseを待つ
-
-# 状況
-- issues #22 がcloseされた
-- testできるようになった
-- commitされたpromptを確認した。issue-notes/ 配下のmdファイルがpromptに添付されていること、が確認できた
-
-# closeする
-
-{% endraw %}
-```
-
-### .github/actions-tmp/issue-notes/2.md
-```md
-{% raw %}
-# issue GitHub Actions「関数コールグラフhtmlビジュアライズ生成」を共通ワークフロー化する #2
-[issues #2](https://github.com/cat2151/github-actions/issues/2)
-
-
-# prompt
-```
-あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
-このymlファイルを、以下の2つのファイルに分割してください。
-1. 共通ワークフロー       cat2151/github-actions/.github/workflows/callgraph_enhanced.yml
-2. 呼び出し元ワークフロー cat2151/github-actions/.github/workflows/call-callgraph_enhanced.yml
-まずplanしてください
-```
-
-# 結果
-- indent
-    - linter？がindentのエラーを出しているがyml内容は見た感じOK
-    - テキストエディタとagentの相性問題と判断する
-    - 別のテキストエディタでsaveしなおし、テキストエディタをreload
-    - indentのエラーは解消した
-- LLMレビュー
-    - agent以外の複数のLLMにレビューさせる
-    - prompt
-```
-あなたはGitHub Actionsと共通ワークフローのスペシャリストです。
-以下の2つのファイルをレビューしてください。最優先で、エラーが発生するかどうかだけレビューしてください。エラー以外の改善事項のチェックをするかわりに、エラー発生有無チェックに最大限注力してください。
-
---- 共通ワークフロー
-
-# GitHub Actions Reusable Workflow for Call Graph Generation
-name: Generate Call Graph
-
-# TODO Windowsネイティブでのtestをしていた名残が残っているので、今後整理していく。今はWSL act でtestしており、Windowsネイティブ環境依存問題が解決した
-#  ChatGPTにレビューさせるとそこそこ有用そうな提案が得られたので、今後それをやる予定
-#  agentに自己チェックさせる手も、セカンドオピニオンとして選択肢に入れておく
-
-on:
-  workflow_call:
-
-jobs:
-  check-commits:
-    runs-on: ubuntu-latest
-    outputs:
-      should-run: ${{ steps.check.outputs.should-run }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 50 # 過去のコミットを取得
-
-      - name: Check for user commits in last 24 hours
-        id: check
-        run: |
-          node .github/scripts/callgraph_enhanced/check-commits.cjs
-
-  generate-callgraph:
-    needs: check-commits
-    if: needs.check-commits.outputs.should-run == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      security-events: write
-      actions: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set Git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Remove old CodeQL packages cache
-        run: rm -rf ~/.codeql/packages
-
-      - name: Check Node.js version
-        run: |
-          node .github/scripts/callgraph_enhanced/check-node-version.cjs
-
-      - name: Install CodeQL CLI
-        run: |
-          wget https://github.com/github/codeql-cli-binaries/releases/download/v2.22.1/codeql-linux64.zip
-          unzip codeql-linux64.zip
-          sudo mv codeql /opt/codeql
-          echo "/opt/codeql" >> $GITHUB_PATH
-
-      - name: Install CodeQL query packs
-        run: |
-          /opt/codeql/codeql pack install .github/codeql-queries
-
-      - name: Check CodeQL exists
-        run: |
-          node .github/scripts/callgraph_enhanced/check-codeql-exists.cjs
-
-      - name: Verify CodeQL Configuration
-        run: |
-          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs verify-config
-
-      - name: Remove existing CodeQL DB (if any)
-        run: |
-          rm -rf codeql-db
-
-      - name: Perform CodeQL Analysis
-        run: |
-          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs analyze
-
-      - name: Check CodeQL Analysis Results
-        run: |
-          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs check-results
-
-      - name: Debug CodeQL execution
-        run: |
-          node .github/scripts/callgraph_enhanced/analyze-codeql.cjs debug
-
-      - name: Wait for CodeQL results
-        run: |
-          node -e "setTimeout(()=>{}, 10000)"
-
-      - name: Find and process CodeQL results
-        run: |
-          node .github/scripts/callgraph_enhanced/find-process-results.cjs
-
-      - name: Generate HTML graph
-        run: |
-          node .github/scripts/callgraph_enhanced/generate-html-graph.cjs
-
-      - name: Copy files to generated-docs and commit results
-        run: |
-          node .github/scripts/callgraph_enhanced/copy-commit-results.cjs
-
---- 呼び出し元
-# 呼び出し元ワークフロー: call-callgraph_enhanced.yml
-name: Call Call Graph Enhanced
-
-on:
-  schedule:
-    # 毎日午前5時(JST) = UTC 20:00前日
-    - cron: '0 20 * * *'
-  workflow_dispatch:
-
-jobs:
-  call-callgraph-enhanced:
-    # uses: cat2151/github-actions/.github/workflows/callgraph_enhanced.yml
-    uses: ./.github/workflows/callgraph_enhanced.yml # ローカルでのテスト用
-```
-
-# レビュー結果OKと判断する
-- レビュー結果を人力でレビューした形になった
-
-# test
-- #4 同様にローカル WSL + act でtestする
-- エラー。userのtest設計ミス。
-  - scriptの挙動 : src/ がある前提
-  - 今回の共通ワークフローのリポジトリ : src/ がない
-  - 今回testで実現したいこと
-    - 仮のソースでよいので、関数コールグラフを生成させる
-  - 対策
-    - src/ にダミーを配置する
-- test green
-  - ただしcommit pushはしてないので、html内容が0件NG、といったケースの検知はできない
-  - もしそうなったら別issueとしよう
-
-# test green
-
-# commit用に、yml 呼び出し元 uses をlocal用から本番用に書き換える
-
-# closeとする
-- もしhtml内容が0件NG、などになったら、別issueとするつもり
 
 {% endraw %}
 ```
@@ -1272,99 +825,6 @@ jobs:
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/22.md
-```md
-{% raw %}
-# issue project-summary の development-status 生成時、Geminiに与えたprompt、もcommit push、を試す #22
-[issues #22](https://github.com/cat2151/github-actions/issues/22)
-
-# 何が困るの？
-- 生成された development-status.md の妥当性がわかりづらいし、バグった場合の原因調査がしづらい
-
-# 対策案
-- Geminiに与えたpromptをfileにしてcommit pushしておくと、デバッグに役立つ可能性がある。
-
-# 方法案
-- Geminiに与えるprompt を生成時、それをfileにsaveし、commit push対象にする。
-- ひとまずgenerated-docs/ に保存する。落ち着いたら移動先を検討する。
-    - generated-docs/ 配下のまま、も有力な候補である。
-        - なぜなら、cjsによってgenerateされたdocなので。
-
-# 日次バッチでpromptを生成させ、agentに投げた
-- レビューした
-- 修正させた
-
-# 結果
-- エラー。pathのミス。呼び出し元側に保存したいのに、共通ワークフロー側に保存となってしまった。
-- 対策、ymlで引数を指定するようにした。
-- testする。
-
-# 結果
-- test green。呼び出し元側にcommitされていることを確認した。
-- 20Kbytesである
-    - Geminiにわたすサイズとしても許容範囲内と判断する
-        - token数から概算して100Kbytes～1Mbytes程度を想定
-
-# closeとする
-
-{% endraw %}
-```
-
-### issue-notes/22.md
-```md
-{% raw %}
-# issue スペクトログラムの左に表示されるHz文字列が重なりすぎて見えないので、表示時にy座標と文字列の縦幅を参照し、間引いて表示する #22
-[issues #22](https://github.com/cat2151/voicevox-playground/issues/22)
-
-- 合わせて、レイアウト改善。
-    - 「音声を再生中」欄が、loop再生ごとに欄そのものがトルツメされたり増えたりして、以降のエリアが激しく上下して見づらいので、そこはトルツメでなく空を表示とする
-
-
-
-{% endraw %}
-```
-
-### .github/actions-tmp/issue-notes/23.md
-```md
-{% raw %}
-# issue issue 17が再発してしまっている #23
-[issues #23](https://github.com/cat2151/github-actions/issues/23)
-
-# 症状は？
-- issue 17と同じ
-
-# どうする？
-- development-status-generated-prompt.md を確認する
-- 結果
-    - >Issue番号を記載する際は、必ず [Issue #番号](issue-notes/番号.md) の形式でMarkdownリンクとして記載してください。
-    - 仮説、これが残っており、ほかの ../ 指定と競合し、どちらかがランダムで選ばれていた
-    - 対策、ここを ../ 指定にする
-
-# 結果
-- test green
-
-# closeとする
-
-{% endraw %}
-```
-
-### issue-notes/23.md
-```md
-{% raw %}
-# issue リアルタイム波形表示欄は、別途表示しているFFT推定周波数の4周期ぶんを表示するよう、自動で横幅の拡大縮小する #23
-[issues #23](https://github.com/cat2151/voicevox-playground/issues/23)
-
-- あわせて表示位相をframe間で揃えて表示する
-- 位相の見た目が揃っていればよい
-- 直近のcat2151のいくつかのリポジトリを参考にして、「前frameで表示した4周期」を保存し、それと現frameを指定offsetから4周期切り取ったセグメントと相関をとり（offsetは指定sample数でスライド、後述）、最も類似度の高いセグメントoffsetを得て、そのセグメントを表示する
-- セグメント探索（相関）の計算コストが高いため、
-    - 相関の探索範囲は4周期にしぼること
-    - 相関の探索ループごとのsampleスライド数がムダに大きくならないようにすること
-    - 表示pixel数から換算して、1pixelが何sampleかを得て、そのsample数を、スライド量とすること。そうすれば見た目に影響しない範囲で、探索ループ数を削減できる考え
-
-{% endraw %}
-```
-
 ### .github/actions-tmp/issue-notes/3.md
 ```md
 {% raw %}
@@ -1446,6 +906,31 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
+### .github/actions-tmp/issue-notes/35.md
+```md
+{% raw %}
+# issue issue-notes作成時に、既存のnotesを調査して不要note削除を行うようにする。clean up #35
+[issues #35](https://github.com/cat2151/github-actions/issues/35)
+
+# 定義：
+- 紐付くissueがある
+    - issueがopen中である → 必要note。PRを進めるために必要。
+    - issueがcloseされた
+        - noteの中身が、先頭2行だけで、あとは空である → 不要note。closeされたが、空っぽのnoteである。
+        - noteの中身が、上記以外である → 必要note。closeされて、issueの履歴としてナレッジとなるnoteである。
+- 紐付くissueがない
+    - noteの中身が、先頭2行だけで、あとは空である → 不要note。issueが削除されたし、空っぽのnoteである。
+    - noteの中身が、上記以外である → 必要note。issueが削除されたが、issueの履歴としてナレッジとなるnoteである。
+
+# なぜこのワークフローymlで実施するの？
+- 利用者の利用コストを下げるため。
+- もし別ワークフローymlだと、全てのリポジトリに新たにワークフローymlが追加となり、導入初期コストが高い。
+- 別ワークフローにするメリットが小さい
+- 位置づけとしては、issue-noteのメンテは、このワークフローで行う、として許容範囲内である、と考える
+
+{% endraw %}
+```
+
 ### .github/actions-tmp/issue-notes/7.md
 ```md
 {% raw %}
@@ -1458,99 +943,17 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/8.md
+### issue-notes/111.md
 ```md
 {% raw %}
-# issue 関数コールグラフhtmlビジュアライズ生成の対象ソースファイルを、呼び出し元ymlで指定できるようにする #8
-[issues #8](https://github.com/cat2151/github-actions/issues/8)
+# issue リアルタイムFFT表示は、リニアと対数を、スペクトログラムと同様に選べてlocal storage保存と起動時復帰できるようにする #111
+[issues #111](https://github.com/cat2151/voicevox-playground/issues/111)
 
-# これまでの課題
-- 以下が決め打ちになっていた
-```
-  const allowedFiles = [
-    'src/main.js',
-    'src/mml2json.js',
-    'src/play.js'
-  ];
-```
-
-# 対策
-- 呼び出し元ymlで指定できるようにする
-
-# agent
-- agentにやらせることができれば楽なので、初手agentを試した
-- 失敗
-    - ハルシネーションしてscriptを大量破壊した
-- 分析
-    - 修正対象scriptはagentが生成したもの
-    - 低品質な生成結果でありソースが巨大
-    - ハルシネーションで破壊されやすいソース
-    - AIの生成したソースは、必ずしもAIフレンドリーではない
-
-# 人力リファクタリング
-- 低品質コードを、最低限agentが扱えて、ハルシネーションによる大量破壊を防止できる内容、にする
-- 手短にやる
-    - そもそもビジュアライズは、agentに雑に指示してやらせたもので、
-    - 今後別のビジュアライザを選ぶ可能性も高い
-    - 今ここで手間をかけすぎてコンコルド効果（サンクコストバイアス）を増やすのは、project群をトータルで俯瞰して見たとき、損
-- 対象
-    - allowedFiles のあるソース
-        - callgraph-utils.cjs
-            - たかだか300行未満のソースである
-            - この程度でハルシネーションされるのは予想外
-            - やむなし、リファクタリングでソース分割を進める
-
-# agentに修正させる
-## prompt
-```
-allowedFilesを引数で受け取るようにしたいです。
-ないならエラー。
-最終的に呼び出し元すべてに波及して修正したいです。
-
-呼び出し元をたどってエントリポイントも見つけて、
-エントリポイントにおいては、
-引数で受け取ったjsonファイル名 allowedFiles.js から
-jsonファイル allowedFiles.jsonの内容をreadして
-変数 allowedFilesに格納、
-後続処理に引き渡す、としたいです。
-
-まずplanしてください。
-planにおいては、修正対象のソースファイル名と関数名を、呼び出し元を遡ってすべて特定し、listしてください。
-```
-
-# 修正が順調にできた
-- コマンドライン引数から受け取る作りになっていなかったので、そこだけ指示して修正させた
-- yml側は人力で修正した
-
-# 他のリポジトリから呼び出した場合にバグらないよう修正する
-- 気付いた
-    - 共通ワークフローとして他のリポジトリから使った場合はバグるはず。
-        - ymlから、共通ワークフロー側リポジトリのcheckoutが漏れているので。
-- 他のyml同様に修正する
-- あわせて全体にymlをリファクタリングし、修正しやすくし、今後のyml読み書きの学びにしやすくする
-
-# local WSL + act : test green
-
-# closeとする
-- もし生成されたhtmlがNGの場合は、別issueとするつもり
-
-{% endraw %}
-```
-
-### .github/actions-tmp/issue-notes/9.md
-```md
-{% raw %}
-# issue 関数コールグラフhtmlビジュアライズが0件なので、原因を可視化する #9
-[issues #9](https://github.com/cat2151/github-actions/issues/9)
-
-# agentに修正させたり、人力で修正したりした
-- agentがハルシネーションし、いろいろ根の深いバグにつながる、エラー隠蔽などを仕込んでいたため、検知が遅れた
-- 詳しくはcommit logを参照のこと
-- WSL + actの環境を少し変更、act起動時のコマンドライン引数を変更し、generated-docsをmountする（ほかはデフォルト挙動であるcpだけにする）ことで、デバッグ情報をコンテナ外に出力できるようにし、デバッグを効率化した
-
-# test green
-
-# closeとする
+# GPT-5 mini に投げてみた
+- ハルシネーションで同じ回答を連発
+- さらに続けたところ、コード破壊（既存機能を削除）
+- どうする？
+  - 待ち。Opus4.6以上かCodex 5.1以上が使えるようになるまで待ち
 
 {% endraw %}
 ```
@@ -1602,17 +1005,6 @@ planにおいては、修正対象のソースファイル名と関数名を、�
 {% endraw %}
 ```
 
-### issue-notes/116.md
-```md
-{% raw %}
-# issue demoの利用方法欄に、ローカルPCにVOICEVOXをinstallしてください、を書く #116
-[issues #116](https://github.com/cat2151/voicevox-playground/issues/116)
-
-- 書く内容については、README.ja.mdを参考にすること
-
-{% endraw %}
-```
-
 ### issue-notes/117.md
 ```md
 {% raw %}
@@ -1621,46 +1013,7 @@ planにおいては、修正対象のソースファイル名と関数名を、�
 
 - userがほしいのは、その状況であれば、イントネーションを維持したまま再生、である
 
-
-{% endraw %}
-```
-
-### issue-notes/118.md
-```md
-{% raw %}
-# issue VOICEVOX Nemo も再生できるようにする #118
-[issues #118](https://github.com/cat2151/voicevox-playground/issues/118)
-
-- VOICEVOX Nemo-engine ローカルサーバー port 50121 からもspeakers取得を試みて、
-    - 取得できたなら、それもキャラ&styleプルダウンに含める
-
-- user向け備忘
-    - nemo
-        - 仕組み
-            - local nemo engineは、voicevox engineと別サーバである。デフォ port 50121 で動作する
-        - もし今すぐnemoだけでいいので鳴らしたいなら
-            - dir
-                - 当該nemoのdirは、voicevoxアプリの設定のengine管理を見るとわかる
-            - run
-                - nemoもvoicevox-engine同様、runがあるので、それを`--port 50021`にすれば鳴らせる
-
-{% endraw %}
-```
-
-### issue-notes/119.md
-```md
-{% raw %}
-# issue キャラ&styleプルダウンを選んだら、自動再生する #119
-[issues #119](https://github.com/cat2151/voicevox-playground/issues/119)
-
-# 自動再生を追加する対象
-- キャラ&styleプルダウン
-- styleプルダウン
-- ランダムstyleチェックボックス
-
-# あわせて、以下も行う
-- お気に入り再生をクリックしたとき、もしloop再生中だったなら、loop再生をやめ、stopして、お気に入り再生を鳴らす
-  - 今は、loop再生中だと、お気に入り再生をクリックしても何も起きないのでuserが混乱する
+- 類似の不具合として、ループ再生チェックボックスonのまま、イントネーション付きお気に入りを再生したときも、イントネーションが初期化された状態で再生されてしまう
 
 {% endraw %}
 ```
@@ -1691,55 +1044,563 @@ planにおいては、修正対象のソースファイル名と関数名を、�
 {% endraw %}
 ```
 
-### issue-notes/122.md
+### issue-notes/97.md
 ```md
 {% raw %}
-# issue 「エラーが発生しました: Failed to fetch」が、知らない人にはわかりづらい #122
-[issues #122](https://github.com/cat2151/voicevox-playground/issues/122)
+# issue スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す #97
+[issues #97](https://github.com/cat2151/voicevox-playground/issues/97)
 
-- 案
-    - その前にstyleの取得に失敗し「未取得」となった時点で、
-    - 「ローカルVOICEVOXサーバーを起動してください」をダイアログ表示する
-    - 一方で、styleの取得に成功したら、既存のstatus表示欄に、「ローカルサーバーとの通信成功。音声合成の準備ができました」を表示する
+
 
 {% endraw %}
 ```
 
-### issue-notes/123.md
-```md
+### src/main.ts
+```ts
 {% raw %}
-# issue イントネーション編集で、モーラのポイント表示と、モーラ名称表示を結ぶ、縦線を表示する #123
-[issues #123](https://github.com/cat2151/voicevox-playground/issues/123)
+import "./styles.css";
+import {
+	AUTO_PLAY_DEBOUNCE_MS,
+	DELIMITER_STORAGE_KEY,
+	FrequencyScale,
+} from "./config";
+import {
+	getCurrentSettings,
+	loadSettings,
+	resetSettings,
+	setFrequencyTopPercent,
+	setVoicevoxNemoPort,
+	setVoicevoxPort,
+} from "./settings";
+import { initializeTextLists } from "./textLists";
+import {
+	adjustIntonationScale,
+	getIntonationKeyboardEnabled,
+	handleIntonationKeyDown,
+	handleIntonationMouseLeave,
+	handleIntonationMouseMove,
+	handleIntonationPointerDown,
+	handleIntonationPointerMove,
+	handleIntonationPointerUp,
+	initializeIntonationCanvas,
+	initializeIntonationElements,
+	refreshIntonationChart,
+	resetIntonationToInitial,
+	saveCurrentIntonationFavorite,
+	setIntonationKeyboardEnabled,
+	setStyleChangeHandler,
+} from "./intonation";
+import { appState } from "./state";
+import { updateExportButtonState } from "./uiControls";
+import {
+	clearAudioCache,
+	downloadLastAudio,
+	handlePlay,
+	handlePlayButtonClick,
+	isPlayRequestPending,
+	scheduleAutoPlay,
+	setLoopCheckboxElement,
+	setPlayButtonAppearance,
+	setTextAndPlay,
+} from "./playback";
+import {
+	fetchVoiceStyles,
+	getSelectedStyleId,
+	populateStyleSelect,
+	populateSpeakerStyleSelect,
+	selectRandomStyleId,
+	setSelectedStyleId,
+} from "./styleManager";
+import {
+	getSpectrogramScale,
+	initializeVisualizationCanvases,
+	isPlaybackActive,
+	setSpectrogramScale,
+} from "./visualization";
+import { showStatus, scheduleHideStatus } from "./status";
 
-- あわせて、マウスポインタが「編集可能なモーラ領域上にhoverしている場合」、
-  - それに紐付くモーラ名を一時的に明るく目立たせる
-  - ※マウスポインタが今どのモーラに紐ついているか？の判定関数を共用する想定
+let delimiterSaveTimer: number | null = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+	loadSettings();
+	const playButton = document.getElementById(
+		"playButton",
+	) as HTMLButtonElement | null;
+	const textArea = document.getElementById(
+		"text",
+	) as HTMLTextAreaElement | null;
+	const exportButton = document.getElementById(
+		"exportButton",
+	) as HTMLButtonElement | null;
+	const usageToggleButton = document.getElementById(
+		"usageToggleButton",
+	) as HTMLButtonElement | null;
+	const usagePanel = document.getElementById("usagePanel");
+	const spectrogramScaleToggle = document.getElementById(
+		"spectrogramScaleToggle",
+	) as HTMLButtonElement | null;
+	const styleSelect = document.getElementById(
+		"styleSelect",
+	) as HTMLSelectElement | null;
+	const speakerStyleSelect = document.getElementById(
+		"speakerStyleSelect",
+	) as HTMLSelectElement | null;
+	const delimiterInput = document.getElementById(
+		"delimiterInput",
+	) as HTMLInputElement | null;
+	const randomStyleCheckbox = document.getElementById(
+		"randomStyleCheckbox",
+	) as HTMLInputElement | null;
+	const favoritesToggleButton = document.getElementById(
+		"favoritesToggleButton",
+	) as HTMLButtonElement | null;
+	const favoritesPanel = document.getElementById("favoritesPanel");
+	const favoritesListEl = document.getElementById(
+		"favoritesList",
+	) as HTMLUListElement | null;
+	const historyListEl = document.getElementById(
+		"historyList",
+	) as HTMLUListElement | null;
+	const intonationFavoritesListEl = document.getElementById(
+		"intonationFavoritesList",
+	) as HTMLUListElement | null;
+	const intonationCanvas = document.getElementById(
+		"intonationCanvas",
+	) as HTMLCanvasElement | null;
+	const intonationTimingEl = null;
+	const intonationLabelsEl = document.getElementById("intonationLabels");
+	const intonationMaxValueEl = document.getElementById("intonationMaxValue");
+	const intonationMinValueEl = document.getElementById("intonationMinValue");
+	const intonationExpandTop = document.getElementById(
+		"intonationExpandTop",
+	) as HTMLButtonElement | null;
+	const intonationShrinkTop = document.getElementById(
+		"intonationShrinkTop",
+	) as HTMLButtonElement | null;
+	const intonationShrinkBottom = document.getElementById(
+		"intonationShrinkBottom",
+	) as HTMLButtonElement | null;
+	const intonationExpandBottom = document.getElementById(
+		"intonationExpandBottom",
+	) as HTMLButtonElement | null;
+	const intonationKeyboardToggle = document.getElementById(
+		"intonationKeyboardToggle",
+	) as HTMLButtonElement | null;
+	const intonationResetButton = document.getElementById(
+		"intonationResetButton",
+	) as HTMLButtonElement | null;
+	const intonationFavoriteButton = document.getElementById(
+		"intonationFavoriteButton",
+	) as HTMLButtonElement | null;
+	const loopCheckboxEl = document.getElementById(
+		"loopCheckbox",
+	) as HTMLInputElement | null;
+	setLoopCheckboxElement(loopCheckboxEl);
+
+	const settingsToggleButton = document.getElementById(
+		"settingsToggleButton",
+	) as HTMLButtonElement | null;
+	const settingsPanel = document.getElementById("settingsPanel");
+	const voicevoxPortInput = document.getElementById(
+		"voicevoxPortInput",
+	) as HTMLInputElement | null;
+	const voicevoxNemoPortInput = document.getElementById(
+		"voicevoxNemoPortInput",
+	) as HTMLInputElement | null;
+	const frequencyTopPercentInput = document.getElementById(
+		"frequencyTopPercentInput",
+	) as HTMLInputElement | null;
+	const settingsResetButton = document.getElementById(
+		"settingsResetButton",
+	) as HTMLButtonElement | null;
+
+	const applySettingsToInputs = () => {
+		const s = getCurrentSettings();
+		if (voicevoxPortInput) voicevoxPortInput.value = String(s.voicevoxPort);
+		if (voicevoxNemoPortInput)
+			voicevoxNemoPortInput.value = String(s.voicevoxNemoPort);
+		if (frequencyTopPercentInput)
+			frequencyTopPercentInput.value = String(s.frequencyTopPercent);
+	};
+	applySettingsToInputs();
+
+	const refreshStylesAfterPortChange = () => {
+		clearAudioCache();
+		void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null);
+	};
+
+	if (settingsToggleButton && settingsPanel) {
+		settingsToggleButton.addEventListener("click", () => {
+			const isHidden = settingsPanel.hidden;
+			settingsPanel.hidden = !isHidden;
+			settingsToggleButton.setAttribute("aria-expanded", String(isHidden));
+		});
+	}
+
+	if (voicevoxPortInput) {
+		voicevoxPortInput.addEventListener("change", () => {
+			const port = Number(voicevoxPortInput.value);
+			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
+				setVoicevoxPort(port);
+				refreshStylesAfterPortChange();
+			} else {
+				applySettingsToInputs();
+			}
+		});
+	}
+
+	if (voicevoxNemoPortInput) {
+		voicevoxNemoPortInput.addEventListener("change", () => {
+			const port = Number(voicevoxNemoPortInput.value);
+			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
+				setVoicevoxNemoPort(port);
+				refreshStylesAfterPortChange();
+			} else {
+				applySettingsToInputs();
+			}
+		});
+	}
+
+	if (frequencyTopPercentInput) {
+		frequencyTopPercentInput.addEventListener("change", () => {
+			const pct = Number(frequencyTopPercentInput.value);
+			if (Number.isFinite(pct) && pct >= 0.1 && pct <= 100) {
+				setFrequencyTopPercent(pct);
+			} else {
+				applySettingsToInputs();
+			}
+		});
+	}
+
+	if (settingsResetButton) {
+		settingsResetButton.addEventListener("click", () => {
+			resetSettings();
+			applySettingsToInputs();
+			refreshStylesAfterPortChange();
+		});
+	}
+
+	const applyStyleSelection = (styleId: number) => {
+		setSelectedStyleId(styleId);
+		if (styleSelect) {
+			styleSelect.value = String(styleId);
+		}
+		populateSpeakerStyleSelect(speakerStyleSelect, styleId);
+	};
+	const applyRandomStyleSelection = () => {
+		const randomStyleId = selectRandomStyleId();
+		applyStyleSelection(randomStyleId);
+		return randomStyleId;
+	};
+
+	if (loopCheckboxEl) {
+		loopCheckboxEl.addEventListener("change", () => {
+			if (
+				loopCheckboxEl.checked &&
+				!appState.isProcessing &&
+				!isPlaybackActive() &&
+				!isPlayRequestPending()
+			) {
+				void handlePlay();
+			}
+		});
+	}
+
+	setStyleChangeHandler((styleId) => {
+		applyStyleSelection(styleId);
+	});
+
+	if (playButton) {
+		playButton.addEventListener("click", handlePlayButtonClick);
+		setPlayButtonAppearance("play");
+		playButton.focus();
+	}
+
+	if (textArea) {
+		textArea.addEventListener("input", scheduleAutoPlay);
+	}
+
+	if (exportButton) {
+		exportButton.addEventListener("click", downloadLastAudio);
+		updateExportButtonState(exportButton);
+	}
+
+	if (styleSelect) {
+		populateStyleSelect(styleSelect);
+		styleSelect.addEventListener("change", () => {
+			const parsed = Number(styleSelect.value);
+			if (!Number.isNaN(parsed)) {
+				applyStyleSelection(parsed);
+				scheduleAutoPlay();
+			}
+		});
+		applyStyleSelection(getSelectedStyleId());
+	}
+
+	if (randomStyleCheckbox) {
+		randomStyleCheckbox.addEventListener("change", () => {
+			if (randomStyleCheckbox.checked) {
+				applyRandomStyleSelection();
+			}
+			scheduleAutoPlay();
+		});
+	}
+
+	if (speakerStyleSelect) {
+		speakerStyleSelect.addEventListener("change", () => {
+			const parsed = Number(speakerStyleSelect.value);
+			if (!Number.isNaN(parsed)) {
+				applyStyleSelection(parsed);
+				scheduleAutoPlay();
+			}
+		});
+	}
+	void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null).then(
+		(success) => {
+			if (success) {
+				showStatus(
+					"ローカルサーバーとの通信成功。音声合成の準備ができました",
+					"success",
+				);
+				scheduleHideStatus(5000);
+			} else {
+				alert("ローカルVOICEVOXサーバーを起動してください");
+			}
+			if (randomStyleCheckbox?.checked) {
+				applyRandomStyleSelection();
+			}
+		},
+	);
+
+	if (delimiterInput) {
+		try {
+			const savedDelimiter = localStorage.getItem(DELIMITER_STORAGE_KEY);
+			if (savedDelimiter !== null) {
+				delimiterInput.value = savedDelimiter;
+			}
+		} catch (error) {
+			console.warn("Failed to restore delimiter config:", error);
+		}
+
+		const saveDelimiter = () => {
+			try {
+				localStorage.setItem(DELIMITER_STORAGE_KEY, delimiterInput.value);
+			} catch (error) {
+				console.warn("Failed to save delimiter config:", error);
+			}
+		};
+		const scheduleSaveDelimiter = () => {
+			if (delimiterSaveTimer !== null) {
+				window.clearTimeout(delimiterSaveTimer);
+			}
+			delimiterSaveTimer = window.setTimeout(
+				saveDelimiter,
+				AUTO_PLAY_DEBOUNCE_MS,
+			);
+		};
+		delimiterInput.addEventListener("input", scheduleSaveDelimiter);
+	}
+
+	if (usageToggleButton && usagePanel) {
+		usageToggleButton.addEventListener("click", () => {
+			const isHidden = usagePanel.hidden;
+			usagePanel.hidden = !isHidden;
+			usageToggleButton.setAttribute("aria-expanded", String(isHidden));
+		});
+	}
+
+	if (favoritesToggleButton && favoritesPanel) {
+		favoritesPanel.hidden = true;
+		favoritesToggleButton.setAttribute("aria-expanded", "false");
+		favoritesToggleButton.addEventListener("click", () => {
+			const isHidden = favoritesPanel.hidden;
+			favoritesPanel.hidden = !isHidden;
+			favoritesToggleButton.setAttribute("aria-expanded", String(isHidden));
+		});
+	}
+
+	initializeTextLists({
+		favoritesList: favoritesListEl,
+		historyList: historyListEl,
+		onSelectText: setTextAndPlay,
+	});
+
+	initializeIntonationElements({
+		canvas: intonationCanvas,
+		timingEl: intonationTimingEl,
+		labelsEl: intonationLabelsEl,
+		maxValueEl: intonationMaxValueEl,
+		minValueEl: intonationMinValueEl,
+		favoritesListEl: intonationFavoritesListEl,
+		loopCheckbox: loopCheckboxEl,
+	});
+
+	const updateSpectrogramScaleLabel = () => {
+		if (spectrogramScaleToggle) {
+			const scale = getSpectrogramScale();
+			const isLogScale = scale === "log";
+			const nextLabel = isLogScale ? "リニアにする" : "対数にする";
+			spectrogramScaleToggle.textContent = nextLabel;
+			spectrogramScaleToggle.setAttribute("aria-pressed", String(isLogScale));
+			spectrogramScaleToggle.setAttribute(
+				"aria-label",
+				`スペクトログラムのスケールを${nextLabel}`,
+			);
+		}
+	};
+
+	if (spectrogramScaleToggle) {
+		updateSpectrogramScaleLabel();
+		spectrogramScaleToggle.addEventListener("click", () => {
+			const nextScale: FrequencyScale =
+				getSpectrogramScale() === "linear" ? "log" : "linear";
+			setSpectrogramScale(nextScale);
+			updateSpectrogramScaleLabel();
+		});
+	}
+
+	const updateIntonationKeyboardToggle = () => {
+		if (intonationKeyboardToggle) {
+			const enabled = getIntonationKeyboardEnabled();
+			intonationKeyboardToggle.textContent = enabled
+				? "キーボード操作: ON"
+				: "キーボード操作: OFF";
+			intonationKeyboardToggle.setAttribute("aria-pressed", String(enabled));
+			intonationKeyboardToggle.setAttribute(
+				"aria-label",
+				enabled ? "キーボード操作を無効にする" : "キーボード操作を有効にする",
+			);
+		}
+	};
+
+	if (intonationKeyboardToggle) {
+		updateIntonationKeyboardToggle();
+		intonationKeyboardToggle.addEventListener("click", () => {
+			setIntonationKeyboardEnabled(!getIntonationKeyboardEnabled());
+			updateIntonationKeyboardToggle();
+			if (getIntonationKeyboardEnabled() && intonationCanvas) {
+				intonationCanvas.focus();
+			}
+			refreshIntonationChart();
+		});
+	}
+
+	if (intonationResetButton) {
+		intonationResetButton.addEventListener("click", () => {
+			resetIntonationToInitial();
+			if (getIntonationKeyboardEnabled() && intonationCanvas) {
+				intonationCanvas.focus();
+			}
+		});
+	}
+
+	if (intonationFavoriteButton) {
+		intonationFavoriteButton.addEventListener("click", () =>
+			saveCurrentIntonationFavorite(getSelectedStyleId()),
+		);
+	}
+
+	if (intonationExpandTop) {
+		intonationExpandTop.addEventListener("click", () =>
+			adjustIntonationScale("top", 2),
+		);
+	}
+	if (intonationShrinkTop) {
+		intonationShrinkTop.addEventListener("click", () =>
+			adjustIntonationScale("top", 0.5),
+		);
+	}
+	if (intonationShrinkBottom) {
+		intonationShrinkBottom.addEventListener("click", () =>
+			adjustIntonationScale("bottom", 0.5),
+		);
+	}
+	if (intonationExpandBottom) {
+		intonationExpandBottom.addEventListener("click", () =>
+			adjustIntonationScale("bottom", 2),
+		);
+	}
+
+	if (intonationCanvas) {
+		intonationCanvas.addEventListener(
+			"pointerdown",
+			handleIntonationPointerDown,
+		);
+		intonationCanvas.addEventListener(
+			"pointermove",
+			handleIntonationPointerMove,
+		);
+		intonationCanvas.addEventListener(
+			"pointerleave",
+			handleIntonationPointerUp,
+		);
+		intonationCanvas.addEventListener(
+			"pointercancel",
+			handleIntonationPointerUp,
+		);
+		intonationCanvas.addEventListener(
+			"lostpointercapture",
+			handleIntonationPointerUp,
+		);
+		intonationCanvas.addEventListener("mousemove", handleIntonationMouseMove);
+		intonationCanvas.addEventListener("mouseleave", handleIntonationMouseLeave);
+		intonationCanvas.addEventListener("focus", () => {
+			refreshIntonationChart();
+		});
+		window.addEventListener("keydown", handleIntonationKeyDown);
+	}
+	window.addEventListener("mouseup", handleIntonationPointerUp);
+	window.addEventListener("pointerup", handleIntonationPointerUp);
+
+	initializeVisualizationCanvases();
+	initializeIntonationCanvas();
+	window.addEventListener("resize", () => {
+		initializeVisualizationCanvases();
+		initializeIntonationCanvas();
+		refreshIntonationChart();
+	});
+});
 
 {% endraw %}
 ```
 
 ## 最近の変更（過去7日間）
 ### コミット履歴:
-21278fd Update issue notes for issue #123
-91c03d7 Add issue note for #123 [auto]
-c85d15a Update project summaries (overview & development status) [auto]
-2178044 Update issue notes for error handling suggestions
-033055b Add issue note for #122 [auto]
-a927642 Add export and import buttons for favorites
-73fb38f Add issue note for #121 [auto]
-6116c0f Clarify keyboard operation mode behavior in issue #120
-0856767 Add issue note for #120 [auto]
-ded1343 Update issue notes for auto-play feature #119
+0bef236 Update issue notes for issue #117
+ce04c3a Merge pull request #134 from cat2151/copilot/fix-a-z-guide-display
+5fad59a fix: move a-z guide below mora text in intonation labels to prevent overlap
+02c0d28 Initial plan
+7bdd001 Merge pull request #133 from cat2151/copilot/refactor-large-files-detection
+703a639 fix: address PR review comments in spectrogramCache.ts and visualization.ts
+67ada71 refactor: split intonation.ts and visualization.ts below 500 lines
+2b33a0b Initial plan
+396e84f Merge pull request #131 from cat2151/copilot/add-settings-button-top-right
+84ae4e3 fix: address PR review comments
 
 ### 変更されたファイル:
-generated-docs/development-status-generated-prompt.md
-generated-docs/development-status.md
-generated-docs/project-overview-generated-prompt.md
-generated-docs/project-overview.md
-issue-notes/121.md
-issue-notes/122.md
-issue-notes/123.md
+.github/check-large-files.toml
+index.html
+issue-notes/110.md
+issue-notes/117.md
+src/audio.ts
+src/config.ts
+src/intonation.ts
+src/intonationDisplay.ts
+src/intonationHandlers.ts
+src/intonationPlayback.ts
+src/main.ts
+src/playback.test.ts
+src/playback.ts
+src/settings.test.ts
+src/settings.ts
+src/styleManager.test.ts
+src/styleManager.ts
+src/styles/base.css
+src/styles/intonation.css
+src/visualization.ts
+src/visualization/fftOverlay.ts
+src/visualization/spectrogramCache.ts
 
 
 ---
-Generated at: 2026-02-20 07:04:37 JST
+Generated at: 2026-03-02 07:01:33 JST
