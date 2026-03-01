@@ -5,7 +5,9 @@ import {
 	handlePlay,
 	handlePlayButtonClick,
 	isPlayRequestPending,
+	setLoopCheckboxElement,
 	setPlayButtonAppearance,
+	setTextAndPlay,
 } from "./playback";
 import { stopActivePlayback } from "./visualization";
 
@@ -135,5 +137,43 @@ describe("handlePlayButtonClick", () => {
 		expect(stopActivePlayback).toHaveBeenCalledTimes(1);
 
 		await playPromise;
+	});
+});
+
+describe("setTextAndPlay", () => {
+	it("stops active playback before scheduling auto-play", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" checked />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const loopCheckbox = document.getElementById(
+			"loopCheckbox",
+		) as HTMLInputElement;
+		setLoopCheckboxElement(loopCheckbox);
+
+		try {
+			vi.useFakeTimers();
+			const playPromise = handlePlay();
+			await vi.runAllTimersAsync();
+
+			setTextAndPlay("new text");
+
+			expect(stopActivePlayback).toHaveBeenCalled();
+			expect(loopCheckbox.checked).toBe(false);
+
+			vi.clearAllTimers();
+			await playPromise;
+		} finally {
+			vi.useRealTimers();
+			setLoopCheckboxElement(null);
+		}
 	});
 });
