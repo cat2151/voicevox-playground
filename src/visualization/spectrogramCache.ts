@@ -89,20 +89,26 @@ export function createSpectrogramImageCache(
 	scale: FrequencyScale,
 ) {
 	if (!window.createImageBitmap) return;
-	window.createImageBitmap(canvas).then((bitmap) => {
-		spectrogramCacheState.cachedImage[scale] = bitmap;
-		const spectrogramCanvas = document.getElementById(
-			"spectrogram",
-		) as HTMLCanvasElement | null;
-		if (spectrogramCanvas && spectrogramCacheState.scale === scale) {
-			const { ctx, width, height } = prepareCanvas(spectrogramCanvas);
-			if (ctx) {
-				ctx.clearRect(0, 0, width, height);
-				ctx.drawImage(bitmap, 0, 0, width, height);
+	window
+		.createImageBitmap(canvas)
+		.then((bitmap) => {
+			spectrogramCacheState.cachedImage[scale] = bitmap;
+			const spectrogramCanvas = document.getElementById(
+				"spectrogram",
+			) as HTMLCanvasElement | null;
+			if (spectrogramCanvas && spectrogramCacheState.scale === scale) {
+				const { ctx, width, height } = prepareCanvas(spectrogramCanvas);
+				if (ctx) {
+					ctx.clearRect(0, 0, width, height);
+					ctx.drawImage(bitmap, 0, 0, width, height);
+				}
+				spectrogramCacheState.needsReset = false;
 			}
-			spectrogramCacheState.needsReset = false;
-		}
-	});
+		})
+		.catch((error) => {
+			console.error("Error creating spectrogram image bitmap:", error);
+			spectrogramCacheState.cachedImage[scale] = null;
+		});
 }
 
 function analyzeAndCacheSpectrogram({
@@ -121,16 +127,16 @@ function analyzeAndCacheSpectrogram({
 	spectrogramCacheState.cachedImage = { linear: null, log: null };
 	void Promise.resolve()
 		.then(async () => {
-			const [linear, log] = await Promise.all([
-				analyzeSpectrogramFrames(decodedBuffer, columnCount),
-				analyzeSpectrogramFrames(decodedBuffer, columnCount),
-			]);
+			const analysis = await analyzeSpectrogramFrames(
+				decodedBuffer,
+				columnCount,
+			);
 			if (spectrogramCacheState.pendingSignature !== analysisSignature) {
 				return;
 			}
 			spectrogramCacheState.cachedData = {
-				linear: { ...linear, signature: analysisSignature },
-				log: { ...log, signature: analysisSignature },
+				linear: { ...analysis, signature: analysisSignature },
+				log: { ...analysis, signature: analysisSignature },
 			};
 			spectrogramCacheState.pendingSignature = null;
 			spectrogramCacheState.needsReset = true;
@@ -182,4 +188,6 @@ export function handleSpectrogramInitialization({
 export function resetSpectrogramCaches() {
 	spectrogramCacheState.cachedData = { linear: null, log: null };
 	spectrogramCacheState.cachedImage = { linear: null, log: null };
+	spectrogramCacheState.pendingSignature = null;
+	spectrogramCacheState.needsReset = false;
 }

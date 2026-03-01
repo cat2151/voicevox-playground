@@ -1,5 +1,5 @@
 import * as Tone from "tone";
-import { FrequencyScale } from "./config";
+import type { FrequencyScale } from "./config";
 import { getColorVariable, invalidateColorVariableCache } from "./status";
 import { prepareCanvas } from "./visualization/canvas";
 import {
