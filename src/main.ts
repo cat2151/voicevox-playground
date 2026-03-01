@@ -44,6 +44,7 @@ import {
   isPlaybackActive,
   setSpectrogramScale,
 } from './visualization';
+import { showStatus, scheduleHideStatus } from './status';
 
 let delimiterSaveTimer: number | null = null;
 
@@ -150,7 +151,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null).then(() => {
+  void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null).then((success) => {
+    if (success) {
+      showStatus('ローカルサーバーとの通信成功。音声合成の準備ができました', 'success');
+      scheduleHideStatus(5000);
+    } else {
+      alert('ローカルVOICEVOXサーバーを起動してください');
+    }
     if (randomStyleCheckbox?.checked) {
       applyRandomStyleSelection();
     }

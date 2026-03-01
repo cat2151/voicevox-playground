@@ -189,9 +189,10 @@ export function populateSpeakerStyleSelect(
 export async function fetchVoiceStyles(
   styleSelect: HTMLSelectElement | null,
   speakerStyleSelect?: HTMLSelectElement | null
-) {
+): Promise<boolean> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let success = false;
 
   try {
     const response = await fetch(`${VOICEVOX_API_BASE}/speakers`, { signal: controller.signal });
@@ -206,6 +207,7 @@ export async function fetchVoiceStyles(
         speakerName: speaker.name,
       }))
     );
+    success = true;
   } catch (error) {
     console.error('Failed to fetch speaker styles:', error);
     if (availableStyles.length === 0) {
@@ -216,4 +218,6 @@ export async function fetchVoiceStyles(
     populateStyleSelect(styleSelect);
     populateSpeakerStyleSelect(speakerStyleSelect ?? null, selectedStyleId);
   }
+
+  return success;
 }

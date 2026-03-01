@@ -15,6 +15,36 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('fetchVoiceStyles', () => {
+  it('returns true when the fetch succeeds', async () => {
+    const fakeResponse = [{ name: 'Tester', styles: [{ id: 10, name: 'ノーマル' }] }];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => fakeResponse }));
+
+    const result = await fetchVoiceStyles(null);
+
+    expect(result).toBe(true);
+  });
+
+  it('returns false when the fetch fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Failed to fetch')));
+
+    const result = await fetchVoiceStyles(null);
+
+    expect(result).toBe(false);
+  });
+
+  it('returns false when the response is not ok', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Server Error' })
+    );
+
+    const result = await fetchVoiceStyles(null);
+
+    expect(result).toBe(false);
+  });
+});
+
 describe('parseDelimiterConfig', () => {
   it('returns null when the delimiter is too short', () => {
     expect(parseDelimiterConfig(' ')).toBeNull();
