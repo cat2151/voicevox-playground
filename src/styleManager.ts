@@ -1,11 +1,10 @@
 import {
 	REQUEST_TIMEOUT_MS,
-	VOICEVOX_API_BASE,
-	VOICEVOX_NEMO_API_BASE,
 	VoiceStyleOption,
 	VoiceVoxSpeaker,
 	ZUNDAMON_SPEAKER_ID,
 } from "./config";
+import { getVoicevoxApiBase, getVoicevoxNemoApiBase } from "./settings";
 
 export type DelimiterConfig = { start: string; end: string };
 export type TextSegment = { text: string; styleId: number };
@@ -40,7 +39,11 @@ function getStyleById(id: number) {
 }
 
 export function getApiBaseForStyleId(styleId: number): string {
-	return getStyleById(styleId)?.apiBase ?? VOICEVOX_API_BASE;
+	const style = getStyleById(styleId);
+	if (!style) return getVoicevoxApiBase();
+	return style.engine === "nemo"
+		? getVoicevoxNemoApiBase()
+		: getVoicevoxApiBase();
 }
 
 function getSpeakerStylesByStyleId(styleId: number) {
@@ -211,11 +214,22 @@ export async function fetchVoiceStyles(
 	styleSelect: HTMLSelectElement | null,
 	speakerStyleSelect?: HTMLSelectElement | null,
 ): Promise<boolean> {
-	const endpoints = [
-		{ url: `${VOICEVOX_API_BASE}/speakers`, apiBase: VOICEVOX_API_BASE },
+	const voicevoxApiBase = getVoicevoxApiBase();
+	const voicevoxNemoApiBase = getVoicevoxNemoApiBase();
+	const endpoints: Array<{
+		url: string;
+		apiBase: string;
+		engine: "voicevox" | "nemo";
+	}> = [
 		{
-			url: `${VOICEVOX_NEMO_API_BASE}/speakers`,
-			apiBase: VOICEVOX_NEMO_API_BASE,
+			url: `${voicevoxApiBase}/speakers`,
+			apiBase: voicevoxApiBase,
+			engine: "voicevox",
+		},
+		{
+			url: `${voicevoxNemoApiBase}/speakers`,
+			apiBase: voicevoxNemoApiBase,
+			engine: "nemo",
 		},
 	];
 
@@ -247,7 +261,7 @@ export async function fetchVoiceStyles(
 
 	for (let i = 0; i < results.length; i++) {
 		const result = results[i];
-		const { url, apiBase } = endpoints[i];
+		const { url, apiBase, engine } = endpoints[i];
 		if (result.status === "fulfilled") {
 			anySuccess = true;
 			const { speakers } = result.value;
@@ -260,6 +274,7 @@ export async function fetchVoiceStyles(
 							name: style.name,
 							speakerName: speaker.name,
 							apiBase,
+							engine,
 						});
 					}
 				}
@@ -280,7 +295,8 @@ export async function fetchVoiceStyles(
 				id: ZUNDAMON_SPEAKER_ID,
 				name: "未取得",
 				speakerName: "デフォルト",
-				apiBase: VOICEVOX_API_BASE,
+				apiBase: getVoicevoxApiBase(),
+				engine: "voicevox",
 			},
 		];
 	}
