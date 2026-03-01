@@ -241,10 +241,17 @@ export async function handlePlay() {
 
 	playRequestPending = true;
 
-	if (hasActiveIntonationQuery(text, getSelectedStyleId())) {
+	const spokenText = segments.map((segment) => segment.text).join("");
+	const intonationStyleId = segments[0]?.styleId ?? getSelectedStyleId();
+
+	if (hasActiveIntonationQuery(spokenText, intonationStyleId)) {
 		try {
+			setPlayButtonAppearance("stop");
+			playButton.disabled = false;
+			updateExportButtonState(exportButton);
 			await playUpdatedIntonation();
 		} finally {
+			setPlayButtonAppearance("play");
 			playRequestPending = false;
 		}
 		if (loopCheckbox?.checked) {

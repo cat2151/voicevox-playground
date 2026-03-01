@@ -170,9 +170,8 @@ export function hasActiveIntonationQuery(
 ): boolean {
 	return (
 		state.currentIntonationQuery !== null &&
-		(state.intonationDirty ||
-			(state.currentIntonationText === currentText &&
-				state.currentIntonationStyleId === currentStyleId))
+		state.currentIntonationText === currentText &&
+		state.currentIntonationStyleId === currentStyleId
 	);
 }
 
