@@ -159,14 +159,21 @@ describe("setTextAndPlay", () => {
 		) as HTMLInputElement;
 		setLoopCheckboxElement(loopCheckbox);
 
-		const playPromise = handlePlay();
-		await new Promise((resolve) => setTimeout(resolve, 0));
+		try {
+			vi.useFakeTimers();
+			const playPromise = handlePlay();
+			await vi.runAllTimersAsync();
 
-		setTextAndPlay("new text");
+			setTextAndPlay("new text");
 
-		expect(stopActivePlayback).toHaveBeenCalled();
-		expect(loopCheckbox.checked).toBe(false);
+			expect(stopActivePlayback).toHaveBeenCalled();
+			expect(loopCheckbox.checked).toBe(false);
 
-		await playPromise;
+			vi.clearAllTimers();
+			await playPromise;
+		} finally {
+			vi.useRealTimers();
+			setLoopCheckboxElement(null);
+		}
 	});
 });
