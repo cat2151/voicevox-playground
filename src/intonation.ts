@@ -13,6 +13,7 @@ import {
   getBaseDisplayRange,
   pitchFromY,
   refreshDisplayRange,
+  updateHoveredLabel,
   updateInitialRangeFromPoints,
 } from './intonationDisplay';
 import {
@@ -35,6 +36,7 @@ export {
   getBaseDisplayRange,
   initializeIntonationCanvas,
   refreshDisplayRange,
+  updateHoveredLabel,
 } from './intonationDisplay';
 export {
   fetchAndRenderIntonation,
@@ -257,6 +259,18 @@ export function handleIntonationPointerUp() {
     state.intonationPlaybackPending = false;
     scheduleIntonationPlayback(playUpdatedIntonation);
   }
+}
+
+export function handleIntonationMouseMove(event: MouseEvent) {
+  if (!state.intonationCanvas || state.intonationPointPositions.length === 0) return;
+  const rect = state.intonationCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const index = findNearestIntonationPoint(x);
+  updateHoveredLabel(index === -1 ? null : index);
+}
+
+export function handleIntonationMouseLeave() {
+  updateHoveredLabel(null);
 }
 
 export function handleIntonationKeyDown(event: KeyboardEvent) {
