@@ -3,7 +3,9 @@ import { AUDIO_CACHE_LIMIT, AUTO_PLAY_DEBOUNCE_MS } from "./config";
 import { addToHistory } from "./textLists";
 import {
 	fetchAndRenderIntonation,
-	isIntonationDirty,
+	hasActiveIntonationQuery,
+	isIntonationActive,
+	playUpdatedIntonation,
 	resetIntonationState,
 } from "./intonation";
 import { appState } from "./state";
@@ -292,7 +294,30 @@ export async function handlePlay() {
 
 	playRequestPending = true;
 
-	if (isIntonationDirty()) {
+	const spokenText = segments.map((segment) => segment.text).join("");
+	const intonationStyleId = segments[0]?.styleId ?? getSelectedStyleId();
+
+	if (hasActiveIntonationQuery(spokenText, intonationStyleId)) {
+		try {
+			setPlayButtonAppearance("stop");
+			playButton.disabled = false;
+			updateExportButtonState(exportButton);
+			await playUpdatedIntonation();
+		} finally {
+			setPlayButtonAppearance("play");
+			playRequestPending = false;
+		}
+		if (loopCheckbox?.checked) {
+			setTimeout(() => {
+				if (loopCheckbox?.checked) {
+					void handlePlay();
+				}
+			}, 0);
+		}
+		return;
+	}
+
+	if (isIntonationActive()) {
 		const shouldReset = await confirmResetIntonationBeforePlay();
 		if (!shouldReset) {
 			playRequestPending = false;

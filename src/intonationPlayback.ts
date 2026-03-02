@@ -177,6 +177,7 @@ export async function fetchAndRenderIntonation(text: string, styleId: number) {
 		state.intonationInitialQuery = cloneAudioQuery(query);
 		state.currentIntonationQuery = cloneAudioQuery(query);
 		state.currentIntonationStyleId = styleId;
+		state.currentIntonationText = text;
 		state.intonationPoints = buildIntonationPointsFromQuery(query);
 		state.intonationTopScale = 1;
 		state.intonationBottomScale = 1;

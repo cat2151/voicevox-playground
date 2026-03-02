@@ -110,6 +110,7 @@ export function resetIntonationState() {
 	state.intonationRangeExtra = { top: 0, bottom: 0 };
 	state.intonationStepSize = 1;
 	state.currentIntonationQuery = null;
+	state.currentIntonationText = null;
 	state.intonationPoints = [];
 	state.intonationPointPositions = [];
 	state.intonationSelectedIndex = null;
@@ -161,6 +162,21 @@ export function initializeIntonationElements(options: {
 
 export function isIntonationDirty() {
 	return state.intonationDirty;
+}
+
+export function isIntonationActive() {
+	return state.currentIntonationQuery !== null;
+}
+
+export function hasActiveIntonationQuery(
+	currentText: string,
+	currentStyleId: number,
+): boolean {
+	return (
+		state.currentIntonationQuery !== null &&
+		state.currentIntonationText === currentText &&
+		state.currentIntonationStyleId === currentStyleId
+	);
 }
 
 export function setIntonationKeyboardEnabled(enabled: boolean) {
@@ -250,6 +266,7 @@ export function applyIntonationFavorite(item: IntonationFavorite) {
 	}
 	state.onStyleChange?.(item.styleId);
 	state.currentIntonationStyleId = item.styleId;
+	state.currentIntonationText = item.text;
 	state.intonationInitialQuery = cloneAudioQuery(item.query);
 	state.currentIntonationQuery = cloneAudioQuery(item.query);
 	state.intonationPoints = buildIntonationPointsFromQuery(
