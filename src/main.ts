@@ -16,12 +16,6 @@ import { initializeTextLists } from "./textLists";
 import {
 	adjustIntonationScale,
 	getIntonationKeyboardEnabled,
-	handleIntonationKeyDown,
-	handleIntonationMouseLeave,
-	handleIntonationMouseMove,
-	handleIntonationPointerDown,
-	handleIntonationPointerMove,
-	handleIntonationPointerUp,
 	initializeIntonationCanvas,
 	initializeIntonationElements,
 	refreshIntonationChart,
@@ -29,6 +23,7 @@ import {
 	saveCurrentIntonationFavorite,
 	setIntonationKeyboardEnabled,
 	setStyleChangeHandler,
+	setupIntonationCanvasEvents,
 } from "./intonation";
 import { appState } from "./state";
 import { updateExportButtonState } from "./uiControls";
@@ -461,36 +456,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		);
 	}
 
-	if (intonationCanvas) {
-		intonationCanvas.addEventListener(
-			"pointerdown",
-			handleIntonationPointerDown,
-		);
-		intonationCanvas.addEventListener(
-			"pointermove",
-			handleIntonationPointerMove,
-		);
-		intonationCanvas.addEventListener(
-			"pointerleave",
-			handleIntonationPointerUp,
-		);
-		intonationCanvas.addEventListener(
-			"pointercancel",
-			handleIntonationPointerUp,
-		);
-		intonationCanvas.addEventListener(
-			"lostpointercapture",
-			handleIntonationPointerUp,
-		);
-		intonationCanvas.addEventListener("mousemove", handleIntonationMouseMove);
-		intonationCanvas.addEventListener("mouseleave", handleIntonationMouseLeave);
-		intonationCanvas.addEventListener("focus", () => {
-			refreshIntonationChart();
-		});
-		window.addEventListener("keydown", handleIntonationKeyDown);
-	}
-	window.addEventListener("mouseup", handleIntonationPointerUp);
-	window.addEventListener("pointerup", handleIntonationPointerUp);
+	setupIntonationCanvasEvents(intonationCanvas);
 
 	initializeVisualizationCanvases();
 	initializeIntonationCanvas();

@@ -14,7 +14,7 @@ import {
 	updateInitialRangeFromPoints,
 } from "./intonationDisplay";
 import { playUpdatedIntonation } from "./intonationPlayback";
-export {
+import {
 	handleIntonationKeyDown,
 	handleIntonationMouseLeave,
 	handleIntonationMouseMove,
@@ -22,6 +22,14 @@ export {
 	handleIntonationPointerMove,
 	handleIntonationPointerUp,
 } from "./intonationHandlers";
+export {
+	handleIntonationKeyDown,
+	handleIntonationMouseLeave,
+	handleIntonationMouseMove,
+	handleIntonationPointerDown,
+	handleIntonationPointerMove,
+	handleIntonationPointerUp,
+};
 
 export type { RangeExtra } from "./intonationState";
 export {
@@ -313,4 +321,22 @@ export function saveCurrentIntonationFavorite(selectedStyleId: number) {
 export function refreshIntonationChart() {
 	refreshDisplayRange();
 	drawIntonationChart(state.intonationPoints);
+}
+
+export function setupIntonationCanvasEvents(canvas: HTMLCanvasElement | null) {
+	if (canvas) {
+		canvas.addEventListener("pointerdown", handleIntonationPointerDown);
+		canvas.addEventListener("pointermove", handleIntonationPointerMove);
+		canvas.addEventListener("pointerleave", handleIntonationPointerUp);
+		canvas.addEventListener("pointercancel", handleIntonationPointerUp);
+		canvas.addEventListener("lostpointercapture", handleIntonationPointerUp);
+		canvas.addEventListener("mousemove", handleIntonationMouseMove);
+		canvas.addEventListener("mouseleave", handleIntonationMouseLeave);
+		canvas.addEventListener("focus", () => {
+			refreshIntonationChart();
+		});
+		window.addEventListener("keydown", handleIntonationKeyDown);
+	}
+	window.addEventListener("mouseup", handleIntonationPointerUp);
+	window.addEventListener("pointerup", handleIntonationPointerUp);
 }
