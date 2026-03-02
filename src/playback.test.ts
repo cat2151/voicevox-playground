@@ -39,7 +39,9 @@ vi.mock("./textLists", () => ({
 vi.mock("./intonation", () => ({
 	fetchAndRenderIntonation: vi.fn(),
 	hasActiveIntonationQuery: vi.fn(() => false),
+	isIntonationActive: vi.fn(() => false),
 	playUpdatedIntonation: vi.fn(async () => {}),
+	resetIntonationState: vi.fn(),
 }));
 
 vi.mock("./uiControls", () => ({
@@ -206,5 +208,83 @@ describe("handlePlay with active intonation", () => {
 		expect(getAudioQuery).not.toHaveBeenCalled();
 
 		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
+	});
+
+	it("shows confirm dialog and resets intonation when intonation is active but text changed", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+      <div id="playConfirmDialog" hidden>
+        <button id="playConfirmReset"></button>
+        <button id="playConfirmCancel"></button>
+      </div>
+    `;
+
+		const { isIntonationActive, resetIntonationState } = await import(
+			"./intonation"
+		);
+		vi.mocked(isIntonationActive).mockReturnValue(true);
+
+		const playPromise = handlePlay();
+
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		const resetButton = document.getElementById(
+			"playConfirmReset",
+		) as HTMLButtonElement;
+		resetButton.click();
+
+		// Wait for synthesis to start then stop it so playPromise resolves
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		handlePlayButtonClick();
+
+		await playPromise;
+
+		expect(resetIntonationState).toHaveBeenCalledTimes(1);
+
+		vi.mocked(isIntonationActive).mockReturnValue(false);
+	});
+
+	it("cancels playback when user declines the intonation reset dialog", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+      <div id="playConfirmDialog" hidden>
+        <button id="playConfirmReset"></button>
+        <button id="playConfirmCancel"></button>
+      </div>
+    `;
+
+		const { isIntonationActive, resetIntonationState } = await import(
+			"./intonation"
+		);
+		const { getAudioQuery } = await import("./audio");
+		vi.mocked(isIntonationActive).mockReturnValue(true);
+
+		const playPromise = handlePlay();
+
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		const cancelButton = document.getElementById(
+			"playConfirmCancel",
+		) as HTMLButtonElement;
+		cancelButton.click();
+
+		await playPromise;
+
+		expect(resetIntonationState).not.toHaveBeenCalled();
+		expect(getAudioQuery).not.toHaveBeenCalled();
 	});
 });

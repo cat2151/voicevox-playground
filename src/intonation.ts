@@ -164,6 +164,10 @@ export function isIntonationDirty() {
 	return state.intonationDirty;
 }
 
+export function isIntonationActive() {
+	return state.currentIntonationQuery !== null;
+}
+
 export function hasActiveIntonationQuery(
 	currentText: string,
 	currentStyleId: number,
