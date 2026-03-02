@@ -1,11 +1,13 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
 	calculateLetterKeyAdjustment,
 	calculateStepSize,
 	clampRangeExtra,
+	hasActiveIntonationQuery,
 } from "./intonation";
+import { intonationState } from "./intonationState";
 
 describe("calculateStepSize", () => {
 	it("returns one tenth of the initial pitch span", () => {
@@ -71,5 +73,60 @@ describe("clampRangeExtra", () => {
 		const clamped = clampRangeExtra(desired, baseRange, dataRange);
 		expect(clamped.top).toBeCloseTo(-0.5);
 		expect(clamped.bottom).toBeCloseTo(-2);
+	});
+});
+
+describe("hasActiveIntonationQuery", () => {
+	const stubQuery = {} as NonNullable<
+		typeof intonationState.currentIntonationQuery
+	>;
+
+	afterEach(() => {
+		intonationState.currentIntonationQuery = null;
+		intonationState.currentIntonationText = null;
+		intonationState.currentIntonationStyleId = 0;
+		intonationState.intonationDirty = false;
+	});
+
+	it("returns false when there is no current query", () => {
+		intonationState.currentIntonationQuery = null;
+		expect(hasActiveIntonationQuery("text", 1)).toBe(false);
+	});
+
+	it("returns true when text and style match", () => {
+		intonationState.currentIntonationQuery = stubQuery;
+		intonationState.currentIntonationText = "hello";
+		intonationState.currentIntonationStyleId = 1;
+		expect(hasActiveIntonationQuery("hello", 1)).toBe(true);
+	});
+
+	it("returns false when text mismatches even if style matches", () => {
+		intonationState.currentIntonationQuery = stubQuery;
+		intonationState.currentIntonationText = "hello";
+		intonationState.currentIntonationStyleId = 1;
+		expect(hasActiveIntonationQuery("different", 1)).toBe(false);
+	});
+
+	it("returns false when style mismatches even if text matches", () => {
+		intonationState.currentIntonationQuery = stubQuery;
+		intonationState.currentIntonationText = "hello";
+		intonationState.currentIntonationStyleId = 1;
+		expect(hasActiveIntonationQuery("hello", 2)).toBe(false);
+	});
+
+	it("returns false when dirty but text/style mismatch", () => {
+		intonationState.currentIntonationQuery = stubQuery;
+		intonationState.currentIntonationText = "hello";
+		intonationState.currentIntonationStyleId = 1;
+		intonationState.intonationDirty = true;
+		expect(hasActiveIntonationQuery("different", 2)).toBe(false);
+	});
+
+	it("returns true when dirty and text/style match", () => {
+		intonationState.currentIntonationQuery = stubQuery;
+		intonationState.currentIntonationText = "hello";
+		intonationState.currentIntonationStyleId = 1;
+		intonationState.intonationDirty = true;
+		expect(hasActiveIntonationQuery("hello", 1)).toBe(true);
 	});
 });

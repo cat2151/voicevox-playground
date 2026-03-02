@@ -35,6 +35,7 @@ export interface IntonationState {
 	currentIntonationStyleId: number;
 	currentIntonationQuery: AudioQuery | null;
 	intonationDirty: boolean;
+	currentIntonationText: string | null;
 	intonationFavorites: IntonationFavorite[];
 	onStyleChange: ((styleId: number) => void) | null;
 	wheelHandlerAttached: boolean;
@@ -70,6 +71,7 @@ export const intonationState: IntonationState = {
 	currentIntonationStyleId: ZUNDAMON_SPEAKER_ID,
 	currentIntonationQuery: null,
 	intonationDirty: false,
+	currentIntonationText: null,
 	intonationFavorites: [],
 	onStyleChange: null,
 	wheelHandlerAttached: false,
