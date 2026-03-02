@@ -1,50 +1,53 @@
-Last updated: 2026-03-02
+Last updated: 2026-03-03
 
 # Development Status
 
 ## 現在のIssues
-- `src/main.ts`ファイルが500行を超過しており、リファクタリングの検討が推奨されています ([Issue #136](../issue-notes/136.md))。
-- イントネーション編集後や再生時に、意図せずイントネーションがリセットされてしまう問題 ([Issue #117](../issue-notes/117.md), [Issue #135](../issue-notes/135.md)) の修正が進行中です。
-- キーボード操作モードでのtextarea編集時に発生する意図しない動作 ([Issue #120](../issue-notes/120.md)) や、イントネーション付きお気に入りのエクスポート・インポート機能追加 ([Issue #121](../issue-notes/121.md)) が検討されています。
+- [Issue #138](../issue-notes/138.md): セリフtextarea内で区切り文字によるスタイル変更がある場合、イントネーション変更時にスタイルが無効化されユーザーが混乱するため、イントネーション編集を不可にする方針です。
+- [Issue #121](../issue-notes/121.md): イントネーション付きお気に入りのエクスポート・インポート機能を追加し、ローカルストレージの内容をまとめて扱えるようにします。
+- [Issue #120](../issue-notes/120.md): キーボード操作モードON時にtextarea編集で発生する意図しないキー動作を抑制し、SHIFT+ENTER/CTRL+ENTERを再生キーとして統一することで操作性を改善します。
 
 ## 次の一手候補
-1. `src/main.ts`の設定関連ロジックを分離し、ファイルサイズを削減する ([Issue #136](../issue-notes/136.md))
-   - 最初の小さな一歩: `src/main.ts`内の設定関連のUI要素初期化とイベントリスナー登録部分を`src/settings.ts`へ移動することを検討し、その影響を分析する。
+1. [Issue #138](../issue-notes/138.md) セリフスタイル変更時のイントネーション編集挙動改善
+   - 最初の小さな一歩: `src/intonation.ts`または`src/intonationUtils.ts`に、セリフテキスト内にスタイル変更の区切り文字が存在するかを判定する関数を実装し、その判定ロジックを確立する。
    - Agent実行プロンプト:
      ```
-     対象ファイル: `src/main.ts`, `src/settings.ts`
+     対象ファイル: src/intonation.ts, src/intonationUtils.ts, src/main.ts
 
-     実行内容: `src/main.ts`から設定関連のUI要素（`settingsToggleButton`, `voicevoxPortInput`など）の初期化とイベントリスナー登録のロジックを抽出し、`src/settings.ts`に移動するための変更計画を立案してください。特に、`applySettingsToInputs`関数および関連する依存関係を考慮してください。
+     実行内容: `src/main.ts`内のセリフテキスト処理ロジックを分析し、セリフテキストにスタイル変更の区切り文字（例: 「_」や「|」）が含まれているかを判定するユーティリティ関数`hasStyleDelimiter(text: string): boolean`を`src/intonationUtils.ts`に実装してください。この関数はブーリアン値を返すべきです。`src/main.ts`において、この関数を使ってセリフテキストのスタイル区切り文字の有無を判定し、イントネーション編集エリアの活性状態を制御するための準備として、この判定結果をどこかの状態変数に格納する、またはログ出力する、といった形で統合案を示してください。
 
-     確認事項: `src/settings.ts`の既存機能との整合性、および移動後の`src/main.ts`からの呼び出し方法を確認してください。既存のテストが影響を受けないかも検証してください。
+     確認事項: スタイル変更の区切り文字の定義（例: `_` や `|`）を正確に特定し、既存のテキスト解析ロジックと衝突しないことを確認してください。また、将来的にイントネーション編集エリアの表示制御に影響を与える可能性のある`src/intonationDisplay.ts`との関連性も考慮し、影響範囲を最小限に抑えるよう設計してください。
 
-     期待する出力: 提案される変更内容、新しい関数やメソッドの定義、`src/main.ts`と`src/settings.ts`の具体的な修正箇所を示すmarkdown形式の計画書。
+     期待する出力: `src/intonationUtils.ts`に追加される新しいユーティリティ関数のコードと、その関数を`src/main.ts`から呼び出し、判定結果を統合するための変更案をMarkdown形式で提示してください。
      ```
 
-2. キーボード操作モード時のtextarea編集における意図しない動作を修正する ([Issue #120](../issue-notes/120.md))
-   - 最初の小さな一歩: `src/main.ts`と`src/intonationHandlers.ts`において、テキストエリアがフォーカスされている際に、キーボード操作モードの特定のキーイベントを無視し、SHIFT+ENTER/CTRL+ENTERでの再生機能を実装する準備として、現在のキーイベント処理の流れを分析する。
+2. [Issue #121](../issue-notes/121.md) イントネーション付きお気に入りのexport/import機能追加
+   - 最初の小さな一歩: `src/settings.ts`内でお気に入りデータを`localStorage`から読み込み、JSON文字列としてエクスポートする基本的な関数と、JSON文字列を受け取って`localStorage`に保存するインポート関数を実装する。
    - Agent実行プロンプト:
      ```
-     対象ファイル: `src/main.ts`, `src/intonationHandlers.ts`, `src/playback.ts`
+     対象ファイル: src/settings.ts, src/uiControls.ts
 
-     実行内容: キーボード操作モードがONの際に、`textarea`要素がフォーカスされている場合、アルファベットキー(a-z)やSpace/Enterキーがイントネーション操作に影響を与えないようにする変更プランを立案してください。また、SHIFT+ENTERまたはCTRL+ENTERで常に再生がトリガーされるようにする変更プランも含めてください。
+     実行内容: イントネーション付きお気に入りデータが`localStorage`にどのように保存されているかを`src/settings.ts`内で分析し、そのデータをJSON形式でエクスポートする関数`exportFavorites(): string`と、JSON文字列を受け取って`localStorage`に保存する関数`importFavorites(data: string): void`を`src/settings.ts`に追加してください。これらの関数は、既存のお気に入りデータ管理ロジック（例: `saveFavorites`, `loadFavorites`など）と連携し、複数のお気に入りをまとめて扱えるように設計してください。
 
-     確認事項: `handleIntonationKeyDown`の既存の挙動を破壊しないこと。`textarea`のキーイベントと`window`のキーイベントの優先順位と伝播を明確にしてください。
+     確認事項: 既存のお気に入り機能が使用している`localStorage`キーとデータ構造を正確に特定し、他の設定と競合しないことを確認してください。エクスポートされるJSONの形式が、インポート時に適切に再構築できるものであることを確認してください。
 
-     期待する出力: キーイベントの処理フロー図と、具体的なコード修正案（どのファイルにどのコードを追加・変更するか）をmarkdown形式で示してください。
+     期待する出力: `src/settings.ts`に追加される`exportFavorites`および`importFavorites`関数のコードをMarkdown形式で生成してください。
      ```
 
-3. イントネーション付きお気に入りのエクスポート機能を実装する ([Issue #121](../issue-notes/121.md))
-   - 最初の小さな一歩: イントネーション付きお気に入りのデータを`local storage`から取得し、JSON形式で出力するexport機能のUIとロジックの実装計画を立てる。
+3. [Issue #120](../issue-notes/120.md) キーボード操作モードON時のtextarea編集改善
+   - 最初の小さな一歩: `src/main.ts`または`src/uiControls.ts`内でキーボードイベントリスナーが設定されている箇所を特定し、textarea要素がフォーカスされている場合に'a'から'z'、スペース、Enterキーのデフォルト動作を阻止する`event.preventDefault()`を追加する。
    - Agent実行プロンプト:
      ```
-     対象ファイル: `src/main.ts`, `src/intonation.ts`, `src/intonationState.ts`, `index.html`
+     対象ファイル: src/main.ts, src/uiControls.ts, src/config.ts
 
-     実行内容: イントネーション付きお気に入りをJSON形式でエクスポートする機能の実装計画を立案してください。具体的には、`index.html`にエクスポートボタンを追加し、`src/main.ts`でそのイベントリスナーを登録、`src/intonation.ts`または`src/intonationState.ts`でお気に入りデータを`localStorage`から取得し、JSON文字列としてファイルに保存するロジックを検討してください。
+     実行内容: `src/main.ts`や`src/uiControls.ts`内で定義されている主要なキーボードイベントリスナーを分析し、以下の改修案を提示してください。
+     1. 現在フォーカスされている要素が`<textarea>`であるかを判定するロジックを組み込みます。
+     2. キーボード操作モードがONの場合でも、`<textarea>`がアクティブな際には、'a'から'z'のキー、'Space'キー、'Enter'キーのデフォルト動作（例: テキスト入力や改行）を`event.preventDefault()`で阻止します。
+     3. SHIFT+ENTERおよびCTRL+ENTERのキーイベントを再生アクションに統一するためのイベントハンドリングの変更を検討し、具体的なコードスニペットで示してください。
 
-     確認事項: 既存のお気に入り保存/ロードロジックとの整合性を確保してください。エクスポートされるJSONのデータ形式を明確にしてください。
+     確認事項: `src/config.ts`で定義されている既存のキーボードショートカットや、他の重要なキーボードイベントハンドラーが意図せず無効化されないことを確認してください。特に、`isKeyboardModeEnabled()`のようなキーボード操作モードの状態判定ロジックが適切に利用されているかを確認してください。
 
-     期待する出力: `index.html`へのHTML要素追加、`src/main.ts`でのイベントリスナー登録、`src/intonation.ts`または`src/intonationState.ts`での新規関数定義と実装案をmarkdown形式で示してください。
+     期待する出力: 既存のキーボードイベント処理に加えるべき変更点を、関連するコードスニペットと説明を加えてMarkdown形式で記述してください。
 
 ---
-Generated at: 2026-03-02 07:01:52 JST
+Generated at: 2026-03-03 07:04:49 JST

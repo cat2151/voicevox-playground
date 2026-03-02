@@ -1,4 +1,4 @@
-Last updated: 2026-03-02
+Last updated: 2026-03-03
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -197,7 +197,7 @@ Last updated: 2026-03-02
 - .github/actions-tmp/issue-notes/4.md
 - .github/actions-tmp/issue-notes/40.md
 - .github/actions-tmp/issue-notes/44.md
-- .github/actions-tmp/issue-notes/46.md
+- .github/actions-tmp/issue-notes/49.md
 - .github/actions-tmp/issue-notes/7.md
 - .github/actions-tmp/issue-notes/8.md
 - .github/actions-tmp/issue-notes/9.md
@@ -231,7 +231,7 @@ Last updated: 2026-03-02
 - issue-notes/121.md
 - issue-notes/122.md
 - issue-notes/123.md
-- issue-notes/127.md
+- issue-notes/138.md
 - issue-notes/22.md
 - issue-notes/23.md
 - issue-notes/24.md
@@ -254,7 +254,6 @@ Last updated: 2026-03-02
 - issue-notes/89.md
 - issue-notes/92.md
 - issue-notes/97.md
-- issue-notes/99.md
 - package-lock.json
 - package.json
 - src/audio.ts
@@ -298,39 +297,36 @@ Last updated: 2026-03-02
 - vite.config.ts
 
 ## 現在のオープンIssues
-## [Issue #136](../issue-notes/136.md): 大きなファイルの検出: 1個のファイルが500行を超えています
-以下のファイルが500行を超えています。リファクタリングを検討してください。
+## [Issue #138](../issue-notes/138.md): セリフtextarea内で区切り文字を使ってstyleを変更している場合、イントネーションを変更したときの挙動がわかりづらくてuserが混乱した
+[issue-notes/138.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/138.md)
 
-## 検出されたファイル
-
-| ファイル | 行数 | 超過行数 |
-|---------|------|----------|
-| `src/main.ts` | 502 | +2 |
-
-## テスト実施のお願い
-
-- リファクタリング前後にテストを実行し、それぞれのテスト失敗件数を報告してください
-- リファクタリング前後のどちらかでテストがredの場合、まず別issueでtest greenにしてからリファクタリングしてください
-
-## 推奨事項
-
-1. ファイルを機能ごとに分割する
-2. 共通ロジックを別モ...
-ラベル: refactoring, code-quality, automated
---- issue-notes/136.md の内容 ---
-
-```markdown
-
-```
-
-## [Issue #135](../issue-notes/135.md): Fix: play button preserves active intonation instead of silently resetting it
-- [x] Understand the issue: pressing play button resets intonation without warning after editing or applying favorites
-- [x] Add `currentIntonationText` tracking to `intonationState`
-- [x] Set `currentIntonationText` in `fetchAndRenderIntonation()` and `applyIntonationFavorite()`; clear in reset fun...
+...
 ラベル: 
---- issue-notes/135.md の内容 ---
+--- issue-notes/138.md の内容 ---
 
 ```markdown
+# issue セリフtextarea内で区切り文字を使ってstyleを変更している場合、イントネーションを変更したときの挙動がわかりづらくてuserが混乱した #138
+[issues #138](https://github.com/cat2151/voicevox-playground/issues/138)
+
+# これまでの課題
+## 挙動
+- セリフtextarea内で区切り文字を使ってstyleを変更している場合、
+- イントネーション編集エリアでイントネーションを変更すると、
+- styleが、textarea先頭のstyleで固定される。つまり、区切り文字を使って変更したstyle、が無効化される
+## 問題
+- これはuserが混乱する
+
+# 対策
+- セリフ内でstyleを変更したときは、イントネーション編集不可にする
+    - メリットは最もシンプル
+        - かつuser混乱を防止できる
+
+# 不採用にした案（参考）
+- セリフ内でstyleを変更したときは、style変更前までのイントネーションのみ編集できる
+    - メリットはシンプル
+    - 不採用の理由：ニーズとアウトカムに対して開発コストが大きく、オーバーエンジニアリングである、と判断する
+- style変更による分割も、イントネーション編集欄で可視化して、複数のイントネーションをそれぞれ編集できる
+    - 不採用の理由：ニーズとアウトカムに対して開発コストが大きく、オーバーエンジニアリングである、と判断する
 
 ```
 
@@ -365,23 +361,6 @@ Last updated: 2026-03-02
 - 対策
     - textarea編集時は、キーボード操作モードonであっても、キーボード操作onモード特有のキー（a-zやspaceとenter）を素通りさせる
     - かわりに、キーボード操作モードon/offに関わらず、どの状況であっても、SHIFT+ENTERとCTRL+ENTERを、playキーとする
-
-```
-
-## [Issue #117](../issue-notes/117.md): イントネーション編集後や、イントネーション付きお気に入りを再生したあと、playボタンを押すと、警告なしにイントネーションが初期化されてしまう
-[issue-notes/117.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/117.md)
-
-...
-ラベル: 
---- issue-notes/117.md の内容 ---
-
-```markdown
-# issue イントネーション編集後や、イントネーション付きお気に入りを再生したあと、playボタンを押すと、警告なしにイントネーションが初期化されてしまう #117
-[issues #117](https://github.com/cat2151/voicevox-playground/issues/117)
-
-- userがほしいのは、その状況であれば、イントネーションを維持したまま再生、である
-
-- 類似の不具合として、ループ再生チェックボックスonのまま、イントネーション付きお気に入りを再生したときも、イントネーションが初期化された状態で再生されてしまう
 
 ```
 
@@ -647,48 +626,6 @@ Last updated: 2026-03-02
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/17.md
-```md
-{% raw %}
-# issue development-status が生成したmdに誤りがある。issue-note へのlinkがURL誤りで、404となってしまう #17
-[issues #17](https://github.com/cat2151/github-actions/issues/17)
-
-# 事例
-- 生成したmdのURL：
-    - https://github.com/cat2151/github-actions/blob/main/generated-docs/development-status.md
-- そのmdをGitHub上でdecodeして閲覧したときのURL、404である：
-    - https://github.com/cat2151/github-actions/blob/main/generated-docs/issue-notes/16.md
-- そのmdに実際に含まれるURL：
-    - issue-notes/16.md
-- あるべきURL：
-    - https://github.com/cat2151/github-actions/blob/main/issue-notes/16.md
-- あるべきURLがmdにどう含まれているべきか：
-    - ../issue-notes/16.md
-
-# どうする？
-- 案
-    - promptを修正する
-    - promptの場所は：
-        - .github_automation/project_summary/scripts/development/DevelopmentStatusGenerator.cjs
-    - 備考、cjs内にpromptがハードコーディングされており、promptをメンテしづらいので別途対処する : [issues #18](https://github.com/cat2151/github-actions/issues/18)
-
-# 結果
-- agentにpromptを投げた
-    - ※promptは、development-statusで生成したもの
-- レビューした
-    - agentがフルパスで実装した、ことがわかった
-- userが分析し、 ../ のほうが適切と判断した
-    - ※「事例」コーナーを、あわせて修正した
-- そのように指示してagentに修正させた
-- testする
-
-# 結果
-- test green
-- closeする
-
-{% endraw %}
-```
-
 ### .github/actions-tmp/issue-notes/20.md
 ```md
 {% raw %}
@@ -906,27 +843,21 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/35.md
+### .github/actions-tmp/issue-notes/38.md
 ```md
 {% raw %}
-# issue issue-notes作成時に、既存のnotesを調査して不要note削除を行うようにする。clean up #35
-[issues #35](https://github.com/cat2151/github-actions/issues/35)
+# issue PR 36 と PR 37 を取り込んだあと、存在しないissueでワークフローがエラー終了してしまった #38
+[issues #38](https://github.com/cat2151/github-actions/issues/38)
 
-# 定義：
-- 紐付くissueがある
-    - issueがopen中である → 必要note。PRを進めるために必要。
-    - issueがcloseされた
-        - noteの中身が、先頭2行だけで、あとは空である → 不要note。closeされたが、空っぽのnoteである。
-        - noteの中身が、上記以外である → 必要note。closeされて、issueの履歴としてナレッジとなるnoteである。
-- 紐付くissueがない
-    - noteの中身が、先頭2行だけで、あとは空である → 不要note。issueが削除されたし、空っぽのnoteである。
-    - noteの中身が、上記以外である → 必要note。issueが削除されたが、issueの履歴としてナレッジとなるnoteである。
+# URL
 
-# なぜこのワークフローymlで実施するの？
-- 利用者の利用コストを下げるため。
-- もし別ワークフローymlだと、全てのリポジトリに新たにワークフローymlが追加となり、導入初期コストが高い。
-- 別ワークフローにするメリットが小さい
-- 位置づけとしては、issue-noteのメンテは、このワークフローで行う、として許容範囲内である、と考える
+- https://github.com/cat2151/wavlpf/actions/runs/21907996164/job/63253441830
+
+# 実現したいこと
+
+- issueが存在しないのは想定したことであるから、エラー終了にはしない。可用性を維持する。
+  - それはそれとして、想定しないできごとが発生した場合は、fail fastする
+    - 今回は「想定したできごとなので、fail fastしない」
 
 {% endraw %}
 ```
@@ -939,6 +870,85 @@ env: で値を渡し、process.env で参照するのが正しい
 
 - 生成できた
 - closeとする
+
+{% endraw %}
+```
+
+### .github/actions-tmp/issue-notes/8.md
+```md
+{% raw %}
+# issue 関数コールグラフhtmlビジュアライズ生成の対象ソースファイルを、呼び出し元ymlで指定できるようにする #8
+[issues #8](https://github.com/cat2151/github-actions/issues/8)
+
+# これまでの課題
+- 以下が決め打ちになっていた
+```
+  const allowedFiles = [
+    'src/main.js',
+    'src/mml2json.js',
+    'src/play.js'
+  ];
+```
+
+# 対策
+- 呼び出し元ymlで指定できるようにする
+
+# agent
+- agentにやらせることができれば楽なので、初手agentを試した
+- 失敗
+    - ハルシネーションしてscriptを大量破壊した
+- 分析
+    - 修正対象scriptはagentが生成したもの
+    - 低品質な生成結果でありソースが巨大
+    - ハルシネーションで破壊されやすいソース
+    - AIの生成したソースは、必ずしもAIフレンドリーではない
+
+# 人力リファクタリング
+- 低品質コードを、最低限agentが扱えて、ハルシネーションによる大量破壊を防止できる内容、にする
+- 手短にやる
+    - そもそもビジュアライズは、agentに雑に指示してやらせたもので、
+    - 今後別のビジュアライザを選ぶ可能性も高い
+    - 今ここで手間をかけすぎてコンコルド効果（サンクコストバイアス）を増やすのは、project群をトータルで俯瞰して見たとき、損
+- 対象
+    - allowedFiles のあるソース
+        - callgraph-utils.cjs
+            - たかだか300行未満のソースである
+            - この程度でハルシネーションされるのは予想外
+            - やむなし、リファクタリングでソース分割を進める
+
+# agentに修正させる
+## prompt
+```
+allowedFilesを引数で受け取るようにしたいです。
+ないならエラー。
+最終的に呼び出し元すべてに波及して修正したいです。
+
+呼び出し元をたどってエントリポイントも見つけて、
+エントリポイントにおいては、
+引数で受け取ったjsonファイル名 allowedFiles.js から
+jsonファイル allowedFiles.jsonの内容をreadして
+変数 allowedFilesに格納、
+後続処理に引き渡す、としたいです。
+
+まずplanしてください。
+planにおいては、修正対象のソースファイル名と関数名を、呼び出し元を遡ってすべて特定し、listしてください。
+```
+
+# 修正が順調にできた
+- コマンドライン引数から受け取る作りになっていなかったので、そこだけ指示して修正させた
+- yml側は人力で修正した
+
+# 他のリポジトリから呼び出した場合にバグらないよう修正する
+- 気付いた
+    - 共通ワークフローとして他のリポジトリから使った場合はバグるはず。
+        - ymlから、共通ワークフロー側リポジトリのcheckoutが漏れているので。
+- 他のyml同様に修正する
+- あわせて全体にymlをリファクタリングし、修正しやすくし、今後のyml読み書きの学びにしやすくする
+
+# local WSL + act : test green
+
+# closeとする
+- もし生成されたhtmlがNGの場合は、別issueとするつもり
 
 {% endraw %}
 ```
@@ -1005,19 +1015,6 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### issue-notes/117.md
-```md
-{% raw %}
-# issue イントネーション編集後や、イントネーション付きお気に入りを再生したあと、playボタンを押すと、警告なしにイントネーションが初期化されてしまう #117
-[issues #117](https://github.com/cat2151/voicevox-playground/issues/117)
-
-- userがほしいのは、その状況であれば、イントネーションを維持したまま再生、である
-
-- 類似の不具合として、ループ再生チェックボックスonのまま、イントネーション付きお気に入りを再生したときも、イントネーションが初期化された状態で再生されてしまう
-
-{% endraw %}
-```
-
 ### issue-notes/120.md
 ```md
 {% raw %}
@@ -1044,6 +1041,35 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
+### issue-notes/138.md
+```md
+{% raw %}
+# issue セリフtextarea内で区切り文字を使ってstyleを変更している場合、イントネーションを変更したときの挙動がわかりづらくてuserが混乱した #138
+[issues #138](https://github.com/cat2151/voicevox-playground/issues/138)
+
+# これまでの課題
+## 挙動
+- セリフtextarea内で区切り文字を使ってstyleを変更している場合、
+- イントネーション編集エリアでイントネーションを変更すると、
+- styleが、textarea先頭のstyleで固定される。つまり、区切り文字を使って変更したstyle、が無効化される
+## 問題
+- これはuserが混乱する
+
+# 対策
+- セリフ内でstyleを変更したときは、イントネーション編集不可にする
+    - メリットは最もシンプル
+        - かつuser混乱を防止できる
+
+# 不採用にした案（参考）
+- セリフ内でstyleを変更したときは、style変更前までのイントネーションのみ編集できる
+    - メリットはシンプル
+    - 不採用の理由：ニーズとアウトカムに対して開発コストが大きく、オーバーエンジニアリングである、と判断する
+- style変更による分割も、イントネーション編集欄で可視化して、複数のイントネーションをそれぞれ編集できる
+    - 不採用の理由：ニーズとアウトカムに対して開発コストが大きく、オーバーエンジニアリングである、と判断する
+
+{% endraw %}
+```
+
 ### issue-notes/97.md
 ```md
 {% raw %}
@@ -1055,552 +1081,38 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### src/main.ts
-```ts
-{% raw %}
-import "./styles.css";
-import {
-	AUTO_PLAY_DEBOUNCE_MS,
-	DELIMITER_STORAGE_KEY,
-	FrequencyScale,
-} from "./config";
-import {
-	getCurrentSettings,
-	loadSettings,
-	resetSettings,
-	setFrequencyTopPercent,
-	setVoicevoxNemoPort,
-	setVoicevoxPort,
-} from "./settings";
-import { initializeTextLists } from "./textLists";
-import {
-	adjustIntonationScale,
-	getIntonationKeyboardEnabled,
-	handleIntonationKeyDown,
-	handleIntonationMouseLeave,
-	handleIntonationMouseMove,
-	handleIntonationPointerDown,
-	handleIntonationPointerMove,
-	handleIntonationPointerUp,
-	initializeIntonationCanvas,
-	initializeIntonationElements,
-	refreshIntonationChart,
-	resetIntonationToInitial,
-	saveCurrentIntonationFavorite,
-	setIntonationKeyboardEnabled,
-	setStyleChangeHandler,
-} from "./intonation";
-import { appState } from "./state";
-import { updateExportButtonState } from "./uiControls";
-import {
-	clearAudioCache,
-	downloadLastAudio,
-	handlePlay,
-	handlePlayButtonClick,
-	isPlayRequestPending,
-	scheduleAutoPlay,
-	setLoopCheckboxElement,
-	setPlayButtonAppearance,
-	setTextAndPlay,
-} from "./playback";
-import {
-	fetchVoiceStyles,
-	getSelectedStyleId,
-	populateStyleSelect,
-	populateSpeakerStyleSelect,
-	selectRandomStyleId,
-	setSelectedStyleId,
-} from "./styleManager";
-import {
-	getSpectrogramScale,
-	initializeVisualizationCanvases,
-	isPlaybackActive,
-	setSpectrogramScale,
-} from "./visualization";
-import { showStatus, scheduleHideStatus } from "./status";
-
-let delimiterSaveTimer: number | null = null;
-
-document.addEventListener("DOMContentLoaded", () => {
-	loadSettings();
-	const playButton = document.getElementById(
-		"playButton",
-	) as HTMLButtonElement | null;
-	const textArea = document.getElementById(
-		"text",
-	) as HTMLTextAreaElement | null;
-	const exportButton = document.getElementById(
-		"exportButton",
-	) as HTMLButtonElement | null;
-	const usageToggleButton = document.getElementById(
-		"usageToggleButton",
-	) as HTMLButtonElement | null;
-	const usagePanel = document.getElementById("usagePanel");
-	const spectrogramScaleToggle = document.getElementById(
-		"spectrogramScaleToggle",
-	) as HTMLButtonElement | null;
-	const styleSelect = document.getElementById(
-		"styleSelect",
-	) as HTMLSelectElement | null;
-	const speakerStyleSelect = document.getElementById(
-		"speakerStyleSelect",
-	) as HTMLSelectElement | null;
-	const delimiterInput = document.getElementById(
-		"delimiterInput",
-	) as HTMLInputElement | null;
-	const randomStyleCheckbox = document.getElementById(
-		"randomStyleCheckbox",
-	) as HTMLInputElement | null;
-	const favoritesToggleButton = document.getElementById(
-		"favoritesToggleButton",
-	) as HTMLButtonElement | null;
-	const favoritesPanel = document.getElementById("favoritesPanel");
-	const favoritesListEl = document.getElementById(
-		"favoritesList",
-	) as HTMLUListElement | null;
-	const historyListEl = document.getElementById(
-		"historyList",
-	) as HTMLUListElement | null;
-	const intonationFavoritesListEl = document.getElementById(
-		"intonationFavoritesList",
-	) as HTMLUListElement | null;
-	const intonationCanvas = document.getElementById(
-		"intonationCanvas",
-	) as HTMLCanvasElement | null;
-	const intonationTimingEl = null;
-	const intonationLabelsEl = document.getElementById("intonationLabels");
-	const intonationMaxValueEl = document.getElementById("intonationMaxValue");
-	const intonationMinValueEl = document.getElementById("intonationMinValue");
-	const intonationExpandTop = document.getElementById(
-		"intonationExpandTop",
-	) as HTMLButtonElement | null;
-	const intonationShrinkTop = document.getElementById(
-		"intonationShrinkTop",
-	) as HTMLButtonElement | null;
-	const intonationShrinkBottom = document.getElementById(
-		"intonationShrinkBottom",
-	) as HTMLButtonElement | null;
-	const intonationExpandBottom = document.getElementById(
-		"intonationExpandBottom",
-	) as HTMLButtonElement | null;
-	const intonationKeyboardToggle = document.getElementById(
-		"intonationKeyboardToggle",
-	) as HTMLButtonElement | null;
-	const intonationResetButton = document.getElementById(
-		"intonationResetButton",
-	) as HTMLButtonElement | null;
-	const intonationFavoriteButton = document.getElementById(
-		"intonationFavoriteButton",
-	) as HTMLButtonElement | null;
-	const loopCheckboxEl = document.getElementById(
-		"loopCheckbox",
-	) as HTMLInputElement | null;
-	setLoopCheckboxElement(loopCheckboxEl);
-
-	const settingsToggleButton = document.getElementById(
-		"settingsToggleButton",
-	) as HTMLButtonElement | null;
-	const settingsPanel = document.getElementById("settingsPanel");
-	const voicevoxPortInput = document.getElementById(
-		"voicevoxPortInput",
-	) as HTMLInputElement | null;
-	const voicevoxNemoPortInput = document.getElementById(
-		"voicevoxNemoPortInput",
-	) as HTMLInputElement | null;
-	const frequencyTopPercentInput = document.getElementById(
-		"frequencyTopPercentInput",
-	) as HTMLInputElement | null;
-	const settingsResetButton = document.getElementById(
-		"settingsResetButton",
-	) as HTMLButtonElement | null;
-
-	const applySettingsToInputs = () => {
-		const s = getCurrentSettings();
-		if (voicevoxPortInput) voicevoxPortInput.value = String(s.voicevoxPort);
-		if (voicevoxNemoPortInput)
-			voicevoxNemoPortInput.value = String(s.voicevoxNemoPort);
-		if (frequencyTopPercentInput)
-			frequencyTopPercentInput.value = String(s.frequencyTopPercent);
-	};
-	applySettingsToInputs();
-
-	const refreshStylesAfterPortChange = () => {
-		clearAudioCache();
-		void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null);
-	};
-
-	if (settingsToggleButton && settingsPanel) {
-		settingsToggleButton.addEventListener("click", () => {
-			const isHidden = settingsPanel.hidden;
-			settingsPanel.hidden = !isHidden;
-			settingsToggleButton.setAttribute("aria-expanded", String(isHidden));
-		});
-	}
-
-	if (voicevoxPortInput) {
-		voicevoxPortInput.addEventListener("change", () => {
-			const port = Number(voicevoxPortInput.value);
-			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
-				setVoicevoxPort(port);
-				refreshStylesAfterPortChange();
-			} else {
-				applySettingsToInputs();
-			}
-		});
-	}
-
-	if (voicevoxNemoPortInput) {
-		voicevoxNemoPortInput.addEventListener("change", () => {
-			const port = Number(voicevoxNemoPortInput.value);
-			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
-				setVoicevoxNemoPort(port);
-				refreshStylesAfterPortChange();
-			} else {
-				applySettingsToInputs();
-			}
-		});
-	}
-
-	if (frequencyTopPercentInput) {
-		frequencyTopPercentInput.addEventListener("change", () => {
-			const pct = Number(frequencyTopPercentInput.value);
-			if (Number.isFinite(pct) && pct >= 0.1 && pct <= 100) {
-				setFrequencyTopPercent(pct);
-			} else {
-				applySettingsToInputs();
-			}
-		});
-	}
-
-	if (settingsResetButton) {
-		settingsResetButton.addEventListener("click", () => {
-			resetSettings();
-			applySettingsToInputs();
-			refreshStylesAfterPortChange();
-		});
-	}
-
-	const applyStyleSelection = (styleId: number) => {
-		setSelectedStyleId(styleId);
-		if (styleSelect) {
-			styleSelect.value = String(styleId);
-		}
-		populateSpeakerStyleSelect(speakerStyleSelect, styleId);
-	};
-	const applyRandomStyleSelection = () => {
-		const randomStyleId = selectRandomStyleId();
-		applyStyleSelection(randomStyleId);
-		return randomStyleId;
-	};
-
-	if (loopCheckboxEl) {
-		loopCheckboxEl.addEventListener("change", () => {
-			if (
-				loopCheckboxEl.checked &&
-				!appState.isProcessing &&
-				!isPlaybackActive() &&
-				!isPlayRequestPending()
-			) {
-				void handlePlay();
-			}
-		});
-	}
-
-	setStyleChangeHandler((styleId) => {
-		applyStyleSelection(styleId);
-	});
-
-	if (playButton) {
-		playButton.addEventListener("click", handlePlayButtonClick);
-		setPlayButtonAppearance("play");
-		playButton.focus();
-	}
-
-	if (textArea) {
-		textArea.addEventListener("input", scheduleAutoPlay);
-	}
-
-	if (exportButton) {
-		exportButton.addEventListener("click", downloadLastAudio);
-		updateExportButtonState(exportButton);
-	}
-
-	if (styleSelect) {
-		populateStyleSelect(styleSelect);
-		styleSelect.addEventListener("change", () => {
-			const parsed = Number(styleSelect.value);
-			if (!Number.isNaN(parsed)) {
-				applyStyleSelection(parsed);
-				scheduleAutoPlay();
-			}
-		});
-		applyStyleSelection(getSelectedStyleId());
-	}
-
-	if (randomStyleCheckbox) {
-		randomStyleCheckbox.addEventListener("change", () => {
-			if (randomStyleCheckbox.checked) {
-				applyRandomStyleSelection();
-			}
-			scheduleAutoPlay();
-		});
-	}
-
-	if (speakerStyleSelect) {
-		speakerStyleSelect.addEventListener("change", () => {
-			const parsed = Number(speakerStyleSelect.value);
-			if (!Number.isNaN(parsed)) {
-				applyStyleSelection(parsed);
-				scheduleAutoPlay();
-			}
-		});
-	}
-	void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null).then(
-		(success) => {
-			if (success) {
-				showStatus(
-					"ローカルサーバーとの通信成功。音声合成の準備ができました",
-					"success",
-				);
-				scheduleHideStatus(5000);
-			} else {
-				alert("ローカルVOICEVOXサーバーを起動してください");
-			}
-			if (randomStyleCheckbox?.checked) {
-				applyRandomStyleSelection();
-			}
-		},
-	);
-
-	if (delimiterInput) {
-		try {
-			const savedDelimiter = localStorage.getItem(DELIMITER_STORAGE_KEY);
-			if (savedDelimiter !== null) {
-				delimiterInput.value = savedDelimiter;
-			}
-		} catch (error) {
-			console.warn("Failed to restore delimiter config:", error);
-		}
-
-		const saveDelimiter = () => {
-			try {
-				localStorage.setItem(DELIMITER_STORAGE_KEY, delimiterInput.value);
-			} catch (error) {
-				console.warn("Failed to save delimiter config:", error);
-			}
-		};
-		const scheduleSaveDelimiter = () => {
-			if (delimiterSaveTimer !== null) {
-				window.clearTimeout(delimiterSaveTimer);
-			}
-			delimiterSaveTimer = window.setTimeout(
-				saveDelimiter,
-				AUTO_PLAY_DEBOUNCE_MS,
-			);
-		};
-		delimiterInput.addEventListener("input", scheduleSaveDelimiter);
-	}
-
-	if (usageToggleButton && usagePanel) {
-		usageToggleButton.addEventListener("click", () => {
-			const isHidden = usagePanel.hidden;
-			usagePanel.hidden = !isHidden;
-			usageToggleButton.setAttribute("aria-expanded", String(isHidden));
-		});
-	}
-
-	if (favoritesToggleButton && favoritesPanel) {
-		favoritesPanel.hidden = true;
-		favoritesToggleButton.setAttribute("aria-expanded", "false");
-		favoritesToggleButton.addEventListener("click", () => {
-			const isHidden = favoritesPanel.hidden;
-			favoritesPanel.hidden = !isHidden;
-			favoritesToggleButton.setAttribute("aria-expanded", String(isHidden));
-		});
-	}
-
-	initializeTextLists({
-		favoritesList: favoritesListEl,
-		historyList: historyListEl,
-		onSelectText: setTextAndPlay,
-	});
-
-	initializeIntonationElements({
-		canvas: intonationCanvas,
-		timingEl: intonationTimingEl,
-		labelsEl: intonationLabelsEl,
-		maxValueEl: intonationMaxValueEl,
-		minValueEl: intonationMinValueEl,
-		favoritesListEl: intonationFavoritesListEl,
-		loopCheckbox: loopCheckboxEl,
-	});
-
-	const updateSpectrogramScaleLabel = () => {
-		if (spectrogramScaleToggle) {
-			const scale = getSpectrogramScale();
-			const isLogScale = scale === "log";
-			const nextLabel = isLogScale ? "リニアにする" : "対数にする";
-			spectrogramScaleToggle.textContent = nextLabel;
-			spectrogramScaleToggle.setAttribute("aria-pressed", String(isLogScale));
-			spectrogramScaleToggle.setAttribute(
-				"aria-label",
-				`スペクトログラムのスケールを${nextLabel}`,
-			);
-		}
-	};
-
-	if (spectrogramScaleToggle) {
-		updateSpectrogramScaleLabel();
-		spectrogramScaleToggle.addEventListener("click", () => {
-			const nextScale: FrequencyScale =
-				getSpectrogramScale() === "linear" ? "log" : "linear";
-			setSpectrogramScale(nextScale);
-			updateSpectrogramScaleLabel();
-		});
-	}
-
-	const updateIntonationKeyboardToggle = () => {
-		if (intonationKeyboardToggle) {
-			const enabled = getIntonationKeyboardEnabled();
-			intonationKeyboardToggle.textContent = enabled
-				? "キーボード操作: ON"
-				: "キーボード操作: OFF";
-			intonationKeyboardToggle.setAttribute("aria-pressed", String(enabled));
-			intonationKeyboardToggle.setAttribute(
-				"aria-label",
-				enabled ? "キーボード操作を無効にする" : "キーボード操作を有効にする",
-			);
-		}
-	};
-
-	if (intonationKeyboardToggle) {
-		updateIntonationKeyboardToggle();
-		intonationKeyboardToggle.addEventListener("click", () => {
-			setIntonationKeyboardEnabled(!getIntonationKeyboardEnabled());
-			updateIntonationKeyboardToggle();
-			if (getIntonationKeyboardEnabled() && intonationCanvas) {
-				intonationCanvas.focus();
-			}
-			refreshIntonationChart();
-		});
-	}
-
-	if (intonationResetButton) {
-		intonationResetButton.addEventListener("click", () => {
-			resetIntonationToInitial();
-			if (getIntonationKeyboardEnabled() && intonationCanvas) {
-				intonationCanvas.focus();
-			}
-		});
-	}
-
-	if (intonationFavoriteButton) {
-		intonationFavoriteButton.addEventListener("click", () =>
-			saveCurrentIntonationFavorite(getSelectedStyleId()),
-		);
-	}
-
-	if (intonationExpandTop) {
-		intonationExpandTop.addEventListener("click", () =>
-			adjustIntonationScale("top", 2),
-		);
-	}
-	if (intonationShrinkTop) {
-		intonationShrinkTop.addEventListener("click", () =>
-			adjustIntonationScale("top", 0.5),
-		);
-	}
-	if (intonationShrinkBottom) {
-		intonationShrinkBottom.addEventListener("click", () =>
-			adjustIntonationScale("bottom", 0.5),
-		);
-	}
-	if (intonationExpandBottom) {
-		intonationExpandBottom.addEventListener("click", () =>
-			adjustIntonationScale("bottom", 2),
-		);
-	}
-
-	if (intonationCanvas) {
-		intonationCanvas.addEventListener(
-			"pointerdown",
-			handleIntonationPointerDown,
-		);
-		intonationCanvas.addEventListener(
-			"pointermove",
-			handleIntonationPointerMove,
-		);
-		intonationCanvas.addEventListener(
-			"pointerleave",
-			handleIntonationPointerUp,
-		);
-		intonationCanvas.addEventListener(
-			"pointercancel",
-			handleIntonationPointerUp,
-		);
-		intonationCanvas.addEventListener(
-			"lostpointercapture",
-			handleIntonationPointerUp,
-		);
-		intonationCanvas.addEventListener("mousemove", handleIntonationMouseMove);
-		intonationCanvas.addEventListener("mouseleave", handleIntonationMouseLeave);
-		intonationCanvas.addEventListener("focus", () => {
-			refreshIntonationChart();
-		});
-		window.addEventListener("keydown", handleIntonationKeyDown);
-	}
-	window.addEventListener("mouseup", handleIntonationPointerUp);
-	window.addEventListener("pointerup", handleIntonationPointerUp);
-
-	initializeVisualizationCanvases();
-	initializeIntonationCanvas();
-	window.addEventListener("resize", () => {
-		initializeVisualizationCanvases();
-		initializeIntonationCanvas();
-		refreshIntonationChart();
-	});
-});
-
-{% endraw %}
-```
-
 ## 最近の変更（過去7日間）
 ### コミット履歴:
-0bef236 Update issue notes for issue #117
-ce04c3a Merge pull request #134 from cat2151/copilot/fix-a-z-guide-display
-5fad59a fix: move a-z guide below mora text in intonation labels to prevent overlap
-02c0d28 Initial plan
-7bdd001 Merge pull request #133 from cat2151/copilot/refactor-large-files-detection
-703a639 fix: address PR review comments in spectrogramCache.ts and visualization.ts
-67ada71 refactor: split intonation.ts and visualization.ts below 500 lines
-2b33a0b Initial plan
-396e84f Merge pull request #131 from cat2151/copilot/add-settings-button-top-right
-84ae4e3 fix: address PR review comments
+33810c3 Update issue notes for confusion with intonation changes
+4182788 Add issue note for #138 [auto]
+3ee5d59 Merge pull request #137 from cat2151/copilot/refactor-large-file-in-src
+8a6f14f refactor: extract intonation canvas event setup from main.ts into intonation.ts
+02301e5 Initial plan
+9e4a729 Merge pull request #135 from cat2151/copilot/fix-intonation-reset-issue
+6b8b492 fix: restore dialog for text-changed case; play from cache when intonation matches
+beb4372 Update project summaries (overview & development status) [auto]
+bbcf904 fix: address review comments on hasActiveIntonationQuery and play button state
+fb8f2da fix: preserve intonation when play button is pressed instead of resetting it
 
 ### 変更されたファイル:
-.github/check-large-files.toml
-index.html
-issue-notes/110.md
+generated-docs/development-status-generated-prompt.md
+generated-docs/development-status.md
+generated-docs/project-overview-generated-prompt.md
+generated-docs/project-overview.md
 issue-notes/117.md
-src/audio.ts
-src/config.ts
+issue-notes/127.md
+issue-notes/138.md
+issue-notes/99.md
+src/intonation.test.ts
 src/intonation.ts
 src/intonationDisplay.ts
-src/intonationHandlers.ts
 src/intonationPlayback.ts
+src/intonationState.ts
 src/main.ts
 src/playback.test.ts
 src/playback.ts
-src/settings.test.ts
-src/settings.ts
-src/styleManager.test.ts
-src/styleManager.ts
-src/styles/base.css
 src/styles/intonation.css
-src/visualization.ts
-src/visualization/fftOverlay.ts
-src/visualization/spectrogramCache.ts
 
 
 ---
-Generated at: 2026-03-02 07:01:33 JST
+Generated at: 2026-03-03 07:04:34 JST

@@ -1,4 +1,4 @@
-Last updated: 2026-03-02
+Last updated: 2026-03-03
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -186,7 +186,7 @@ npm run preview
   📖 121.md
   📖 122.md
   📖 123.md
-  📖 127.md
+  📖 138.md
   📖 22.md
   📖 23.md
   📖 24.md
@@ -209,7 +209,6 @@ npm run preview
   📖 89.md
   📖 92.md
   📖 97.md
-  📖 99.md
 📊 package-lock.json
 📊 package.json
 📁 src/
@@ -268,12 +267,12 @@ npm run preview
   - 関数: なし
   - インポート: なし
 
-**src/intonation.test.ts** (76行, 2412バイト)
+**src/intonation.test.ts** (133行, 4537バイト)
   - 関数: なし
-  - インポート: vitest
+  - インポート: vitest, ./intonationState
 
-**src/intonation.ts** (300行, 8633バイト)
-  - 関数: dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, for, catch, if
+**src/intonation.ts** (343行, 10114バイト)
+  - 関数: dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, isIntonationActive, hasActiveIntonationQuery, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, setupIntonationCanvasEvents, for, catch, if
   - インポート: ./status, ./intonationState, ./intonationUtils
 
 **src/intonationDisplay.ts** (430行, 12497バイト)
@@ -284,11 +283,11 @@ npm run preview
   - 関数: disableLoopOnIntonationEdit, applyPitchToQuery, applyPitchEdit, handleIntonationPointerDown, handleIntonationPointerMove, handleIntonationPointerUp, handleIntonationMouseMove, handleIntonationMouseLeave, handleIntonationKeyDown, if
   - インポート: ./intonationState
 
-**src/intonationPlayback.ts** (214行, 6723バイト)
+**src/intonationPlayback.ts** (215行, 6761バイト)
   - 関数: scheduleIntonationPlayback, replayCachedIntonationAudio, showPlaybackStatus, playUpdatedIntonation, fetchAndRenderIntonation, resetIntonationToInitial, if, catch
   - インポート: tone, ./config, ./audio
 
-**src/intonationState.ts** (86行, 2723バイト)
+**src/intonationState.ts** (88行, 2792バイト)
   - 関数: updateIntonationTiming, if
   - インポート: なし
 
@@ -296,15 +295,15 @@ npm run preview
   - 関数: isValidAudioQueryShape, cloneAudioQuery
   - インポート: ./config
 
-**src/main.ts** (503行, 14382バイト)
+**src/main.ts** (469行, 13360バイト)
   - 関数: applySettingsToInputs, refreshStylesAfterPortChange, applyStyleSelection, applyRandomStyleSelection, saveDelimiter, scheduleSaveDelimiter, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, catch
   - インポート: ./textLists, ./state, ./uiControls
 
-**src/playback.test.ts** (181行, 4855バイト)
+**src/playback.test.ts** (291行, 8499バイト)
   - 関数: なし
   - インポート: vitest, ./visualization
 
-**src/playback.ts** (433行, 12037バイト)
+**src/playback.ts** (458行, 12679バイト)
   - 関数: clearAudioCache, setLoopCheckboxElement, setPlayButtonAppearance, isPlayRequestPending, stopPlaybackAndResetLoop, getAudioCacheKey, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, confirmResetIntonationBeforePlay, handlePlayButtonClick, handlePlay, clearRealtimeWaveformCanvas, triggerPlay, cleanup, handleReset, handleCancel, if, for, catch
   - インポート: tone, ./config, ./textLists
 
@@ -427,6 +426,8 @@ npm run preview
       - setStyleChangeHandler ()
       - initializeIntonationElements ()
       - isIntonationDirty ()
+      - isIntonationActive ()
+      - hasActiveIntonationQuery ()
       - setIntonationKeyboardEnabled ()
       - getIntonationKeyboardEnabled ()
       - renderIntonationFavoritesList ()
@@ -434,6 +435,7 @@ npm run preview
       - applyIntonationFavorite ()
       - saveCurrentIntonationFavorite ()
       - refreshIntonationChart ()
+      - setupIntonationCanvasEvents ()
       - refreshDisplayRange ()
       - ensureWheelHandler ()
       - updateInitialRangeFromPoints ()
@@ -618,7 +620,7 @@ issue-notes/120.md
 issue-notes/121.md
 issue-notes/122.md
 issue-notes/123.md
-issue-notes/127.md
+issue-notes/138.md
 issue-notes/22.md
 issue-notes/23.md
 issue-notes/24.md
@@ -642,4 +644,4 @@ package-lock.json
 
 
 ---
-Generated at: 2026-03-02 07:01:33 JST
+Generated at: 2026-03-03 07:04:34 JST
