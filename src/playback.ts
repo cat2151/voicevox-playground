@@ -296,8 +296,14 @@ export async function handlePlay() {
 
 	const spokenText = segments.map((segment) => segment.text).join("");
 	const intonationStyleId = segments[0]?.styleId ?? getSelectedStyleId();
+	const hasMultipleStyles = segments.some(
+		(seg) => seg.styleId !== segments[0]?.styleId,
+	);
 
-	if (hasActiveIntonationQuery(spokenText, intonationStyleId)) {
+	if (
+		!hasMultipleStyles &&
+		hasActiveIntonationQuery(spokenText, intonationStyleId)
+	) {
 		try {
 			setPlayButtonAppearance("stop");
 			playButton.disabled = false;
@@ -318,10 +324,12 @@ export async function handlePlay() {
 	}
 
 	if (isIntonationActive()) {
-		const shouldReset = await confirmResetIntonationBeforePlay();
-		if (!shouldReset) {
-			playRequestPending = false;
-			return;
+		if (!hasMultipleStyles) {
+			const shouldReset = await confirmResetIntonationBeforePlay();
+			if (!shouldReset) {
+				playRequestPending = false;
+				return;
+			}
 		}
 		resetIntonationState();
 	}
@@ -411,9 +419,11 @@ export async function handlePlay() {
 			return;
 		}
 		appState.lastSpectrogramSignature = currentSignature;
-		const spokenText = segments.map((segment) => segment.text).join("");
-		const intonationStyleId = segments[0]?.styleId ?? getSelectedStyleId();
-		await fetchAndRenderIntonation(spokenText, intonationStyleId);
+		if (hasMultipleStyles) {
+			resetIntonationState();
+		} else {
+			await fetchAndRenderIntonation(spokenText, intonationStyleId);
+		}
 		addToHistory(text);
 
 		showStatus("再生完了！", "success");
