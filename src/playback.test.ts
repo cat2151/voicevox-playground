@@ -321,7 +321,7 @@ describe("handlePlay with multiple styles", () => {
 		await handlePlay();
 
 		expect(fetchAndRenderIntonation).not.toHaveBeenCalled();
-		expect(resetIntonationState).toHaveBeenCalledTimes(1);
+		expect(resetIntonationState).not.toHaveBeenCalled();
 	});
 
 	it("silently resets active intonation without confirmation dialog when switching to multi-style", async () => {
@@ -352,11 +352,15 @@ describe("handlePlay with multiple styles", () => {
 		]);
 		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
 
+		const confirmSpy = vi.spyOn(window, "confirm");
+
 		await handlePlay();
 
-		expect(resetIntonationState).toHaveBeenCalledTimes(2); // once before playback (silent reset of active intonation), once after playback (clear canvas for multi-style)
+		expect(resetIntonationState).toHaveBeenCalled();
 		expect(fetchAndRenderIntonation).not.toHaveBeenCalled();
+		expect(confirmSpy).not.toHaveBeenCalled();
 
+		confirmSpy.mockRestore();
 		vi.mocked(isIntonationActive).mockReturnValue(false);
 	});
 });

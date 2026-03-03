@@ -295,9 +295,10 @@ export async function handlePlay() {
 	playRequestPending = true;
 
 	const spokenText = segments.map((segment) => segment.text).join("");
-	const intonationStyleId = segments[0]?.styleId ?? getSelectedStyleId();
+	const firstStyleId = segments[0].styleId;
+	const intonationStyleId = firstStyleId;
 	const hasMultipleStyles = segments.some(
-		(seg) => seg.styleId !== segments[0]?.styleId,
+		(seg) => seg.styleId !== firstStyleId,
 	);
 
 	if (
@@ -419,9 +420,7 @@ export async function handlePlay() {
 			return;
 		}
 		appState.lastSpectrogramSignature = currentSignature;
-		if (hasMultipleStyles) {
-			resetIntonationState();
-		} else {
+		if (!hasMultipleStyles) {
 			await fetchAndRenderIntonation(spokenText, intonationStyleId);
 		}
 		addToHistory(text);
