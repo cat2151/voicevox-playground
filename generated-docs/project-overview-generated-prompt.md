@@ -1,4 +1,4 @@
-Last updated: 2026-03-03
+Last updated: 2026-03-05
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -187,6 +187,8 @@ npm run preview
   📖 122.md
   📖 123.md
   📖 138.md
+  📖 140.md
+  📖 141.md
   📖 22.md
   📖 23.md
   📖 24.md
@@ -621,6 +623,8 @@ issue-notes/121.md
 issue-notes/122.md
 issue-notes/123.md
 issue-notes/138.md
+issue-notes/140.md
+issue-notes/141.md
 issue-notes/22.md
 issue-notes/23.md
 issue-notes/24.md
@@ -630,8 +634,6 @@ issue-notes/27.md
 issue-notes/30.md
 issue-notes/45.md
 issue-notes/56.md
-issue-notes/62.md
-issue-notes/64.md
 package-lock.json
 
 上記の情報を基に、プロンプトで指定された形式でプロジェクト概要を生成してください。
@@ -644,4 +646,4 @@ package-lock.json
 
 
 ---
-Generated at: 2026-03-03 07:04:34 JST
+Generated at: 2026-03-05 07:04:19 JST
