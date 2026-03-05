@@ -288,3 +288,79 @@ describe("handlePlay with active intonation", () => {
 		expect(getAudioQuery).not.toHaveBeenCalled();
 	});
 });
+
+describe("handlePlay with multiple styles", () => {
+	it("resets intonation state and skips intonation fetch when multiple styles are used", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello world</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const {
+			isIntonationActive,
+			fetchAndRenderIntonation,
+			resetIntonationState,
+		} = await import("./intonation");
+		const { buildTextSegments } = await import("./styleManager");
+		const { playAudio } = await import("./visualization");
+
+		vi.mocked(isIntonationActive).mockReturnValue(false);
+		vi.mocked(buildTextSegments).mockReturnValueOnce([
+			{ text: "hello", styleId: 1 },
+			{ text: " world", styleId: 2 },
+		]);
+		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
+
+		await handlePlay();
+
+		expect(fetchAndRenderIntonation).not.toHaveBeenCalled();
+		expect(resetIntonationState).not.toHaveBeenCalled();
+	});
+
+	it("silently resets active intonation without confirmation dialog when switching to multi-style", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello world</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const {
+			isIntonationActive,
+			fetchAndRenderIntonation,
+			resetIntonationState,
+		} = await import("./intonation");
+		const { buildTextSegments } = await import("./styleManager");
+		const { playAudio } = await import("./visualization");
+
+		vi.mocked(isIntonationActive).mockReturnValue(true);
+		vi.mocked(buildTextSegments).mockReturnValueOnce([
+			{ text: "hello", styleId: 1 },
+			{ text: " world", styleId: 2 },
+		]);
+		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
+
+		const confirmSpy = vi.spyOn(window, "confirm");
+
+		await handlePlay();
+
+		expect(resetIntonationState).toHaveBeenCalled();
+		expect(fetchAndRenderIntonation).not.toHaveBeenCalled();
+		expect(confirmSpy).not.toHaveBeenCalled();
+
+		confirmSpy.mockRestore();
+		vi.mocked(isIntonationActive).mockReturnValue(false);
+	});
+});
