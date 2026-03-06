@@ -7,7 +7,7 @@ import {
 	clampRangeExtra,
 	hasActiveIntonationQuery,
 } from "./intonation";
-import { intonationState } from "./intonationState";
+import { intonationState } from "./intonation/state";
 
 describe("calculateStepSize", () => {
 	it("returns one tenth of the initial pitch span", () => {

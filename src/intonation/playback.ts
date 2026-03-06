@@ -1,25 +1,22 @@
 import * as Tone from "tone";
-import { INTONATION_DEBOUNCE_MS } from "./config";
-import { getAudioQuery, synthesize } from "./audio";
-import { showStatus, scheduleHideStatus } from "./status";
+import { INTONATION_DEBOUNCE_MS } from "../config";
+import { getAudioQuery, synthesize } from "../audio";
+import { showStatus, scheduleHideStatus } from "../status";
 import {
 	initializeVisualizationCanvases,
 	drawRenderedWaveform,
 	playAudio,
-} from "./visualization";
-import { appState } from "./state";
-import { updateExportButtonState } from "./uiControls";
-import {
-	intonationState as state,
-	updateIntonationTiming,
-} from "./intonationState";
-import { cloneAudioQuery } from "./intonationUtils";
+} from "../visualization";
+import { appState } from "../state";
+import { updateExportButtonState } from "../uiControls";
+import { intonationState as state, updateIntonationTiming } from "./state";
+import { cloneAudioQuery } from "./utils";
 import {
 	buildIntonationPointsFromQuery,
 	drawIntonationChart,
 	updateInitialRangeFromPoints,
-} from "./intonationDisplay";
-import { getApiBaseForStyleId } from "./styleManager";
+} from "./display";
+import { getApiBaseForStyleId } from "../styleManager";
 
 export function scheduleIntonationPlayback(playbackFn: () => Promise<void>) {
 	if (state.intonationDebounceTimer !== null) {

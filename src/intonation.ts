@@ -4,16 +4,16 @@ import {
 	TEXT_LIST_LIMIT,
 } from "./config";
 import { showStatus, scheduleHideStatus } from "./status";
-import { intonationState, updateIntonationTiming } from "./intonationState";
-import { cloneAudioQuery, isValidAudioQueryShape } from "./intonationUtils";
+import { intonationState, updateIntonationTiming } from "./intonation/state";
+import { cloneAudioQuery, isValidAudioQueryShape } from "./intonation/utils";
 import {
 	buildIntonationPointsFromQuery,
 	drawIntonationChart,
 	ensureWheelHandler,
 	refreshDisplayRange,
 	updateInitialRangeFromPoints,
-} from "./intonationDisplay";
-import { playUpdatedIntonation } from "./intonationPlayback";
+} from "./intonation/display";
+import { playUpdatedIntonation } from "./intonation/playback";
 import {
 	handleIntonationKeyDown,
 	handleIntonationMouseLeave,
@@ -21,7 +21,7 @@ import {
 	handleIntonationPointerDown,
 	handleIntonationPointerMove,
 	handleIntonationPointerUp,
-} from "./intonationHandlers";
+} from "./intonation/handlers";
 export {
 	handleIntonationKeyDown,
 	handleIntonationMouseLeave,
@@ -31,7 +31,7 @@ export {
 	handleIntonationPointerUp,
 };
 
-export type { RangeExtra } from "./intonationState";
+export type { RangeExtra } from "./intonation/state";
 export {
 	adjustIntonationScale,
 	buildIntonationPointsFromQuery,
@@ -45,14 +45,14 @@ export {
 	initializeIntonationCanvas,
 	refreshDisplayRange,
 	updateHoveredLabel,
-} from "./intonationDisplay";
+} from "./intonation/display";
 export {
 	fetchAndRenderIntonation,
 	playUpdatedIntonation,
 	replayCachedIntonationAudio,
 	resetIntonationToInitial,
 	scheduleIntonationPlayback,
-} from "./intonationPlayback";
+} from "./intonation/playback";
 
 const state = intonationState;
 
