@@ -1,4 +1,4 @@
-Last updated: 2026-03-05
+Last updated: 2026-03-07
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -189,6 +189,7 @@ npm run preview
   📖 138.md
   📖 140.md
   📖 141.md
+  📖 142.md
   📖 22.md
   📖 23.md
   📖 24.md
@@ -216,13 +217,14 @@ npm run preview
 📁 src/
   📘 audio.ts
   📘 config.ts
+  📁 intonation/
+    📘 display.ts
+    📘 handlers.ts
+    📘 playback.ts
+    📘 state.ts
+    📘 utils.ts
   📘 intonation.test.ts
   📘 intonation.ts
-  📘 intonationDisplay.ts
-  📘 intonationHandlers.ts
-  📘 intonationPlayback.ts
-  📘 intonationState.ts
-  📘 intonationUtils.ts
   📘 main.ts
   📘 playback.test.ts
   📘 playback.ts
@@ -265,49 +267,49 @@ npm run preview
   - 関数: getAudioQuery, synthesize, combineAudioBuffers, encodeAudioBufferToWav, writeString, clamp, if, catch, for
   - インポート: ./config
 
-**src/config.ts** (92行, 2067バイト)
+**src/config.ts** (93行, 2103バイト)
   - 関数: なし
   - インポート: なし
 
-**src/intonation.test.ts** (133行, 4537バイト)
-  - 関数: なし
-  - インポート: vitest, ./intonationState
-
-**src/intonation.ts** (343行, 10114バイト)
-  - 関数: dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, isIntonationActive, hasActiveIntonationQuery, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, setupIntonationCanvasEvents, for, catch, if
-  - インポート: ./status, ./intonationState, ./intonationUtils
-
-**src/intonationDisplay.ts** (430行, 12497バイト)
+**src/intonation/display.ts** (430行, 12490バイト)
   - 関数: getPitchRange, calculateBasePadding, getBaseDisplayRange, calculateDisplayRange, clampRangeExtra, applyRangeExtra, refreshDisplayRange, clampPitchToDisplayRange, calculateStepSize, calculateLetterKeyAdjustment, handleIntonationWheel, ensureWheelHandler, updateInitialRangeFromPoints, initializeIntonationCanvas, buildIntonationPointsFromQuery, renderIntonationLabels, updateHoveredLabel, drawIntonationChart, adjustIntonationScale, pitchFromY, findNearestIntonationPoint, if, for
-  - インポート: ./config, ./status, ./intonationState
+  - インポート: ../config, ../status, ./state
 
-**src/intonationHandlers.ts** (262行, 8114バイト)
+**src/intonation/handlers.ts** (262行, 8084バイト)
   - 関数: disableLoopOnIntonationEdit, applyPitchToQuery, applyPitchEdit, handleIntonationPointerDown, handleIntonationPointerMove, handleIntonationPointerUp, handleIntonationMouseMove, handleIntonationMouseLeave, handleIntonationKeyDown, if
-  - インポート: ./intonationState
+  - インポート: ./state
 
-**src/intonationPlayback.ts** (215行, 6761バイト)
+**src/intonation/playback.ts** (212行, 6735バイト)
   - 関数: scheduleIntonationPlayback, replayCachedIntonationAudio, showPlaybackStatus, playUpdatedIntonation, fetchAndRenderIntonation, resetIntonationToInitial, if, catch
-  - インポート: tone, ./config, ./audio
+  - インポート: tone, ../config, ../audio
 
-**src/intonationState.ts** (88行, 2792バイト)
+**src/intonation/state.ts** (88行, 2793バイト)
   - 関数: updateIntonationTiming, if
   - インポート: なし
 
-**src/intonationUtils.ts** (14行, 387バイト)
+**src/intonation/utils.ts** (14行, 388バイト)
   - 関数: isValidAudioQueryShape, cloneAudioQuery
-  - インポート: ./config
+  - インポート: ../config
+
+**src/intonation.test.ts** (133行, 4538バイト)
+  - 関数: なし
+  - インポート: vitest, ./intonation/state
+
+**src/intonation.ts** (343行, 10122バイト)
+  - 関数: dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, isIntonationActive, hasActiveIntonationQuery, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, setupIntonationCanvasEvents, for, catch, if
+  - インポート: ./status, ./intonation/state, ./intonation/utils
 
 **src/main.ts** (469行, 13360バイト)
   - 関数: applySettingsToInputs, refreshStylesAfterPortChange, applyStyleSelection, applyRandomStyleSelection, saveDelimiter, scheduleSaveDelimiter, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, catch
   - インポート: ./textLists, ./state, ./uiControls
 
-**src/playback.test.ts** (291行, 8499バイト)
-  - 関数: なし
-  - インポート: vitest, ./visualization
+**src/playback.test.ts** (475行, 14654バイト)
+  - 関数: makeDOM
+  - インポート: vitest, ./visualization, ./config
 
-**src/playback.ts** (458行, 12679バイト)
+**src/playback.ts** (494行, 13167バイト)
   - 関数: clearAudioCache, setLoopCheckboxElement, setPlayButtonAppearance, isPlayRequestPending, stopPlaybackAndResetLoop, getAudioCacheKey, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, confirmResetIntonationBeforePlay, handlePlayButtonClick, handlePlay, clearRealtimeWaveformCanvas, triggerPlay, cleanup, handleReset, handleCancel, if, for, catch
-  - インポート: tone, ./config, ./textLists
+  - インポート: tone, ./textLists, ./state
 
 **src/settings.test.ts** (227行, 5948バイト)
   - 関数: なし
@@ -421,6 +423,53 @@ npm run preview
       - encodeAudioBufferToWav ()
       - writeString ()
       - clamp ()
+  - getPitchRange (src/intonation/display.ts)
+    - calculateBasePadding ()
+      - getBaseDisplayRange ()
+      - calculateDisplayRange ()
+      - clampRangeExtra ()
+      - applyRangeExtra ()
+      - refreshDisplayRange ()
+      - clampPitchToDisplayRange ()
+      - calculateStepSize ()
+      - calculateLetterKeyAdjustment ()
+      - handleIntonationWheel ()
+      - ensureWheelHandler ()
+      - updateInitialRangeFromPoints ()
+      - initializeIntonationCanvas ()
+      - buildIntonationPointsFromQuery ()
+      - renderIntonationLabels ()
+      - updateHoveredLabel ()
+      - drawIntonationChart ()
+      - adjustIntonationScale ()
+      - pitchFromY ()
+      - findNearestIntonationPoint ()
+      - getColorVariable ()
+  - disableLoopOnIntonationEdit (src/intonation/handlers.ts)
+    - applyPitchToQuery ()
+      - applyPitchEdit ()
+      - handleIntonationPointerDown ()
+      - handleIntonationPointerMove ()
+      - handleIntonationPointerUp ()
+      - handleIntonationMouseMove ()
+      - handleIntonationMouseLeave ()
+      - handleIntonationKeyDown ()
+      - scheduleIntonationPlayback ()
+      - replayCachedIntonationAudio ()
+      - showPlaybackStatus ()
+  - playUpdatedIntonation ()
+    - fetchAndRenderIntonation ()
+      - resetIntonationToInitial ()
+      - updateIntonationTiming ()
+      - cloneAudioQuery ()
+      - showStatus ()
+      - scheduleHideStatus ()
+      - getApiBaseForStyleId ()
+      - updateExportButtonState ()
+      - drawRenderedWaveform ()
+      - initializeVisualizationCanvases ()
+      - playAudio ()
+  - isValidAudioQueryShape (src/intonation/utils.ts)
   - dedupeIntonationFavorites (src/intonation.ts)
     - loadIntonationFavorites ()
       - persistIntonationFavorites ()
@@ -438,53 +487,6 @@ npm run preview
       - saveCurrentIntonationFavorite ()
       - refreshIntonationChart ()
       - setupIntonationCanvasEvents ()
-      - refreshDisplayRange ()
-      - ensureWheelHandler ()
-      - updateInitialRangeFromPoints ()
-      - buildIntonationPointsFromQuery ()
-      - drawIntonationChart ()
-      - playUpdatedIntonation ()
-      - updateIntonationTiming ()
-      - isValidAudioQueryShape ()
-      - cloneAudioQuery ()
-      - showStatus ()
-      - scheduleHideStatus ()
-  - getPitchRange (src/intonationDisplay.ts)
-    - calculateBasePadding ()
-      - getBaseDisplayRange ()
-      - calculateDisplayRange ()
-      - clampRangeExtra ()
-      - applyRangeExtra ()
-      - clampPitchToDisplayRange ()
-      - calculateStepSize ()
-      - calculateLetterKeyAdjustment ()
-      - handleIntonationWheel ()
-      - initializeIntonationCanvas ()
-      - renderIntonationLabels ()
-      - updateHoveredLabel ()
-      - adjustIntonationScale ()
-      - pitchFromY ()
-      - findNearestIntonationPoint ()
-      - getColorVariable ()
-  - disableLoopOnIntonationEdit (src/intonationHandlers.ts)
-    - applyPitchToQuery ()
-      - applyPitchEdit ()
-      - handleIntonationPointerDown ()
-      - handleIntonationPointerMove ()
-      - handleIntonationPointerUp ()
-      - handleIntonationMouseMove ()
-      - handleIntonationMouseLeave ()
-      - handleIntonationKeyDown ()
-      - scheduleIntonationPlayback ()
-      - replayCachedIntonationAudio ()
-      - showPlaybackStatus ()
-  - fetchAndRenderIntonation ()
-    - resetIntonationToInitial ()
-      - getApiBaseForStyleId ()
-      - updateExportButtonState ()
-      - drawRenderedWaveform ()
-      - initializeVisualizationCanvases ()
-      - playAudio ()
   - applySettingsToInputs (src/main.ts)
     - refreshStylesAfterPortChange ()
       - applyStyleSelection ()
@@ -598,6 +600,7 @@ npm run preview
 - for (src/audio.ts)
 - saveDelimiter (src/main.ts)
 - scheduleSaveDelimiter (src/main.ts)
+- makeDOM (src/playback.test.ts)
 - triggerPlay (src/playback.ts)
 - handleReset (src/playback.ts)
 - while (src/styleManager.ts)
@@ -625,6 +628,7 @@ issue-notes/123.md
 issue-notes/138.md
 issue-notes/140.md
 issue-notes/141.md
+issue-notes/142.md
 issue-notes/22.md
 issue-notes/23.md
 issue-notes/24.md
@@ -633,7 +637,6 @@ issue-notes/26.md
 issue-notes/27.md
 issue-notes/30.md
 issue-notes/45.md
-issue-notes/56.md
 package-lock.json
 
 上記の情報を基に、プロンプトで指定された形式でプロジェクト概要を生成してください。
@@ -646,4 +649,4 @@ package-lock.json
 
 
 ---
-Generated at: 2026-03-05 07:04:19 JST
+Generated at: 2026-03-07 07:03:02 JST
