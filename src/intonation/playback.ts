@@ -1,5 +1,5 @@
 import * as Tone from "tone";
-import { INTONATION_DEBOUNCE_MS } from "../config";
+import { INTONATION_DEBOUNCE_MS, type AudioQuery } from "../config";
 import { getAudioQuery, synthesize } from "../audio";
 import { showStatus, scheduleHideStatus } from "../status";
 import {
@@ -94,6 +94,14 @@ export function showPlaybackStatus(isCache = false) {
 	);
 }
 
+export function buildSynthesisCacheKey(
+	query: AudioQuery,
+	speakerId: number,
+	apiBase: string,
+): string {
+	return `${apiBase}:${speakerId}:${JSON.stringify(query)}`;
+}
+
 export async function playUpdatedIntonation() {
 	if (!state.currentIntonationQuery) return;
 	if (appState.isProcessing) return;
@@ -120,17 +128,32 @@ export async function playUpdatedIntonation() {
 	initializeVisualizationCanvases();
 
 	try {
-		showStatus("イントネーションを適用中...", "info");
-		const synthesisStart = performance.now();
-		const audioBuffer = await synthesize(
+		const apiBase = getApiBaseForStyleId(state.currentIntonationStyleId);
+		const cacheKey = buildSynthesisCacheKey(
 			state.currentIntonationQuery,
 			state.currentIntonationStyleId,
-			getApiBaseForStyleId(state.currentIntonationStyleId),
+			apiBase,
 		);
-		const synthesisElapsed = performance.now() - synthesisStart;
-		updateIntonationTiming(
-			`イントネーション反映: ${Math.round(synthesisElapsed)} ms`,
-		);
+		const cached = state.synthesisCache.get(cacheKey);
+
+		let audioBuffer: ArrayBuffer;
+		if (cached) {
+			audioBuffer = cached;
+			updateIntonationTiming("イントネーション反映: キャッシュから取得");
+		} else {
+			showStatus("イントネーションを適用中...", "info");
+			const synthesisStart = performance.now();
+			audioBuffer = await synthesize(
+				state.currentIntonationQuery,
+				state.currentIntonationStyleId,
+				apiBase,
+			);
+			const synthesisElapsed = performance.now() - synthesisStart;
+			updateIntonationTiming(
+				`イントネーション反映: ${Math.round(synthesisElapsed)} ms`,
+			);
+			state.synthesisCache.set(cacheKey, audioBuffer);
+		}
 
 		appState.lastSynthesizedBuffer = audioBuffer;
 		state.intonationDirty = false;

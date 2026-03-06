@@ -42,6 +42,7 @@ export interface IntonationState {
 	scrollLocked: boolean;
 	previousBodyOverflow: string | null;
 	intonationHoverIndex: number | null;
+	synthesisCache: Map<string, ArrayBuffer>;
 }
 
 export const intonationState: IntonationState = {
@@ -78,6 +79,7 @@ export const intonationState: IntonationState = {
 	scrollLocked: false,
 	previousBodyOverflow: null,
 	intonationHoverIndex: null,
+	synthesisCache: new Map(),
 };
 
 export function updateIntonationTiming(message: string) {
