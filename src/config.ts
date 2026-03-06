@@ -22,6 +22,7 @@ export const FAVORITES_STORAGE_KEY = "voicevox-favorites";
 export const HISTORY_STORAGE_KEY = "voicevox-history";
 export const INTONATION_FAVORITES_STORAGE_KEY = "voicevox-intonation-favorites";
 export const TEXT_LIST_LIMIT = 20;
+export const TEXT_MAX_LENGTH = 500;
 
 export type FrequencyScale = "linear" | "log";
 

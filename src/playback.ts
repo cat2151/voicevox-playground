@@ -1,5 +1,9 @@
 import * as Tone from "tone";
-import { AUDIO_CACHE_LIMIT, AUTO_PLAY_DEBOUNCE_MS } from "./config";
+import {
+	AUDIO_CACHE_LIMIT,
+	AUTO_PLAY_DEBOUNCE_MS,
+	TEXT_MAX_LENGTH,
+} from "./config";
 import { addToHistory } from "./textLists";
 import {
 	fetchAndRenderIntonation,
@@ -266,6 +270,9 @@ export async function handlePlay() {
 		return;
 	}
 
+	const truncated = text.length > TEXT_MAX_LENGTH;
+	const effectiveText = truncated ? text.slice(0, TEXT_MAX_LENGTH) : text;
+
 	const randomStyleEnabled = randomStyleCheckbox?.checked ?? false;
 
 	if (randomStyleEnabled) {
@@ -282,7 +289,11 @@ export async function handlePlay() {
 	}
 
 	const delimiter = parseDelimiterConfig(delimiterInput?.value ?? "");
-	const segments = buildTextSegments(text, delimiter, getSelectedStyleId());
+	const segments = buildTextSegments(
+		effectiveText,
+		delimiter,
+		getSelectedStyleId(),
+	);
 	if (segments.length === 0) {
 		showStatus("テキストを入力してください", "error");
 		return;
@@ -306,6 +317,12 @@ export async function handlePlay() {
 		hasActiveIntonationQuery(spokenText, intonationStyleId)
 	) {
 		try {
+			if (truncated) {
+				showStatus(
+					`${TEXT_MAX_LENGTH}文字を超えたためカットして再生します`,
+					"info",
+				);
+			}
 			setPlayButtonAppearance("stop");
 			playButton.disabled = false;
 			updateExportButtonState(exportButton);
@@ -355,7 +372,12 @@ export async function handlePlay() {
 				usedCache = true;
 			} else {
 				allSegmentsCached = false;
-				showStatus("音声クエリを作成中...", "info");
+				showStatus(
+					truncated
+						? `${TEXT_MAX_LENGTH}文字を超えたためカットして音声クエリを作成中...`
+						: "音声クエリを作成中...",
+					"info",
+				);
 				const apiBase = getApiBaseForStyleId(segment.styleId);
 				const audioQuery = await getAudioQuery(
 					segment.text,
@@ -425,7 +447,12 @@ export async function handlePlay() {
 		}
 		addToHistory(text);
 
-		showStatus("再生完了！", "success");
+		showStatus(
+			truncated
+				? `再生完了！（${TEXT_MAX_LENGTH}文字を超えた分はカットしました）`
+				: "再生完了！",
+			"success",
+		);
 		clearRealtimeWaveformCanvas(realtimeCanvas);
 		scheduleHideStatus(3000);
 
