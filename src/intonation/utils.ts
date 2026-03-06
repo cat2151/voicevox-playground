@@ -1,4 +1,4 @@
-import type { AudioQuery } from "./config";
+import type { AudioQuery } from "../config";
 
 export function isValidAudioQueryShape(query: unknown): query is AudioQuery {
 	return (

@@ -1,4 +1,4 @@
-import { intonationState as state } from "./intonationState";
+import { intonationState as state } from "./state";
 import {
 	applyRangeExtra,
 	calculateLetterKeyAdjustment,
@@ -10,13 +10,13 @@ import {
 	refreshDisplayRange,
 	updateHoveredLabel,
 	updateInitialRangeFromPoints,
-} from "./intonationDisplay";
+} from "./display";
 import {
 	playUpdatedIntonation,
 	replayCachedIntonationAudio,
 	scheduleIntonationPlayback,
 	showPlaybackStatus,
-} from "./intonationPlayback";
+} from "./playback";
 
 function disableLoopOnIntonationEdit() {
 	if (state.loopCheckboxEl && state.loopCheckboxEl.checked) {

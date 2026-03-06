@@ -4,7 +4,7 @@ import {
 	IntonationFavorite,
 	IntonationPoint,
 	ZUNDAMON_SPEAKER_ID,
-} from "./config";
+} from "../config";
 
 export type RangeExtra = { top: number; bottom: number };
 

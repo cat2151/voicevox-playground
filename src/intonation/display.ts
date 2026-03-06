@@ -1,7 +1,7 @@
-import { MONOKAI_COLORS } from "./config";
-import { getColorVariable } from "./status";
-import { intonationState as state, RangeExtra } from "./intonationState";
-import type { AudioQuery, IntonationPoint } from "./config";
+import { MONOKAI_COLORS } from "../config";
+import { getColorVariable } from "../status";
+import { intonationState as state, RangeExtra } from "./state";
+import type { AudioQuery, IntonationPoint } from "../config";
 
 function getPitchRange(points: IntonationPoint[]): {
 	min: number;
