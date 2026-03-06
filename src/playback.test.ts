@@ -440,4 +440,35 @@ describe("handlePlay text truncation", () => {
 		const completionMsg = statusCalls.find((msg) => msg.includes("再生完了"));
 		expect(completionMsg).toContain("カット");
 	});
+
+	it("shows truncation notice when playUpdatedIntonation path is taken with long text", async () => {
+		const longText = "あ".repeat(TEXT_MAX_LENGTH + 1);
+		document.body.innerHTML = `
+      <textarea id="text">${longText}</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const { hasActiveIntonationQuery, playUpdatedIntonation } = await import(
+			"./intonation"
+		);
+		const { showStatus } = await import("./status");
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
+
+		await handlePlay();
+
+		expect(playUpdatedIntonation).toHaveBeenCalledTimes(1);
+		const statusCalls = vi
+			.mocked(showStatus)
+			.mock.calls.map(([msg]) => msg as string);
+		expect(statusCalls.some((msg) => msg.includes("カット"))).toBe(true);
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
+	});
 });

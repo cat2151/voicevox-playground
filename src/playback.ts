@@ -317,6 +317,12 @@ export async function handlePlay() {
 		hasActiveIntonationQuery(spokenText, intonationStyleId)
 	) {
 		try {
+			if (truncated) {
+				showStatus(
+					`${TEXT_MAX_LENGTH}文字を超えたためカットして再生します`,
+					"info",
+				);
+			}
 			setPlayButtonAppearance("stop");
 			playButton.disabled = false;
 			updateExportButtonState(exportButton);
@@ -350,15 +356,6 @@ export async function handlePlay() {
 	playButton.disabled = true;
 	updateExportButtonState(exportButton);
 
-	// Show truncation notice here (after confirming we will proceed with synthesis)
-	// so users know their text was shortened before hearing the result.
-	if (truncated) {
-		showStatus(
-			`${TEXT_MAX_LENGTH}文字を超えたためカットして生成します`,
-			"info",
-		);
-	}
-
 	try {
 		const audioContext = Tone.getContext().rawContext as BaseAudioContext;
 		const decodedBuffers: AudioBuffer[] = [];
@@ -375,7 +372,12 @@ export async function handlePlay() {
 				usedCache = true;
 			} else {
 				allSegmentsCached = false;
-				showStatus("音声クエリを作成中...", "info");
+				showStatus(
+					truncated
+						? `${TEXT_MAX_LENGTH}文字を超えたためカットして音声クエリを作成中...`
+						: "音声クエリを作成中...",
+					"info",
+				);
 				const apiBase = getApiBaseForStyleId(segment.styleId);
 				const audioQuery = await getAudioQuery(
 					segment.text,
