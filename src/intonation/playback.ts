@@ -133,6 +133,7 @@ export async function playUpdatedIntonation() {
 		);
 
 		appState.lastSynthesizedBuffer = audioBuffer;
+		state.intonationDirty = false;
 		const audioContext = Tone.getContext().rawContext as BaseAudioContext;
 		const decodedBuffer = await audioContext.decodeAudioData(
 			audioBuffer.slice(0),
