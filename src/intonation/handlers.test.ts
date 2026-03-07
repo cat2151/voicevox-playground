@@ -44,7 +44,7 @@ function enableKeyboard(canvas: HTMLCanvasElement) {
 	intonationState.intonationKeyboardEnabled = true;
 	intonationState.intonationPointPositions = [{ x: 50, y: 50 }];
 	intonationState.intonationPoints = [
-		{ pitch: 5, phraseIndex: 0, moraIndex: 0 },
+		{ pitch: 5, phraseIndex: 0, moraIndex: 0, label: "ア" },
 	];
 }
 
