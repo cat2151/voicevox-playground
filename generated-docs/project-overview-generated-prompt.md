@@ -1,4 +1,4 @@
-Last updated: 2026-03-07
+Last updated: 2026-03-08
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -219,7 +219,9 @@ npm run preview
   📘 config.ts
   📁 intonation/
     📘 display.ts
+    📘 handlers.test.ts
     📘 handlers.ts
+    📘 playback.test.ts
     📘 playback.ts
     📘 state.ts
     📘 utils.ts
@@ -275,15 +277,23 @@ npm run preview
   - 関数: getPitchRange, calculateBasePadding, getBaseDisplayRange, calculateDisplayRange, clampRangeExtra, applyRangeExtra, refreshDisplayRange, clampPitchToDisplayRange, calculateStepSize, calculateLetterKeyAdjustment, handleIntonationWheel, ensureWheelHandler, updateInitialRangeFromPoints, initializeIntonationCanvas, buildIntonationPointsFromQuery, renderIntonationLabels, updateHoveredLabel, drawIntonationChart, adjustIntonationScale, pitchFromY, findNearestIntonationPoint, if, for
   - インポート: ../config, ../status, ./state
 
-**src/intonation/handlers.ts** (262行, 8084バイト)
+**src/intonation/handlers.test.ts** (193行, 6201バイト)
+  - 関数: makeKeyEvent, enableKeyboard
+  - インポート: vitest, ./handlers, ./state
+
+**src/intonation/handlers.ts** (268行, 8346バイト)
   - 関数: disableLoopOnIntonationEdit, applyPitchToQuery, applyPitchEdit, handleIntonationPointerDown, handleIntonationPointerMove, handleIntonationPointerUp, handleIntonationMouseMove, handleIntonationMouseLeave, handleIntonationKeyDown, if
   - インポート: ./state
 
-**src/intonation/playback.ts** (212行, 6735バイト)
-  - 関数: scheduleIntonationPlayback, replayCachedIntonationAudio, showPlaybackStatus, playUpdatedIntonation, fetchAndRenderIntonation, resetIntonationToInitial, if, catch
+**src/intonation/playback.test.ts** (126行, 3569バイト)
+  - 関数: なし
+  - インポート: vitest, ./playback, ./state
+
+**src/intonation/playback.ts** (236行, 7364バイト)
+  - 関数: scheduleIntonationPlayback, replayCachedIntonationAudio, showPlaybackStatus, buildSynthesisCacheKey, playUpdatedIntonation, fetchAndRenderIntonation, resetIntonationToInitial, if, catch
   - インポート: tone, ../config, ../audio
 
-**src/intonation/state.ts** (88行, 2793バイト)
+**src/intonation/state.ts** (90行, 2864バイト)
   - 関数: updateIntonationTiming, if
   - インポート: なし
 
@@ -291,23 +301,23 @@ npm run preview
   - 関数: isValidAudioQueryShape, cloneAudioQuery
   - インポート: ../config
 
-**src/intonation.test.ts** (133行, 4538バイト)
+**src/intonation.test.ts** (162行, 5696バイト)
   - 関数: なし
-  - インポート: vitest, ./intonation/state
+  - インポート: vitest, ./intonation/state, ./intonation/playback
 
 **src/intonation.ts** (343行, 10122バイト)
   - 関数: dedupeIntonationFavorites, loadIntonationFavorites, persistIntonationFavorites, resetIntonationState, setStyleChangeHandler, initializeIntonationElements, isIntonationDirty, isIntonationActive, hasActiveIntonationQuery, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, saveCurrentIntonationFavorite, refreshIntonationChart, setupIntonationCanvasEvents, for, catch, if
   - インポート: ./status, ./intonation/state, ./intonation/utils
 
-**src/main.ts** (469行, 13360バイト)
+**src/main.ts** (476行, 13557バイト)
   - 関数: applySettingsToInputs, refreshStylesAfterPortChange, applyStyleSelection, applyRandomStyleSelection, saveDelimiter, scheduleSaveDelimiter, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, catch
   - インポート: ./textLists, ./state, ./uiControls
 
-**src/playback.test.ts** (475行, 14654バイト)
+**src/playback.test.ts** (521行, 16294バイト)
   - 関数: makeDOM
   - インポート: vitest, ./visualization, ./config
 
-**src/playback.ts** (494行, 13167バイト)
+**src/playback.ts** (500行, 13306バイト)
   - 関数: clearAudioCache, setLoopCheckboxElement, setPlayButtonAppearance, isPlayRequestPending, stopPlaybackAndResetLoop, getAudioCacheKey, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, confirmResetIntonationBeforePlay, handlePlayButtonClick, handlePlay, clearRealtimeWaveformCanvas, triggerPlay, cleanup, handleReset, handleCancel, if, for, catch
   - インポート: tone, ./textLists, ./state
 
@@ -457,8 +467,9 @@ npm run preview
       - scheduleIntonationPlayback ()
       - replayCachedIntonationAudio ()
       - showPlaybackStatus ()
-  - playUpdatedIntonation ()
-    - fetchAndRenderIntonation ()
+  - buildSynthesisCacheKey ()
+    - playUpdatedIntonation ()
+      - fetchAndRenderIntonation ()
       - resetIntonationToInitial ()
       - updateIntonationTiming ()
       - cloneAudioQuery ()
@@ -498,6 +509,7 @@ npm run preview
       - setPlayButtonAppearance ()
       - isPlayRequestPending ()
       - scheduleAutoPlay ()
+      - handlePlayButtonClick ()
       - handlePlay ()
       - loadSettings ()
       - resetSettings ()
@@ -520,7 +532,6 @@ npm run preview
       - setTextAndPlay ()
       - downloadLastAudio ()
       - confirmResetIntonationBeforePlay ()
-      - handlePlayButtonClick ()
       - clearRealtimeWaveformCanvas ()
       - cleanup ()
       - handleCancel ()
@@ -649,4 +660,4 @@ package-lock.json
 
 
 ---
-Generated at: 2026-03-07 07:03:02 JST
+Generated at: 2026-03-08 07:01:15 JST

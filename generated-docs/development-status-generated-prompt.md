@@ -1,4 +1,4 @@
-Last updated: 2026-03-07
+Last updated: 2026-03-08
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -262,7 +262,9 @@ Last updated: 2026-03-07
 - src/audio.ts
 - src/config.ts
 - src/intonation/display.ts
+- src/intonation/handlers.test.ts
 - src/intonation/handlers.ts
+- src/intonation/playback.test.ts
 - src/intonation/playback.ts
 - src/intonation/state.ts
 - src/intonation/utils.ts
@@ -300,38 +302,27 @@ Last updated: 2026-03-07
 - vite.config.ts
 
 ## 現在のオープンIssues
-## [Issue #145](../issue-notes/145.md): Fix unnecessary re-synthesis during loop playback when intonation is unmodified
-After the first playback, `fetchAndRenderIntonation()` caches the intonation query with `intonationDirty = false`. On every subsequent loop iteration, `handlePlay()` hit the `hasActiveIntonationQuery` branch and unconditionally called `playUpdatedIntonation()`, re-synthesizing via the VOICEVOX API a...
-ラベル: 
---- issue-notes/145.md の内容 ---
+## [Issue #149](../issue-notes/149.md): 大きなファイルの検出: 1個のファイルが500行を超えています
+以下のファイルが500行を超えています。リファクタリングを検討してください。
+
+## 検出されたファイル
+
+| ファイル | 行数 | 超過行数 |
+|---------|------|----------|
+| `src/playback.test.ts` | 520 | +20 |
+
+## テスト実施のお願い
+
+- リファクタリング前後にテストを実行し、それぞれのテスト失敗件数を報告してください
+- リファクタリング前後のどちらかでテストがredの場合、まず別issueでtest greenにしてからリファクタリングしてください
+
+## 推奨事項
+
+1. 単一責任の原則に従い、ファイルを分...
+ラベル: refactoring, code-quality, automated
+--- issue-notes/149.md の内容 ---
 
 ```markdown
-
-```
-
-## [Issue #140](../issue-notes/140.md): デフォルトでplayボタンを押すと、つまりループ再生すると、再生ごとにムダな待ち時間がある
-[issue-notes/140.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/140.md)
-
-...
-ラベル: 
---- issue-notes/140.md の内容 ---
-
-```markdown
-# issue デフォルトでplayボタンを押すと、つまりループ再生すると、再生ごとにムダな待ち時間がある #140
-[issues #140](https://github.com/cat2151/voicevox-playground/issues/140)
-
-- 事象
-    - ループ再生onのとき、playボタンを押すと、
-    - 「イントネーションを適用中…」という文言だけが表示されて、
-    - おそらく「デフォルトのイントネーションのままなのに」「ムダにイントネーション適用処理がされて」しまっている
-- 対策
-    - userがほしい挙動は、この条件であれば、「textarea、style、イントネーション情報、すべてが、前回のwav再生時と同じであれば、あらゆる音声合成処理は不要で、cacheされているwavデータを再生すべし」「cacheから再生します、のような既存のメッセージが表示されるべき」
-- 背後にあると予想される問題
-    - 仕様変更で既存機能が破壊されている、リグレッションが発生している
-    - これは、agentがアプリの全体像を掴みそこねている、というアラートである、と判断する
-    - ソースコードの構成を、agentのハルシネーションのリスクを下げるよう、リファクタリングを検討すべし
-    - それは別issueに切り分けて実施すべし
-        - issue : ソースコード構成を改善し、ドメイン単位でフォルダ化する
 
 ```
 
@@ -349,23 +340,6 @@ After the first playback, `fetchAndRenderIntonation()` caches the intonation que
 - 「イントネーション付きお気に入り」の見出しの右に、exportボタンとimportボタンをつける
 - exportもimportも、「イントネーション付きお気に入り」のlocal storageに保存される内容そのもの（複数まるごと）、とする
 - ひとまず複数まるごとでUX検証とする
-
-```
-
-## [Issue #120](../issue-notes/120.md): キーボード操作モードonのとき、textarea編集時に意図しないa-zやplayができてしまい混乱する
-[issue-notes/120.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/120.md)
-
-...
-ラベル: 
---- issue-notes/120.md の内容 ---
-
-```markdown
-# issue キーボード操作モードonのとき、textarea編集時に意図しないa-zやplayができてしまい混乱する #120
-[issues #120](https://github.com/cat2151/voicevox-playground/issues/120)
-
-- 対策
-    - textarea編集時は、キーボード操作モードonであっても、キーボード操作onモード特有のキー（a-zやspaceとenter）を素通りさせる
-    - かわりに、キーボード操作モードon/offに関わらず、どの状況であっても、SHIFT+ENTERとCTRL+ENTERを、playキーとする
 
 ```
 
@@ -631,81 +605,6 @@ After the first playback, `fetchAndRenderIntonation()` caches the intonation que
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/20.md
-```md
-{% raw %}
-# issue project-summary の development-status 生成時、issue-notes/ 配下のmdにファイル名が書いてあれば、そのファイル内容もpromptに添付、を試す #20
-[issues #20](https://github.com/cat2151/github-actions/issues/20)
-
-# 何が困るの？
-- Geminiに次の一手を生成させるとき、cjsの内容も添付したほうが、生成品質が改善できる可能性がある。
-
-# 案
-## outputのimage
-- promptが言及するfilename、について、そのfileの内容もすべてpromptに含める。
-    - 軸は、projectのfilename一覧である。
-        - 一覧それぞれのfilenameについて、promptで言及されているものをfile内容埋め込み、とする。
-- 方向性
-    - シンプルで明確なルール、曖昧さのないルールで、メンテを楽にすることを優先する
-    - 余分なファイルが出てしまうが割り切ってOKとし、欠落リスクを減らせることを優先する
-- 備考
-    - 曖昧でメンテが必要な「documentからのfilename抽出」をやめ、
-        - かわりに、逆に、「今のprojectにあるfileすべてのうち、promptで言及されているもの」を軸とする
-## 実現方法の案
-- project全体について、filenameと、filepath配列（複数ありうる）、のmapを取得する。そういう関数Aをまず実装する。
-    - filepathは、agentが扱えるよう、github上のworkの絶対pathではなく、projectRootからの相対パス表記とする。
-- そして、そのfilenameにmatchするfilepath配列について、filepathとファイル内容を記したmarkdown文字列を返却、という関数Bを実装する。
-- さらに、Geminiにわたすpromptについて、前述の関数Aのfilenameそれぞれについて、prompt内を検索し、filenameが存在する場合は、そのfilenameについて、関数Bを用いてmarkdown文字列を取得する。そうして得られたmarkdown文字列群を返却する、という関数Cを実装する。
-- さらに、promptの末尾に書いてあるプレースホルダー「`${file_contents}`」を、関数Cの結果で置き換える、という関数Dを実装する。
-- 実際には、Geminiにわたすpromptのプレースホルダー展開は、2回にわたる必要がある。1回目でissues-note内容をpromptに埋め込む。2回目でそのpromptに対して関数Dを適用する。
-## 備忘
-- 上記は、agentにplanさせてレビューし、context不足と感じたら上記をメンテ、というサイクルで書いた。
-
-# どうする？
-- 上記をagentに投げる。documentやtestについてのplanもしてくるかもしれないがそこは時間の都合で省略して実施させるつもり。
-- 投げた、実装させた、レビューして人力リファクタリングした
-- testする
-
-# 結果
-- バグ
-    - この20.mdにあるプレースホルダーが置換されてしまっている
-    - issue-notesで言及されていないfileまで添付されてしまっている
-- 分析
-    - この20.mdにあるプレースホルダーが置換されてしまっている
-        - 原因
-            - 20.mdにあるプレースホルダーまで置換対象としてしまっていたため。
-            - prompt全体のプレースホルダーを置換対象としてしまっていたため。
-            - issue-notesを埋め込んだあとでの、プレースホルダー処理だったので、
-                - 20.md が置換対象となってしまったため。
-        - 対策案
-            - プレースホルダーはすべて、「行頭と行末で囲まれている」ときだけ置換対象とする。
-                - つまり文中やcode中のプレースホルダーは置換対象外とする。
-            - さらに、2つ以上プレースホルダーが出たら想定外なので早期エラー終了させ、検知させる。
-    - issue-notesで言及されていないfileまで添付されてしまっている
-        - 原因
-            - promptに、既にprojectの全file listが書き込まれたあとなので、
-                - issue-noteで言及されていなくても、
-                - promptの全file listを対象に検索してしまっている
-        - 対策案の候補
-            - プレースホルダー置換の順番を変更し、全file listは最後に置換する
-            - file添付の対象を変更し、promptでなく、issue-notesとする
-                - これが範囲が絞られているので安全である、と考える
-        - 備忘
-            - 全fileの対象は、リモートリポジトリ側のfileなので、secretsの心配はないし、実際に検索して確認済み
-
-# どうする？
-- agent半分、人力が半分（agentがハルシネーションでソース破壊したので、関数切り分けしたり、リファクタリングしたり）。
-- で実装した。
-- testする
-
-# 結果
-- test green
-
-# closeとする
-
-{% endraw %}
-```
-
 ### .github/actions-tmp/issue-notes/21.md
 ```md
 {% raw %}
@@ -848,21 +747,6 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/40.md
-```md
-{% raw %}
-# issue 巨大コードの検知のワークフローの対象に、テストコードも含むようにする #40
-[issues #40](https://github.com/cat2151/github-actions/issues/40)
-
-- あわせて、issueのプロンプトに以下を含むようにせよ
-    - リファクタリングするときは、事前と事後にtestし、エラー件数（test red件数）を事前と事後で報告してください
-    - リファクタリング前後でtest redがあった場合は、userに「まず別issueでtest greenにしてからリファクタリングしてください」を報告してください
-
-- あわせて、cat2151の直近の20のリポジトリを調査し、それらのリポジトリでのワークフロー設定tomlの変更の要否と、このワークフロー適用漏れのリポジトリの有無を、報告せよ
-
-{% endraw %}
-```
-
 ### .github/actions-tmp/issue-notes/7.md
 ```md
 {% raw %}
@@ -871,6 +755,24 @@ env: で値を渡し、process.env で参照するのが正しい
 
 - 生成できた
 - closeとする
+
+{% endraw %}
+```
+
+### .github/actions-tmp/issue-notes/9.md
+```md
+{% raw %}
+# issue 関数コールグラフhtmlビジュアライズが0件なので、原因を可視化する #9
+[issues #9](https://github.com/cat2151/github-actions/issues/9)
+
+# agentに修正させたり、人力で修正したりした
+- agentがハルシネーションし、いろいろ根の深いバグにつながる、エラー隠蔽などを仕込んでいたため、検知が遅れた
+- 詳しくはcommit logを参照のこと
+- WSL + actの環境を少し変更、act起動時のコマンドライン引数を変更し、generated-docsをmountする（ほかはデフォルト挙動であるcpだけにする）ことで、デバッグ情報をコンテナ外に出力できるようにし、デバッグを効率化した
+
+# test green
+
+# closeとする
 
 {% endraw %}
 ```
@@ -937,19 +839,6 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### issue-notes/120.md
-```md
-{% raw %}
-# issue キーボード操作モードonのとき、textarea編集時に意図しないa-zやplayができてしまい混乱する #120
-[issues #120](https://github.com/cat2151/voicevox-playground/issues/120)
-
-- 対策
-    - textarea編集時は、キーボード操作モードonであっても、キーボード操作onモード特有のキー（a-zやspaceとenter）を素通りさせる
-    - かわりに、キーボード操作モードon/offに関わらず、どの状況であっても、SHIFT+ENTERとCTRL+ENTERを、playキーとする
-
-{% endraw %}
-```
-
 ### issue-notes/121.md
 ```md
 {% raw %}
@@ -959,45 +848,6 @@ env: で値を渡し、process.env で参照するのが正しい
 - 「イントネーション付きお気に入り」の見出しの右に、exportボタンとimportボタンをつける
 - exportもimportも、「イントネーション付きお気に入り」のlocal storageに保存される内容そのもの（複数まるごと）、とする
 - ひとまず複数まるごとでUX検証とする
-
-{% endraw %}
-```
-
-### issue-notes/140.md
-```md
-{% raw %}
-# issue デフォルトでplayボタンを押すと、つまりループ再生すると、再生ごとにムダな待ち時間がある #140
-[issues #140](https://github.com/cat2151/voicevox-playground/issues/140)
-
-- 事象
-    - ループ再生onのとき、playボタンを押すと、
-    - 「イントネーションを適用中…」という文言だけが表示されて、
-    - おそらく「デフォルトのイントネーションのままなのに」「ムダにイントネーション適用処理がされて」しまっている
-- 対策
-    - userがほしい挙動は、この条件であれば、「textarea、style、イントネーション情報、すべてが、前回のwav再生時と同じであれば、あらゆる音声合成処理は不要で、cacheされているwavデータを再生すべし」「cacheから再生します、のような既存のメッセージが表示されるべき」
-- 背後にあると予想される問題
-    - 仕様変更で既存機能が破壊されている、リグレッションが発生している
-    - これは、agentがアプリの全体像を掴みそこねている、というアラートである、と判断する
-    - ソースコードの構成を、agentのハルシネーションのリスクを下げるよう、リファクタリングを検討すべし
-    - それは別issueに切り分けて実施すべし
-        - issue : ソースコード構成を改善し、ドメイン単位でフォルダ化する
-
-{% endraw %}
-```
-
-### issue-notes/45.md
-```md
-{% raw %}
-# issue イントネーション、キーボード操作、で、aとAを繰り返してもその中間の値が指定できず、もどかしい #45
-[issues #45](https://github.com/cat2151/voicevox-playground/issues/45)
-
-# 対策
-- aでup、Aでdownだが、1秒以内にa,A,aと入力したとき、aのup量を通常の1/2することで、中間の値を指定可能にする
-- 同様に、1秒以内にA,a,Aと入力したときは、Aのdown量を通常の1/2とする
-- 要は、upとdownを素早く交互に入力したときだけ、その中間の値を入力できるようにするということ
-- upもdownもなく1秒が経過したら、up量とdown量は通常に戻る
-- 要はステートマシンで、通常モードと、up/down半減モード、があるということ
-
 
 {% endraw %}
 ```
@@ -1013,38 +863,698 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
+### src/intonation/playback.test.ts
+```ts
+{% raw %}
+/** @vitest-environment jsdom */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { playUpdatedIntonation } from "./playback";
+import { intonationState } from "./state";
+import { appState } from "../state";
+import type { AudioQuery } from "../config";
+
+const dummyAudioBuffer = {
+	length: 1,
+	numberOfChannels: 1,
+	sampleRate: 48000,
+	duration: 0.01,
+	getChannelData: () => new Float32Array(1),
+} as unknown as AudioBuffer;
+
+vi.mock("tone", () => ({
+	getContext: () => ({
+		rawContext: {
+			decodeAudioData: vi.fn(async () => dummyAudioBuffer),
+		},
+	}),
+}));
+
+vi.mock("../audio", () => ({
+	getAudioQuery: vi.fn(),
+	synthesize: vi.fn(async () => new ArrayBuffer(8)),
+}));
+
+vi.mock("../visualization", () => ({
+	drawRenderedWaveform: vi.fn(),
+	initializeVisualizationCanvases: vi.fn(),
+	playAudio: vi.fn(async () => ({ stopped: false })),
+}));
+
+vi.mock("../status", () => ({
+	showStatus: vi.fn(),
+	scheduleHideStatus: vi.fn(),
+}));
+
+vi.mock("../uiControls", () => ({
+	updateExportButtonState: vi.fn(),
+}));
+
+vi.mock("../styleManager", () => ({
+	getApiBaseForStyleId: vi.fn(() => "http://localhost:50021"),
+}));
+
+const stubQuery: AudioQuery = { accent_phrases: [] } as unknown as AudioQuery;
+
+beforeEach(() => {
+	document.body.innerHTML = `
+    <button id="playButton"></button>
+    <button id="exportButton"></button>
+    <canvas id="renderedWaveform"></canvas>
+    <canvas id="realtimeWaveform"></canvas>
+    <canvas id="spectrogram"></canvas>
+  `;
+	intonationState.currentIntonationQuery = stubQuery;
+	intonationState.currentIntonationStyleId = 1;
+	intonationState.intonationDirty = true;
+	intonationState.synthesisCache.clear();
+	appState.isProcessing = false;
+	appState.lastSynthesizedBuffer = null;
+});
+
+afterEach(() => {
+	vi.clearAllMocks();
+	intonationState.synthesisCache.clear();
+	intonationState.currentIntonationQuery = null;
+	intonationState.intonationDirty = false;
+	appState.isProcessing = false;
+	appState.lastSynthesizedBuffer = null;
+});
+
+describe("playUpdatedIntonation cache behavior", () => {
+	it("calls synthesize on cache miss and stores result in synthesisCache", async () => {
+		const { synthesize } = await import("../audio");
+
+		await playUpdatedIntonation();
+
+		expect(vi.mocked(synthesize)).toHaveBeenCalledTimes(1);
+		expect(intonationState.synthesisCache.size).toBe(1);
+	});
+
+	it("skips synthesize on cache hit and reuses the cached buffer", async () => {
+		const { synthesize } = await import("../audio");
+
+		await playUpdatedIntonation();
+		vi.mocked(synthesize).mockClear();
+
+		intonationState.intonationDirty = true;
+		await playUpdatedIntonation();
+
+		expect(vi.mocked(synthesize)).not.toHaveBeenCalled();
+		expect(intonationState.synthesisCache.size).toBe(1);
+	});
+
+	it("sets intonationDirty to false after successful synthesis", async () => {
+		await playUpdatedIntonation();
+
+		expect(intonationState.intonationDirty).toBe(false);
+	});
+
+	it("populates appState.lastSynthesizedBuffer after synthesis", async () => {
+		await playUpdatedIntonation();
+
+		expect(appState.lastSynthesizedBuffer).not.toBeNull();
+	});
+
+	it("caches different buffers for different queries", async () => {
+		const { synthesize } = await import("../audio");
+
+		await playUpdatedIntonation();
+
+		const query2 = {
+			accent_phrases: [{ moras: [] }],
+		} as unknown as AudioQuery;
+		intonationState.currentIntonationQuery = query2;
+		intonationState.intonationDirty = true;
+		await playUpdatedIntonation();
+
+		expect(vi.mocked(synthesize)).toHaveBeenCalledTimes(2);
+		expect(intonationState.synthesisCache.size).toBe(2);
+	});
+});
+
+{% endraw %}
+```
+
+### src/playback.test.ts
+```ts
+{% raw %}
+/** @vitest-environment jsdom */
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+	getAudioCacheKey,
+	handlePlay,
+	handlePlayButtonClick,
+	isPlayRequestPending,
+	setLoopCheckboxElement,
+	setPlayButtonAppearance,
+	setTextAndPlay,
+} from "./playback";
+import { stopActivePlayback } from "./visualization";
+import { TEXT_MAX_LENGTH } from "./config";
+
+const dummyAudioBuffer = {
+	length: 1,
+	numberOfChannels: 1,
+	sampleRate: 48000,
+	duration: 0.01,
+	getChannelData: () => new Float32Array(1),
+} as unknown as AudioBuffer;
+
+vi.mock("tone", () => ({
+	getContext: () => ({
+		rawContext: {
+			decodeAudioData: vi.fn(async () => dummyAudioBuffer),
+		},
+	}),
+}));
+
+vi.mock("./status", () => ({
+	showStatus: vi.fn(),
+	scheduleHideStatus: vi.fn(),
+}));
+
+vi.mock("./textLists", () => ({
+	addToHistory: vi.fn(),
+}));
+
+vi.mock("./intonation", () => ({
+	fetchAndRenderIntonation: vi.fn(),
+	hasActiveIntonationQuery: vi.fn(() => false),
+	isIntonationActive: vi.fn(() => false),
+	isIntonationDirty: vi.fn(() => false),
+	playUpdatedIntonation: vi.fn(async () => {}),
+	replayCachedIntonationAudio: vi.fn(async () => true),
+	resetIntonationState: vi.fn(),
+}));
+
+vi.mock("./uiControls", () => ({
+	updateExportButtonState: vi.fn(),
+}));
+
+vi.mock("./styleManager", () => ({
+	buildTextSegments: vi.fn(() => [{ text: "hello", styleId: 1 }]),
+	getSelectedStyleId: vi.fn(() => 1),
+	getApiBaseForStyleId: vi.fn(() => "http://localhost:50021"),
+	parseDelimiterConfig: vi.fn(() => ({})),
+	setSelectedStyleId: vi.fn(),
+}));
+
+vi.mock("./audio", () => ({
+	combineAudioBuffers: vi.fn(() => dummyAudioBuffer),
+	encodeAudioBufferToWav: vi.fn(() => new ArrayBuffer(4)),
+	getAudioQuery: vi.fn(async () => ({})),
+	synthesize: vi.fn(async () => new ArrayBuffer(8)),
+}));
+
+vi.mock("./visualization", () => {
+	let active = false;
+	let resolvePlayback: ((result: { stopped: boolean }) => void) | null = null;
+	const stopActivePlayback = vi.fn(() => {
+		active = false;
+		resolvePlayback?.({ stopped: true });
+		resolvePlayback = null;
+	});
+	const playAudio = vi.fn(async () => {
+		active = true;
+		return new Promise<{ stopped: boolean }>((resolve) => {
+			resolvePlayback = resolve;
+		});
+	});
+	return {
+		drawRenderedWaveform: vi.fn(),
+		initializeVisualizationCanvases: vi.fn(),
+		isPlaybackActive: vi.fn(() => active),
+		playAudio,
+		stopActivePlayback,
+	};
+});
+
+afterEach(() => {
+	document.body.innerHTML = "";
+	vi.clearAllMocks();
+});
+
+describe("getAudioCacheKey", () => {
+	it("combines style id and text", () => {
+		expect(getAudioCacheKey("hello", 42)).toBe("42::hello");
+	});
+});
+
+describe("setPlayButtonAppearance", () => {
+	it("sets play and stop button states", () => {
+		const button = document.createElement("button");
+		button.id = "playButton";
+		document.body.appendChild(button);
+
+		setPlayButtonAppearance("play");
+		expect(button.getAttribute("aria-label")).toBe("Play");
+		expect(button.title).toBe("Play");
+		expect(button.dataset.icon).toBe("play");
+		expect(button.querySelector("svg.icon--play")).not.toBeNull();
+
+		setPlayButtonAppearance("stop");
+		expect(button.getAttribute("aria-label")).toBe("Stop");
+		expect(button.title).toBe("Stop");
+		expect(button.dataset.icon).toBe("stop");
+		expect(button.querySelector("svg.icon--stop")).not.toBeNull();
+	});
+});
+
+describe("handlePlayButtonClick", () => {
+	it("stops playback even when a play request is pending", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const playPromise = handlePlay();
+		expect(isPlayRequestPending()).toBe(true);
+
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		handlePlayButtonClick();
+
+		expect(stopActivePlayback).toHaveBeenCalledTimes(1);
+
+		await playPromise;
+	});
+});
+
+describe("setTextAndPlay", () => {
+	it("stops active playback before scheduling auto-play", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" checked />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const loopCheckbox = document.getElementById(
+			"loopCheckbox",
+		) as HTMLInputElement;
+		setLoopCheckboxElement(loopCheckbox);
+
+		try {
+			vi.useFakeTimers();
+			const playPromise = handlePlay();
+			await vi.runAllTimersAsync();
+
+			setTextAndPlay("new text");
+
+			expect(stopActivePlayback).toHaveBeenCalled();
+			expect(loopCheckbox.checked).toBe(false);
+
+			vi.clearAllTimers();
+			await playPromise;
+		} finally {
+			vi.useRealTimers();
+			setLoopCheckboxElement(null);
+		}
+	});
+});
+
+describe("handlePlay with active intonation", () => {
+	it("calls replayCachedIntonationAudio instead of re-synthesizing when intonation is active and not dirty (loop playback)", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const {
+			hasActiveIntonationQuery,
+			isIntonationDirty,
+			playUpdatedIntonation,
+			replayCachedIntonationAudio,
+		} = await import("./intonation");
+		const { getAudioQuery } = await import("./audio");
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
+		vi.mocked(isIntonationDirty).mockReturnValue(false);
+
+		await handlePlay();
+
+		expect(replayCachedIntonationAudio).toHaveBeenCalledTimes(1);
+		expect(playUpdatedIntonation).not.toHaveBeenCalled();
+		expect(getAudioQuery).not.toHaveBeenCalled();
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
+		vi.mocked(isIntonationDirty).mockReturnValue(false);
+	});
+
+	it("calls playUpdatedIntonation when intonation is active and dirty", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const {
+			hasActiveIntonationQuery,
+			isIntonationDirty,
+			playUpdatedIntonation,
+			replayCachedIntonationAudio,
+		} = await import("./intonation");
+		const { getAudioQuery } = await import("./audio");
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
+		vi.mocked(isIntonationDirty).mockReturnValue(true);
+
+		await handlePlay();
+
+		expect(playUpdatedIntonation).toHaveBeenCalledTimes(1);
+		expect(replayCachedIntonationAudio).not.toHaveBeenCalled();
+		expect(getAudioQuery).not.toHaveBeenCalled();
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
+		vi.mocked(isIntonationDirty).mockReturnValue(false);
+	});
+
+	it("shows confirm dialog and resets intonation when intonation is active but text changed", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+      <div id="playConfirmDialog" hidden>
+        <button id="playConfirmReset"></button>
+        <button id="playConfirmCancel"></button>
+      </div>
+    `;
+
+		const { isIntonationActive, resetIntonationState } = await import(
+			"./intonation"
+		);
+		vi.mocked(isIntonationActive).mockReturnValue(true);
+
+		const playPromise = handlePlay();
+
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		const resetButton = document.getElementById(
+			"playConfirmReset",
+		) as HTMLButtonElement;
+		resetButton.click();
+
+		// Wait for synthesis to start then stop it so playPromise resolves
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		handlePlayButtonClick();
+
+		await playPromise;
+
+		expect(resetIntonationState).toHaveBeenCalledTimes(1);
+
+		vi.mocked(isIntonationActive).mockReturnValue(false);
+	});
+
+	it("cancels playback when user declines the intonation reset dialog", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+      <div id="playConfirmDialog" hidden>
+        <button id="playConfirmReset"></button>
+        <button id="playConfirmCancel"></button>
+      </div>
+    `;
+
+		const { isIntonationActive, resetIntonationState } = await import(
+			"./intonation"
+		);
+		const { getAudioQuery } = await import("./audio");
+		vi.mocked(isIntonationActive).mockReturnValue(true);
+
+		const playPromise = handlePlay();
+
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		const cancelButton = document.getElementById(
+			"playConfirmCancel",
+		) as HTMLButtonElement;
+		cancelButton.click();
+
+		await playPromise;
+
+		expect(resetIntonationState).not.toHaveBeenCalled();
+		expect(getAudioQuery).not.toHaveBeenCalled();
+	});
+});
+
+describe("handlePlay with multiple styles", () => {
+	it("resets intonation state and skips intonation fetch when multiple styles are used", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello world</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const {
+			isIntonationActive,
+			fetchAndRenderIntonation,
+			resetIntonationState,
+		} = await import("./intonation");
+		const { buildTextSegments } = await import("./styleManager");
+		const { playAudio } = await import("./visualization");
+
+		vi.mocked(isIntonationActive).mockReturnValue(false);
+		vi.mocked(buildTextSegments).mockReturnValueOnce([
+			{ text: "hello", styleId: 1 },
+			{ text: " world", styleId: 2 },
+		]);
+		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
+
+		await handlePlay();
+
+		expect(fetchAndRenderIntonation).not.toHaveBeenCalled();
+		expect(resetIntonationState).not.toHaveBeenCalled();
+	});
+
+	it("silently resets active intonation without confirmation dialog when switching to multi-style", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello world</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const {
+			isIntonationActive,
+			fetchAndRenderIntonation,
+			resetIntonationState,
+		} = await import("./intonation");
+		const { buildTextSegments } = await import("./styleManager");
+		const { playAudio } = await import("./visualization");
+
+		vi.mocked(isIntonationActive).mockReturnValue(true);
+		vi.mocked(buildTextSegments).mockReturnValueOnce([
+			{ text: "hello", styleId: 1 },
+			{ text: " world", styleId: 2 },
+		]);
+		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
+
+		const confirmSpy = vi.spyOn(window, "confirm");
+
+		await handlePlay();
+
+		expect(resetIntonationState).toHaveBeenCalled();
+		expect(fetchAndRenderIntonation).not.toHaveBeenCalled();
+		expect(confirmSpy).not.toHaveBeenCalled();
+
+		confirmSpy.mockRestore();
+		vi.mocked(isIntonationActive).mockReturnValue(false);
+	});
+});
+
+describe("handlePlay text truncation", () => {
+	const makeDOM = (text: string) => {
+		document.body.innerHTML = `
+      <textarea id="text">${text}</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+	};
+
+	it("passes text unchanged when within limit", async () => {
+		const shortText = "あ".repeat(TEXT_MAX_LENGTH - 1);
+		makeDOM(shortText);
+
+		const { buildTextSegments } = await import("./styleManager");
+		const { playAudio } = await import("./visualization");
+		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
+
+		await handlePlay();
+
+		expect(vi.mocked(buildTextSegments)).toHaveBeenCalledWith(
+			shortText,
+			expect.anything(),
+			expect.anything(),
+		);
+
+		const { showStatus } = await import("./status");
+		const statusCalls = vi.mocked(showStatus).mock.calls;
+		const completionCall = statusCalls.find(([msg]) =>
+			(msg as string).includes("再生完了"),
+		);
+		expect(completionCall?.[0]).toBe("再生完了！");
+	});
+
+	it("truncates text to TEXT_MAX_LENGTH when over limit", async () => {
+		const longText = "あ".repeat(TEXT_MAX_LENGTH + 100);
+		makeDOM(longText);
+
+		const { buildTextSegments } = await import("./styleManager");
+		const { playAudio } = await import("./visualization");
+		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
+
+		await handlePlay();
+
+		const expectedText = "あ".repeat(TEXT_MAX_LENGTH);
+		expect(vi.mocked(buildTextSegments)).toHaveBeenCalledWith(
+			expectedText,
+			expect.anything(),
+			expect.anything(),
+		);
+	});
+
+	it("shows truncation notice in status when text is over limit", async () => {
+		const longText = "あ".repeat(TEXT_MAX_LENGTH + 1);
+		makeDOM(longText);
+
+		const { playAudio } = await import("./visualization");
+		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
+
+		await handlePlay();
+
+		const { showStatus } = await import("./status");
+		const statusCalls = vi
+			.mocked(showStatus)
+			.mock.calls.map(([msg]) => msg as string);
+		expect(statusCalls.some((msg) => msg.includes("カット"))).toBe(true);
+		const completionMsg = statusCalls.find((msg) => msg.includes("再生完了"));
+		expect(completionMsg).toContain("カット");
+	});
+
+	it("shows truncation notice when playUpdatedIntonation path is taken with long text", async () => {
+		const longText = "あ".repeat(TEXT_MAX_LENGTH + 1);
+		document.body.innerHTML = `
+      <textarea id="text">${longText}</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const {
+			hasActiveIntonationQuery,
+			isIntonationDirty,
+			playUpdatedIntonation,
+		} = await import("./intonation");
+		const { showStatus } = await import("./status");
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
+		vi.mocked(isIntonationDirty).mockReturnValue(true);
+
+		await handlePlay();
+
+		expect(playUpdatedIntonation).toHaveBeenCalledTimes(1);
+		const statusCalls = vi
+			.mocked(showStatus)
+			.mock.calls.map(([msg]) => msg as string);
+		expect(statusCalls.some((msg) => msg.includes("カット"))).toBe(true);
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
+		vi.mocked(isIntonationDirty).mockReturnValue(false);
+	});
+});
+
+{% endraw %}
+```
+
 ## 最近の変更（過去7日間）
 ### コミット履歴:
-1ded2a4 Merge pull request #144 from cat2151/copilot/improve-source-code-organization
-9a945cd refactor: organize intonation source files into src/intonation/ domain folder
-63bc9d9 Initial plan
-69417f0 Merge pull request #143 from cat2151/copilot/fix-os-response-delay
-79dfb40 レビュー指摘対応: カット通知をawait境界後のメッセージに組み込み、intonationパスにも追加
-49ef1d5 500文字超過分をカット・ステータス表示追加（OS操作レスポンス低下の対策）
-3c55726 Initial plan
-fe3036c Add issue note for #142 [auto]
-5424339 Merge pull request #139 from cat2151/copilot/fix-intonation-behavior-in-textarea
-03b626a Update project summaries (overview & development status) [auto]
+047dbba Merge pull request #148 from cat2151/copilot/fix-ci-deploy-github-pages
+d50951a Fix CI: add missing label property to IntonationPoint in handlers.test.ts
+f05099e Initial plan
+0c9bf16 Merge pull request #146 from cat2151/copilot/fix-keyboard-operation-issues
+f6b30f4 Fix: early return when text input focused; fix Space+modifier bypass; add missing input focus tests
+6dda768 Fix: skip keyboard-mode shortcuts when textarea/input focused; add Shift/Ctrl+Enter global play key
+050520c Initial plan
+22a4949 Merge pull request #145 from cat2151/copilot/fix-play-button-delay
+3e91a16 test: add playback cache behavior tests for playUpdatedIntonation
+05336c5 feat: replace single-buffer cache with Map<synthesisJSON, ArrayBuffer> in playUpdatedIntonation
 
 ### 変更されたファイル:
 generated-docs/development-status-generated-prompt.md
 generated-docs/development-status.md
 generated-docs/project-overview-generated-prompt.md
 generated-docs/project-overview.md
-issue-notes/140.md
-issue-notes/141.md
 issue-notes/142.md
 src/config.ts
 src/intonation.test.ts
 src/intonation.ts
 src/intonation/display.ts
+src/intonation/handlers.test.ts
 src/intonation/handlers.ts
+src/intonation/playback.test.ts
 src/intonation/playback.ts
 src/intonation/state.ts
 src/intonation/utils.ts
+src/main.ts
 src/playback.test.ts
 src/playback.ts
 
 
 ---
-Generated at: 2026-03-07 07:03:03 JST
+Generated at: 2026-03-08 07:01:15 JST
