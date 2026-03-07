@@ -157,7 +157,13 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
 	) {
 		return;
 	}
+	const activeEl = document.activeElement;
+	const isTextInputFocused =
+		activeEl instanceof HTMLTextAreaElement ||
+		activeEl instanceof HTMLInputElement;
+	if (isTextInputFocused) return;
 	if (event.key === "Enter" || event.key === " ") {
+		if (event.key === "Enter" && (event.shiftKey || event.ctrlKey)) return;
 		event.preventDefault();
 		showPlaybackStatus();
 		void replayCachedIntonationAudio();

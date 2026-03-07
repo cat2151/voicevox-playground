@@ -458,6 +458,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	setupIntonationCanvasEvents(intonationCanvas);
 
+	window.addEventListener("keydown", (event: KeyboardEvent) => {
+		if (event.key === "Enter" && (event.shiftKey || event.ctrlKey)) {
+			event.preventDefault();
+			handlePlayButtonClick();
+		}
+	});
+
 	initializeVisualizationCanvases();
 	initializeIntonationCanvas();
 	window.addEventListener("resize", () => {
