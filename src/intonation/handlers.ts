@@ -161,8 +161,9 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
 	const isTextInputFocused =
 		activeEl instanceof HTMLTextAreaElement ||
 		activeEl instanceof HTMLInputElement;
+	if (isTextInputFocused) return;
 	if (event.key === "Enter" || event.key === " ") {
-		if (isTextInputFocused || event.shiftKey || event.ctrlKey) return;
+		if (event.key === "Enter" && (event.shiftKey || event.ctrlKey)) return;
 		event.preventDefault();
 		showPlaybackStatus();
 		void replayCachedIntonationAudio();
@@ -186,7 +187,6 @@ export function handleIntonationKeyDown(event: KeyboardEvent) {
 			? event.key.toLowerCase().charCodeAt(0) - "a".charCodeAt(0)
 			: -1;
 	if (letterIndex >= 0 && letterIndex < 26) {
-		if (isTextInputFocused) return;
 		const targetIndex = state.intonationPoints.findIndex(
 			(_, idx) => idx % 26 === letterIndex,
 		);

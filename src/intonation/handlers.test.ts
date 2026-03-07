@@ -106,9 +106,7 @@ describe("handleIntonationKeyDown – textarea bypass", () => {
 
 	it("does not replay audio on Enter when input is focused", async () => {
 		const { replayCachedIntonationAudio } = await import("./playback");
-		const input = document.getElementById(
-			"delimiterInput",
-		) as HTMLInputElement;
+		const input = document.getElementById("delimiterInput") as HTMLInputElement;
 		input.focus();
 
 		const event = makeKeyEvent("Enter");
@@ -117,9 +115,43 @@ describe("handleIntonationKeyDown – textarea bypass", () => {
 		expect(vi.mocked(replayCachedIntonationAudio)).not.toHaveBeenCalled();
 	});
 
+	it("does not replay audio on Space when input is focused", async () => {
+		const { replayCachedIntonationAudio } = await import("./playback");
+		const input = document.getElementById("delimiterInput") as HTMLInputElement;
+		input.focus();
+
+		const event = makeKeyEvent(" ");
+		handleIntonationKeyDown(event);
+
+		expect(vi.mocked(replayCachedIntonationAudio)).not.toHaveBeenCalled();
+	});
+
+	it("does not change intonation on letter key when input is focused", async () => {
+		const { drawIntonationChart } = await import("./display");
+		const input = document.getElementById("delimiterInput") as HTMLInputElement;
+		input.focus();
+
+		const event = makeKeyEvent("a");
+		handleIntonationKeyDown(event);
+
+		expect(vi.mocked(drawIntonationChart)).not.toHaveBeenCalled();
+	});
+
+	it("does not call preventDefault on ArrowLeft when textarea is focused", async () => {
+		const textarea = document.getElementById("text") as HTMLTextAreaElement;
+		textarea.focus();
+
+		const event = makeKeyEvent("ArrowLeft");
+		const spy = vi.spyOn(event, "preventDefault");
+		handleIntonationKeyDown(event);
+
+		expect(spy).not.toHaveBeenCalled();
+	});
+
 	it("replays audio on plain Enter when canvas is focused", async () => {
-		const { replayCachedIntonationAudio, showPlaybackStatus } =
-			await import("./playback");
+		const { replayCachedIntonationAudio, showPlaybackStatus } = await import(
+			"./playback"
+		);
 		const canvas = document.getElementById(
 			"intonationCanvas",
 		) as HTMLCanvasElement;
