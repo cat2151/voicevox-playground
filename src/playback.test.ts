@@ -41,7 +41,9 @@ vi.mock("./intonation", () => ({
 	fetchAndRenderIntonation: vi.fn(),
 	hasActiveIntonationQuery: vi.fn(() => false),
 	isIntonationActive: vi.fn(() => false),
+	isIntonationDirty: vi.fn(() => false),
 	playUpdatedIntonation: vi.fn(async () => {}),
+	replayCachedIntonationAudio: vi.fn(async () => true),
 	resetIntonationState: vi.fn(),
 }));
 
@@ -183,7 +185,7 @@ describe("setTextAndPlay", () => {
 });
 
 describe("handlePlay with active intonation", () => {
-	it("calls playUpdatedIntonation instead of re-synthesizing when intonation is active", async () => {
+	it("calls replayCachedIntonationAudio instead of re-synthesizing when intonation is active and not dirty (loop playback)", async () => {
 		document.body.innerHTML = `
       <textarea id="text">hello</textarea>
       <button id="playButton"></button>
@@ -196,19 +198,59 @@ describe("handlePlay with active intonation", () => {
       <input id="delimiterInput" />
     `;
 
-		const { hasActiveIntonationQuery, playUpdatedIntonation } = await import(
-			"./intonation"
-		);
+		const {
+			hasActiveIntonationQuery,
+			isIntonationDirty,
+			playUpdatedIntonation,
+			replayCachedIntonationAudio,
+		} = await import("./intonation");
 		const { getAudioQuery } = await import("./audio");
 
 		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
+		vi.mocked(isIntonationDirty).mockReturnValue(false);
+
+		await handlePlay();
+
+		expect(replayCachedIntonationAudio).toHaveBeenCalledTimes(1);
+		expect(playUpdatedIntonation).not.toHaveBeenCalled();
+		expect(getAudioQuery).not.toHaveBeenCalled();
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
+		vi.mocked(isIntonationDirty).mockReturnValue(false);
+	});
+
+	it("calls playUpdatedIntonation when intonation is active and dirty", async () => {
+		document.body.innerHTML = `
+      <textarea id="text">hello</textarea>
+      <button id="playButton"></button>
+      <button id="exportButton"></button>
+      <canvas id="renderedWaveform"></canvas>
+      <canvas id="realtimeWaveform"></canvas>
+      <canvas id="spectrogram"></canvas>
+      <input id="loopCheckbox" type="checkbox" />
+      <select id="styleSelect"></select>
+      <input id="delimiterInput" />
+    `;
+
+		const {
+			hasActiveIntonationQuery,
+			isIntonationDirty,
+			playUpdatedIntonation,
+			replayCachedIntonationAudio,
+		} = await import("./intonation");
+		const { getAudioQuery } = await import("./audio");
+
+		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
+		vi.mocked(isIntonationDirty).mockReturnValue(true);
 
 		await handlePlay();
 
 		expect(playUpdatedIntonation).toHaveBeenCalledTimes(1);
+		expect(replayCachedIntonationAudio).not.toHaveBeenCalled();
 		expect(getAudioQuery).not.toHaveBeenCalled();
 
 		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
+		vi.mocked(isIntonationDirty).mockReturnValue(false);
 	});
 
 	it("shows confirm dialog and resets intonation when intonation is active but text changed", async () => {
@@ -455,11 +497,14 @@ describe("handlePlay text truncation", () => {
       <input id="delimiterInput" />
     `;
 
-		const { hasActiveIntonationQuery, playUpdatedIntonation } = await import(
-			"./intonation"
-		);
+		const {
+			hasActiveIntonationQuery,
+			isIntonationDirty,
+			playUpdatedIntonation,
+		} = await import("./intonation");
 		const { showStatus } = await import("./status");
 		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
+		vi.mocked(isIntonationDirty).mockReturnValue(true);
 
 		await handlePlay();
 
@@ -470,5 +515,6 @@ describe("handlePlay text truncation", () => {
 		expect(statusCalls.some((msg) => msg.includes("カット"))).toBe(true);
 
 		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
+		vi.mocked(isIntonationDirty).mockReturnValue(false);
 	});
 });

@@ -8,6 +8,35 @@ import {
 	hasActiveIntonationQuery,
 } from "./intonation";
 import { intonationState } from "./intonation/state";
+import { buildSynthesisCacheKey } from "./intonation/playback";
+
+describe("buildSynthesisCacheKey", () => {
+	it("encodes apiBase, speakerId and query into a stable key", () => {
+		const query = { accent_phrases: [] } as unknown as Parameters<
+			typeof buildSynthesisCacheKey
+		>[0];
+		const key = buildSynthesisCacheKey(query, 3, "http://localhost:50021");
+		expect(key).toBe(`http://localhost:50021:3:${JSON.stringify(query)}`);
+	});
+
+	it("produces different keys for different speakerIds", () => {
+		const query = { accent_phrases: [] } as unknown as Parameters<
+			typeof buildSynthesisCacheKey
+		>[0];
+		const key1 = buildSynthesisCacheKey(query, 1, "http://localhost:50021");
+		const key2 = buildSynthesisCacheKey(query, 2, "http://localhost:50021");
+		expect(key1).not.toBe(key2);
+	});
+
+	it("produces different keys for different apiBase values", () => {
+		const query = { accent_phrases: [] } as unknown as Parameters<
+			typeof buildSynthesisCacheKey
+		>[0];
+		const key1 = buildSynthesisCacheKey(query, 1, "http://localhost:50021");
+		const key2 = buildSynthesisCacheKey(query, 1, "http://localhost:50121");
+		expect(key1).not.toBe(key2);
+	});
+});
 
 describe("calculateStepSize", () => {
 	it("returns one tenth of the initial pitch span", () => {

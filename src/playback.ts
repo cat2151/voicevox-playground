@@ -9,7 +9,9 @@ import {
 	fetchAndRenderIntonation,
 	hasActiveIntonationQuery,
 	isIntonationActive,
+	isIntonationDirty,
 	playUpdatedIntonation,
+	replayCachedIntonationAudio,
 	resetIntonationState,
 } from "./intonation";
 import { appState } from "./state";
@@ -326,7 +328,11 @@ export async function handlePlay() {
 			setPlayButtonAppearance("stop");
 			playButton.disabled = false;
 			updateExportButtonState(exportButton);
-			await playUpdatedIntonation();
+			if (isIntonationDirty()) {
+				await playUpdatedIntonation();
+			} else {
+				await replayCachedIntonationAudio();
+			}
 		} finally {
 			setPlayButtonAppearance("play");
 			playRequestPending = false;
