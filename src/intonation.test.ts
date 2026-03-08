@@ -1,11 +1,13 @@
 /** @vitest-environment jsdom */
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
 	calculateLetterKeyAdjustment,
 	calculateStepSize,
 	clampRangeExtra,
+	exportIntonationFavorites,
 	hasActiveIntonationQuery,
+	importIntonationFavorites,
 } from "./intonation";
 import { intonationState } from "./intonation/state";
 import { buildSynthesisCacheKey } from "./intonation/playback";
@@ -157,5 +159,133 @@ describe("hasActiveIntonationQuery", () => {
 		intonationState.currentIntonationStyleId = 1;
 		intonationState.intonationDirty = true;
 		expect(hasActiveIntonationQuery("hello", 1)).toBe(true);
+	});
+});
+
+const stubQuery = {
+	accent_phrases: [
+		{
+			moras: [{ text: "a", vowel: "a", vowel_length: 0.1, pitch: 5.5 }],
+			accent: 1,
+		},
+	],
+	speedScale: 1,
+	pitchScale: 0,
+	intonationScale: 1,
+	volumeScale: 1,
+	prePhonemeLength: 0.1,
+	postPhonemeLength: 0.1,
+	outputSamplingRate: 24000,
+	outputStereo: false,
+} as const;
+
+describe("exportIntonationFavorites", () => {
+	let anchorClicked: boolean;
+	let originalCreateElement: typeof document.createElement;
+
+	beforeEach(() => {
+		anchorClicked = false;
+		originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
+		vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+		vi.spyOn(document, "createElement").mockImplementation(
+			(tag: string): HTMLElement => {
+				if (tag === "a") {
+					const anchor = originalCreateElement(
+						"a",
+					) as HTMLAnchorElement;
+					anchor.click = () => {
+						anchorClicked = true;
+					};
+					return anchor;
+				}
+				return originalCreateElement(tag);
+			},
+		);
+		intonationState.intonationFavorites = [
+			{ text: "テスト", styleId: 1, query: { ...stubQuery } },
+		];
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+		intonationState.intonationFavorites = [];
+	});
+
+	it("triggers a file download with the current favorites as JSON", () => {
+		exportIntonationFavorites();
+		expect(anchorClicked).toBe(true);
+		expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
+	});
+});
+
+describe("importIntonationFavorites", () => {
+	beforeEach(() => {
+		intonationState.intonationFavorites = [];
+		intonationState.intonationFavoritesListEl = null;
+		localStorage.clear();
+	});
+
+	afterEach(() => {
+		intonationState.intonationFavorites = [];
+		localStorage.clear();
+	});
+
+	it("merges valid favorites from a JSON file", async () => {
+		const data = JSON.stringify([
+			{ text: "hello", styleId: 2, query: { ...stubQuery } },
+		]);
+		const file = new File([data], "test.json", { type: "application/json" });
+		await new Promise<void>((resolve) => {
+			importIntonationFavorites(file, resolve);
+		});
+		expect(intonationState.intonationFavorites).toHaveLength(1);
+		expect(intonationState.intonationFavorites[0].text).toBe("hello");
+		expect(intonationState.intonationFavorites[0].styleId).toBe(2);
+	});
+
+	it("deduplicates favorites on import", async () => {
+		intonationState.intonationFavorites = [
+			{ text: "hello", styleId: 2, query: { ...stubQuery } },
+		];
+		const data = JSON.stringify([
+			{ text: "hello", styleId: 2, query: { ...stubQuery } },
+		]);
+		const file = new File([data], "test.json", { type: "application/json" });
+		await new Promise<void>((resolve) => {
+			importIntonationFavorites(file, resolve);
+		});
+		expect(intonationState.intonationFavorites).toHaveLength(1);
+	});
+
+	it("rejects invalid JSON with an error status", async () => {
+		const file = new File(["not-json"], "bad.json", {
+			type: "application/json",
+		});
+		let done = false;
+		await new Promise<void>((resolve) => {
+			importIntonationFavorites(file, () => {
+				done = true;
+				resolve();
+			});
+		});
+		expect(done).toBe(true);
+		expect(intonationState.intonationFavorites).toHaveLength(0);
+	});
+
+	it("skips items with missing or invalid fields", async () => {
+		const data = JSON.stringify([
+			{ text: "ok", styleId: 1, query: { ...stubQuery } },
+			{ text: 123, styleId: 1, query: { ...stubQuery } },
+			{ styleId: 1, query: { ...stubQuery } },
+		]);
+		const file = new File([data], "partial.json", {
+			type: "application/json",
+		});
+		await new Promise<void>((resolve) => {
+			importIntonationFavorites(file, resolve);
+		});
+		expect(intonationState.intonationFavorites).toHaveLength(1);
+		expect(intonationState.intonationFavorites[0].text).toBe("ok");
 	});
 });

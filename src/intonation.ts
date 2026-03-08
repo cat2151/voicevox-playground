@@ -289,6 +289,68 @@ export function applyIntonationFavorite(item: IntonationFavorite) {
 	void playUpdatedIntonation();
 }
 
+export function exportIntonationFavorites() {
+	const data = JSON.stringify(state.intonationFavorites, null, 2);
+	const blob = new Blob([data], { type: "application/json" });
+	const url = URL.createObjectURL(blob);
+	const anchor = document.createElement("a");
+	anchor.href = url;
+	anchor.download = "intonation-favorites.json";
+	anchor.click();
+	URL.revokeObjectURL(url);
+}
+
+export function importIntonationFavorites(
+	file: File,
+	onDone?: () => void,
+): void {
+	const reader = new FileReader();
+	reader.onload = (event) => {
+		try {
+			const raw = event.target?.result;
+			if (typeof raw !== "string") throw new Error("Invalid file content");
+			const parsed = JSON.parse(raw);
+			if (!Array.isArray(parsed)) throw new Error("Expected an array");
+			const incoming = parsed
+				.map((item) => {
+					if (!item || typeof item !== "object") return null;
+					const { text, styleId, query } = item as Partial<IntonationFavorite>;
+					if (
+						typeof text !== "string" ||
+						typeof styleId !== "number" ||
+						!isValidAudioQueryShape(query)
+					)
+						return null;
+					return { text: text.trim(), styleId, query } as IntonationFavorite;
+				})
+				.filter((item): item is IntonationFavorite => item !== null);
+			state.intonationFavorites = dedupeIntonationFavorites([
+				...incoming,
+				...state.intonationFavorites,
+			]);
+			persistIntonationFavorites();
+			renderIntonationFavoritesList();
+			showStatus(
+				"イントネーション付きお気に入りをインポートしました",
+				"success",
+			);
+			scheduleHideStatus(2000);
+		} catch (error) {
+			console.warn("Failed to import intonation favorites:", error);
+			showStatus(
+				"インポートに失敗しました。JSONファイルを確認してください",
+				"error",
+			);
+		}
+		onDone?.();
+	};
+	reader.onerror = () => {
+		showStatus("ファイルの読み込みに失敗しました", "error");
+		onDone?.();
+	};
+	reader.readAsText(file);
+}
+
 export function saveCurrentIntonationFavorite(selectedStyleId: number) {
 	const textArea = document.getElementById(
 		"text",
