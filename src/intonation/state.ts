@@ -38,6 +38,7 @@ export interface IntonationState {
 	currentIntonationText: string | null;
 	intonationFavorites: IntonationFavorite[];
 	onStyleChange: ((styleId: number) => void) | null;
+	onHandlePlay: (() => void) | null;
 	wheelHandlerAttached: boolean;
 	scrollLocked: boolean;
 	previousBodyOverflow: string | null;
@@ -75,6 +76,7 @@ export const intonationState: IntonationState = {
 	currentIntonationText: null,
 	intonationFavorites: [],
 	onStyleChange: null,
+	onHandlePlay: null,
 	wheelHandlerAttached: false,
 	scrollLocked: false,
 	previousBodyOverflow: null,
