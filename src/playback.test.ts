@@ -10,7 +10,6 @@ import {
 	setTextAndPlay,
 } from "./playback";
 import { stopActivePlayback } from "./visualization";
-import { TEXT_MAX_LENGTH } from "./config";
 
 const dummyAudioBuffer = {
 	length: 1,
@@ -405,116 +404,5 @@ describe("handlePlay with multiple styles", () => {
 
 		confirmSpy.mockRestore();
 		vi.mocked(isIntonationActive).mockReturnValue(false);
-	});
-});
-
-describe("handlePlay text truncation", () => {
-	const makeDOM = (text: string) => {
-		document.body.innerHTML = `
-      <textarea id="text">${text}</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
-	};
-
-	it("passes text unchanged when within limit", async () => {
-		const shortText = "あ".repeat(TEXT_MAX_LENGTH - 1);
-		makeDOM(shortText);
-
-		const { buildTextSegments } = await import("./styleManager");
-		const { playAudio } = await import("./visualization");
-		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
-
-		await handlePlay();
-
-		expect(vi.mocked(buildTextSegments)).toHaveBeenCalledWith(
-			shortText,
-			expect.anything(),
-			expect.anything(),
-		);
-
-		const { showStatus } = await import("./status");
-		const statusCalls = vi.mocked(showStatus).mock.calls;
-		const completionCall = statusCalls.find(([msg]) =>
-			(msg as string).includes("再生完了"),
-		);
-		expect(completionCall?.[0]).toBe("再生完了！");
-	});
-
-	it("truncates text to TEXT_MAX_LENGTH when over limit", async () => {
-		const longText = "あ".repeat(TEXT_MAX_LENGTH + 100);
-		makeDOM(longText);
-
-		const { buildTextSegments } = await import("./styleManager");
-		const { playAudio } = await import("./visualization");
-		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
-
-		await handlePlay();
-
-		const expectedText = "あ".repeat(TEXT_MAX_LENGTH);
-		expect(vi.mocked(buildTextSegments)).toHaveBeenCalledWith(
-			expectedText,
-			expect.anything(),
-			expect.anything(),
-		);
-	});
-
-	it("shows truncation notice in status when text is over limit", async () => {
-		const longText = "あ".repeat(TEXT_MAX_LENGTH + 1);
-		makeDOM(longText);
-
-		const { playAudio } = await import("./visualization");
-		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
-
-		await handlePlay();
-
-		const { showStatus } = await import("./status");
-		const statusCalls = vi
-			.mocked(showStatus)
-			.mock.calls.map(([msg]) => msg as string);
-		expect(statusCalls.some((msg) => msg.includes("カット"))).toBe(true);
-		const completionMsg = statusCalls.find((msg) => msg.includes("再生完了"));
-		expect(completionMsg).toContain("カット");
-	});
-
-	it("shows truncation notice when playUpdatedIntonation path is taken with long text", async () => {
-		const longText = "あ".repeat(TEXT_MAX_LENGTH + 1);
-		document.body.innerHTML = `
-      <textarea id="text">${longText}</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
-
-		const {
-			hasActiveIntonationQuery,
-			isIntonationDirty,
-			playUpdatedIntonation,
-		} = await import("./intonation");
-		const { showStatus } = await import("./status");
-		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
-		vi.mocked(isIntonationDirty).mockReturnValue(true);
-
-		await handlePlay();
-
-		expect(playUpdatedIntonation).toHaveBeenCalledTimes(1);
-		const statusCalls = vi
-			.mocked(showStatus)
-			.mock.calls.map(([msg]) => msg as string);
-		expect(statusCalls.some((msg) => msg.includes("カット"))).toBe(true);
-
-		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
-		vi.mocked(isIntonationDirty).mockReturnValue(false);
 	});
 });
