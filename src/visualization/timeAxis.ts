@@ -1,6 +1,6 @@
 import { getColorVariable } from "../status";
 
-export const SPECTROGRAM_LEFT_MARGIN = 40;
+export const SPECTROGRAM_LEFT_MARGIN = 60;
 export const TIME_TICK_STEP_SECONDS = 0.5;
 
 function formatTimeLabel(seconds: number) {
