@@ -71,29 +71,29 @@ function dedupeIntonationFavorites(list: IntonationFavorite[]) {
 	return result;
 }
 
+function parseIntonationFavoritesArray(parsed: unknown): IntonationFavorite[] {
+	if (!Array.isArray(parsed)) return [];
+	return parsed
+		.map((item) => {
+			if (!item || typeof item !== "object") return null;
+			const { text, styleId, query } = item as Partial<IntonationFavorite>;
+			if (
+				typeof text !== "string" ||
+				typeof styleId !== "number" ||
+				!isValidAudioQueryShape(query)
+			)
+				return null;
+			return { text: text.trim(), styleId, query } as IntonationFavorite;
+		})
+		.filter((item): item is IntonationFavorite => item !== null);
+}
+
 function loadIntonationFavorites() {
 	try {
 		const raw = localStorage.getItem(INTONATION_FAVORITES_STORAGE_KEY);
 		if (!raw) return [];
 		const parsed = JSON.parse(raw);
-		if (Array.isArray(parsed)) {
-			return dedupeIntonationFavorites(
-				parsed
-					.map((item) => {
-						if (!item || typeof item !== "object") return null;
-						const { text, styleId, query } =
-							item as Partial<IntonationFavorite>;
-						if (
-							typeof text !== "string" ||
-							typeof styleId !== "number" ||
-							!isValidAudioQueryShape(query)
-						)
-							return null;
-						return { text: text.trim(), styleId, query } as IntonationFavorite;
-					})
-					.filter((item): item is IntonationFavorite => item !== null),
-			);
-		}
+		return dedupeIntonationFavorites(parseIntonationFavoritesArray(parsed));
 	} catch (error) {
 		console.warn("Failed to load intonation favorites:", error);
 	}
@@ -296,8 +296,12 @@ export function exportIntonationFavorites() {
 	const anchor = document.createElement("a");
 	anchor.href = url;
 	anchor.download = "intonation-favorites.json";
+	document.body.appendChild(anchor);
 	anchor.click();
-	URL.revokeObjectURL(url);
+	window.setTimeout(() => {
+		URL.revokeObjectURL(url);
+		anchor.remove();
+	}, 0);
 }
 
 export function importIntonationFavorites(
@@ -311,19 +315,7 @@ export function importIntonationFavorites(
 			if (typeof raw !== "string") throw new Error("Invalid file content");
 			const parsed = JSON.parse(raw);
 			if (!Array.isArray(parsed)) throw new Error("Expected an array");
-			const incoming = parsed
-				.map((item) => {
-					if (!item || typeof item !== "object") return null;
-					const { text, styleId, query } = item as Partial<IntonationFavorite>;
-					if (
-						typeof text !== "string" ||
-						typeof styleId !== "number" ||
-						!isValidAudioQueryShape(query)
-					)
-						return null;
-					return { text: text.trim(), styleId, query } as IntonationFavorite;
-				})
-				.filter((item): item is IntonationFavorite => item !== null);
+			const incoming = parseIntonationFavoritesArray(parsed);
 			state.intonationFavorites = dedupeIntonationFavorites([
 				...incoming,
 				...state.intonationFavorites,

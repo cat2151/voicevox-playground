@@ -11,6 +11,7 @@ import {
 } from "./intonation";
 import { intonationState } from "./intonation/state";
 import { buildSynthesisCacheKey } from "./intonation/playback";
+import * as statusModule from "./status";
 
 describe("buildSynthesisCacheKey", () => {
 	it("encodes apiBase, speakerId and query into a stable key", () => {
@@ -186,14 +187,13 @@ describe("exportIntonationFavorites", () => {
 	beforeEach(() => {
 		anchorClicked = false;
 		originalCreateElement = document.createElement.bind(document);
+		vi.useFakeTimers();
 		vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
 		vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
 		vi.spyOn(document, "createElement").mockImplementation(
 			(tag: string): HTMLElement => {
 				if (tag === "a") {
-					const anchor = originalCreateElement(
-						"a",
-					) as HTMLAnchorElement;
+					const anchor = originalCreateElement("a") as HTMLAnchorElement;
 					anchor.click = () => {
 						anchorClicked = true;
 					};
@@ -208,6 +208,7 @@ describe("exportIntonationFavorites", () => {
 	});
 
 	afterEach(() => {
+		vi.useRealTimers();
 		vi.restoreAllMocks();
 		intonationState.intonationFavorites = [];
 	});
@@ -215,6 +216,7 @@ describe("exportIntonationFavorites", () => {
 	it("triggers a file download with the current favorites as JSON", () => {
 		exportIntonationFavorites();
 		expect(anchorClicked).toBe(true);
+		vi.runAllTimers();
 		expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
 	});
 });
@@ -224,9 +226,11 @@ describe("importIntonationFavorites", () => {
 		intonationState.intonationFavorites = [];
 		intonationState.intonationFavoritesListEl = null;
 		localStorage.clear();
+		vi.spyOn(statusModule, "scheduleHideStatus").mockImplementation(() => {});
 	});
 
 	afterEach(() => {
+		vi.restoreAllMocks();
 		intonationState.intonationFavorites = [];
 		localStorage.clear();
 	});
