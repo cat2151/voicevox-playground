@@ -276,19 +276,12 @@ export function drawSpectrogram(
 	ctx.lineTo(width, drawableHeight);
 	ctx.stroke();
 
-	ctx.strokeStyle = getColorVariable("--border-color", "#e0e0e0");
-	ctx.beginPath();
-	ctx.moveTo(leftMargin, 0);
-	ctx.lineTo(leftMargin, drawableHeight);
-	ctx.lineTo(width, drawableHeight);
-	ctx.stroke();
-
 	ctx.strokeStyle = getColorVariable("--canvas-grid", "rgba(0,0,0,0.06)");
 	ctx.fillStyle = getColorVariable("--axis-label", "#666666");
 	ctx.font = "11px sans-serif";
 	ctx.textAlign = "right";
 	ctx.textBaseline = "middle";
-	const labelMetrics = ctx.measureText("0000Hz");
+	const labelMetrics = ctx.measureText("00000Hz");
 	const calculatedHeight =
 		(labelMetrics.actualBoundingBoxAscent ?? 0) +
 		(labelMetrics.actualBoundingBoxDescent ?? 0);
@@ -316,7 +309,7 @@ export function drawSpectrogram(
 			drawableHeight - Math.min(normalized * drawableHeight, drawableHeight);
 		ctx.beginPath();
 		ctx.moveTo(leftMargin - 4, y);
-		ctx.lineTo(leftMargin + 6, y);
+		ctx.lineTo(leftMargin, y);
 		ctx.stroke();
 		const shouldDrawLabel =
 			lastLabelY === null ||
