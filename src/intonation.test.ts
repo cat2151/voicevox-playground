@@ -2,16 +2,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+	applyIntonationFavorite,
 	calculateLetterKeyAdjustment,
 	calculateStepSize,
 	clampRangeExtra,
 	exportIntonationFavorites,
 	hasActiveIntonationQuery,
 	importIntonationFavorites,
+	setHandlePlayHandler,
 } from "./intonation";
 import { intonationState } from "./intonation/state";
 import { buildSynthesisCacheKey } from "./intonation/playback";
 import * as statusModule from "./status";
+import * as visualization from "./visualization";
 
 describe("buildSynthesisCacheKey", () => {
 	it("encodes apiBase, speakerId and query into a stable key", () => {
@@ -291,5 +294,99 @@ describe("importIntonationFavorites", () => {
 		});
 		expect(intonationState.intonationFavorites).toHaveLength(1);
 		expect(intonationState.intonationFavorites[0].text).toBe("ok");
+	});
+});
+
+describe("applyIntonationFavorite with loop playback", () => {
+	const favoriteItem = {
+		text: "テスト",
+		styleId: 1,
+		query: { ...stubQuery },
+	};
+
+	beforeEach(() => {
+		document.body.innerHTML = `
+      <textarea id="text"></textarea>
+      <select id="styleSelect"><option value="1">Style 1</option></select>
+      <input id="loopCheckbox" type="checkbox" />
+    `;
+		intonationState.intonationFavorites = [];
+		intonationState.intonationFavoritesListEl = null;
+		intonationState.loopCheckboxEl = null;
+		intonationState.onHandlePlay = null;
+		intonationState.onStyleChange = null;
+		vi.useFakeTimers();
+		vi.spyOn(statusModule, "showStatus").mockImplementation(() => {});
+		vi.spyOn(statusModule, "scheduleHideStatus").mockImplementation(() => {});
+		vi.spyOn(visualization, "stopActivePlayback").mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		vi.restoreAllMocks();
+		intonationState.loopCheckboxEl = null;
+		intonationState.onHandlePlay = null;
+	});
+
+	it("stops active playback and turns off loop before setting up state", () => {
+		const loopCheckbox = document.getElementById(
+			"loopCheckbox",
+		) as HTMLInputElement;
+		loopCheckbox.checked = true;
+		intonationState.loopCheckboxEl = loopCheckbox;
+
+		applyIntonationFavorite(favoriteItem);
+
+		expect(visualization.stopActivePlayback).toHaveBeenCalledTimes(1);
+		expect(loopCheckbox.checked).toBe(false);
+	});
+
+	it("re-enables loop and calls onHandlePlay after a tick", async () => {
+		const loopCheckbox = document.getElementById(
+			"loopCheckbox",
+		) as HTMLInputElement;
+		loopCheckbox.checked = true;
+		intonationState.loopCheckboxEl = loopCheckbox;
+
+		const handlePlayMock = vi.fn();
+		setHandlePlayHandler(handlePlayMock);
+
+		applyIntonationFavorite(favoriteItem);
+
+		expect(handlePlayMock).not.toHaveBeenCalled();
+		expect(loopCheckbox.checked).toBe(false);
+
+		await vi.runAllTimersAsync();
+
+		expect(loopCheckbox.checked).toBe(true);
+		expect(handlePlayMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("sets intonationDirty to true inside the setTimeout so handlePlay re-synthesizes audio", async () => {
+		const handlePlayMock = vi.fn();
+		setHandlePlayHandler(handlePlayMock);
+
+		applyIntonationFavorite(favoriteItem);
+		expect(intonationState.intonationDirty).toBe(false);
+
+		await vi.runAllTimersAsync();
+		expect(intonationState.intonationDirty).toBe(true);
+	});
+
+	it("does not re-enable loop when it was not active", async () => {
+		const loopCheckbox = document.getElementById(
+			"loopCheckbox",
+		) as HTMLInputElement;
+		loopCheckbox.checked = false;
+		intonationState.loopCheckboxEl = loopCheckbox;
+
+		const handlePlayMock = vi.fn();
+		setHandlePlayHandler(handlePlayMock);
+
+		applyIntonationFavorite(favoriteItem);
+		await vi.runAllTimersAsync();
+
+		expect(loopCheckbox.checked).toBe(false);
+		expect(handlePlayMock).toHaveBeenCalledTimes(1);
 	});
 });

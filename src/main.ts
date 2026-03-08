@@ -23,6 +23,7 @@ import {
 	refreshIntonationChart,
 	resetIntonationToInitial,
 	saveCurrentIntonationFavorite,
+	setHandlePlayHandler,
 	setIntonationKeyboardEnabled,
 	setStyleChangeHandler,
 	setupIntonationCanvasEvents,
@@ -255,6 +256,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	setStyleChangeHandler((styleId) => {
 		applyStyleSelection(styleId);
 	});
+
+	setHandlePlayHandler(() => void handlePlay());
 
 	if (playButton) {
 		playButton.addEventListener("click", handlePlayButtonClick);

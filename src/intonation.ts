@@ -14,6 +14,7 @@ import {
 	updateInitialRangeFromPoints,
 } from "./intonation/display";
 import { playUpdatedIntonation } from "./intonation/playback";
+import { stopActivePlayback } from "./visualization";
 import {
 	handleIntonationKeyDown,
 	handleIntonationMouseLeave,
@@ -146,6 +147,10 @@ export function setStyleChangeHandler(handler: (styleId: number) => void) {
 	state.onStyleChange = handler;
 }
 
+export function setHandlePlayHandler(handler: () => void) {
+	state.onHandlePlay = handler;
+}
+
 export function initializeIntonationElements(options: {
 	canvas: HTMLCanvasElement | null;
 	timingEl: HTMLElement | null;
@@ -260,6 +265,12 @@ export function applyIntonationFavorite(item: IntonationFavorite) {
 		}
 		return;
 	}
+	const loopCheckbox = state.loopCheckboxEl;
+	const wasLooping = loopCheckbox?.checked ?? false;
+	if (wasLooping && loopCheckbox) {
+		loopCheckbox.checked = false;
+	}
+	stopActivePlayback();
 	const textArea = document.getElementById(
 		"text",
 	) as HTMLTextAreaElement | null;
@@ -286,7 +297,21 @@ export function applyIntonationFavorite(item: IntonationFavorite) {
 	state.intonationDirty = false;
 	updateInitialRangeFromPoints(state.intonationPoints);
 	drawIntonationChart(state.intonationPoints);
-	void playUpdatedIntonation();
+	// Defer playback start to allow the current playback's async cleanup
+	// (isProcessing reset, playRequestPending reset) to complete first.
+	setTimeout(() => {
+		if (wasLooping && loopCheckbox) {
+			loopCheckbox.checked = true;
+		}
+		if (state.onHandlePlay) {
+			// Mark dirty so handlePlay re-synthesizes the new intonation query,
+			// then the loop will use the cached result on subsequent iterations.
+			state.intonationDirty = true;
+			state.onHandlePlay();
+		} else {
+			void playUpdatedIntonation();
+		}
+	}, 0);
 }
 
 export function exportIntonationFavorites() {
