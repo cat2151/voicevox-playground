@@ -300,10 +300,10 @@ export function applyIntonationFavorite(item: IntonationFavorite) {
 	// Defer playback start to allow the current playback's async cleanup
 	// (isProcessing reset, playRequestPending reset) to complete first.
 	setTimeout(() => {
-		if (wasLooping && loopCheckbox) {
-			loopCheckbox.checked = true;
-		}
 		if (state.onHandlePlay) {
+			if (wasLooping && loopCheckbox) {
+				loopCheckbox.checked = true;
+			}
 			// Mark dirty so handlePlay re-synthesizes the new intonation query,
 			// then the loop will use the cached result on subsequent iterations.
 			state.intonationDirty = true;

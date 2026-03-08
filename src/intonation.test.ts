@@ -313,7 +313,9 @@ describe("applyIntonationFavorite with loop playback", () => {
 		intonationState.intonationFavorites = [];
 		intonationState.intonationFavoritesListEl = null;
 		intonationState.loopCheckboxEl = null;
-		intonationState.onHandlePlay = null;
+		// Always register a no-op handler so the fallback playUpdatedIntonation()
+		// path (which triggers real Tone/audio work) is never reached in tests.
+		intonationState.onHandlePlay = vi.fn();
 		intonationState.onStyleChange = null;
 		vi.useFakeTimers();
 		vi.spyOn(statusModule, "showStatus").mockImplementation(() => {});
