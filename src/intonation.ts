@@ -71,29 +71,29 @@ function dedupeIntonationFavorites(list: IntonationFavorite[]) {
 	return result;
 }
 
+function parseIntonationFavoritesArray(parsed: unknown): IntonationFavorite[] {
+	if (!Array.isArray(parsed)) return [];
+	return parsed
+		.map((item) => {
+			if (!item || typeof item !== "object") return null;
+			const { text, styleId, query } = item as Partial<IntonationFavorite>;
+			if (
+				typeof text !== "string" ||
+				typeof styleId !== "number" ||
+				!isValidAudioQueryShape(query)
+			)
+				return null;
+			return { text: text.trim(), styleId, query } as IntonationFavorite;
+		})
+		.filter((item): item is IntonationFavorite => item !== null);
+}
+
 function loadIntonationFavorites() {
 	try {
 		const raw = localStorage.getItem(INTONATION_FAVORITES_STORAGE_KEY);
 		if (!raw) return [];
 		const parsed = JSON.parse(raw);
-		if (Array.isArray(parsed)) {
-			return dedupeIntonationFavorites(
-				parsed
-					.map((item) => {
-						if (!item || typeof item !== "object") return null;
-						const { text, styleId, query } =
-							item as Partial<IntonationFavorite>;
-						if (
-							typeof text !== "string" ||
-							typeof styleId !== "number" ||
-							!isValidAudioQueryShape(query)
-						)
-							return null;
-						return { text: text.trim(), styleId, query } as IntonationFavorite;
-					})
-					.filter((item): item is IntonationFavorite => item !== null),
-			);
-		}
+		return dedupeIntonationFavorites(parseIntonationFavoritesArray(parsed));
 	} catch (error) {
 		console.warn("Failed to load intonation favorites:", error);
 	}
@@ -287,6 +287,60 @@ export function applyIntonationFavorite(item: IntonationFavorite) {
 	updateInitialRangeFromPoints(state.intonationPoints);
 	drawIntonationChart(state.intonationPoints);
 	void playUpdatedIntonation();
+}
+
+export function exportIntonationFavorites() {
+	const data = JSON.stringify(state.intonationFavorites, null, 2);
+	const blob = new Blob([data], { type: "application/json" });
+	const url = URL.createObjectURL(blob);
+	const anchor = document.createElement("a");
+	anchor.href = url;
+	anchor.download = "intonation-favorites.json";
+	document.body.appendChild(anchor);
+	anchor.click();
+	window.setTimeout(() => {
+		URL.revokeObjectURL(url);
+		anchor.remove();
+	}, 0);
+}
+
+export function importIntonationFavorites(
+	file: File,
+	onDone?: () => void,
+): void {
+	const reader = new FileReader();
+	reader.onload = (event) => {
+		try {
+			const raw = event.target?.result;
+			if (typeof raw !== "string") throw new Error("Invalid file content");
+			const parsed = JSON.parse(raw);
+			if (!Array.isArray(parsed)) throw new Error("Expected an array");
+			const incoming = parseIntonationFavoritesArray(parsed);
+			state.intonationFavorites = dedupeIntonationFavorites([
+				...incoming,
+				...state.intonationFavorites,
+			]);
+			persistIntonationFavorites();
+			renderIntonationFavoritesList();
+			showStatus(
+				"イントネーション付きお気に入りをインポートしました",
+				"success",
+			);
+			scheduleHideStatus(2000);
+		} catch (error) {
+			console.warn("Failed to import intonation favorites:", error);
+			showStatus(
+				"インポートに失敗しました。JSONファイルを確認してください",
+				"error",
+			);
+		}
+		onDone?.();
+	};
+	reader.onerror = () => {
+		showStatus("ファイルの読み込みに失敗しました", "error");
+		onDone?.();
+	};
+	reader.readAsText(file);
 }
 
 export function saveCurrentIntonationFavorite(selectedStyleId: number) {

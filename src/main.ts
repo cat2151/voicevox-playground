@@ -15,7 +15,9 @@ import {
 import { initializeTextLists } from "./textLists";
 import {
 	adjustIntonationScale,
+	exportIntonationFavorites,
 	getIntonationKeyboardEnabled,
+	importIntonationFavorites,
 	initializeIntonationCanvas,
 	initializeIntonationElements,
 	refreshIntonationChart,
@@ -99,6 +101,15 @@ document.addEventListener("DOMContentLoaded", () => {
 	const intonationFavoritesListEl = document.getElementById(
 		"intonationFavoritesList",
 	) as HTMLUListElement | null;
+	const intonationFavoritesExportButton = document.getElementById(
+		"intonationFavoritesExportButton",
+	) as HTMLButtonElement | null;
+	const intonationFavoritesImportButton = document.getElementById(
+		"intonationFavoritesImportButton",
+	) as HTMLButtonElement | null;
+	const intonationFavoritesImportFile = document.getElementById(
+		"intonationFavoritesImportFile",
+	) as HTMLInputElement | null;
 	const intonationCanvas = document.getElementById(
 		"intonationCanvas",
 	) as HTMLCanvasElement | null;
@@ -369,6 +380,27 @@ document.addEventListener("DOMContentLoaded", () => {
 		favoritesListEl: intonationFavoritesListEl,
 		loopCheckbox: loopCheckboxEl,
 	});
+
+	if (intonationFavoritesExportButton) {
+		intonationFavoritesExportButton.addEventListener("click", () => {
+			exportIntonationFavorites();
+		});
+	}
+
+	if (intonationFavoritesImportButton && intonationFavoritesImportFile) {
+		intonationFavoritesImportButton.addEventListener("click", () => {
+			intonationFavoritesImportFile.value = "";
+			intonationFavoritesImportFile.click();
+		});
+		intonationFavoritesImportFile.addEventListener("change", () => {
+			const file = intonationFavoritesImportFile.files?.[0];
+			if (file) {
+				importIntonationFavorites(file, () => {
+					intonationFavoritesImportFile.value = "";
+				});
+			}
+		});
+	}
 
 	const updateSpectrogramScaleLabel = () => {
 		if (spectrogramScaleToggle) {

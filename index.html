@@ -82,7 +82,24 @@
       </div>
       <div id="favoritesPanel" class="favorites-panel" hidden>
         <div class="favorites-section">
-          <div class="favorites-section__title">イントネーション付きお気に入り</div>
+          <div class="favorites-section__header">
+            <div class="favorites-section__title">イントネーション付きお気に入り</div>
+            <button
+              type="button"
+              id="intonationFavoritesExportButton"
+              class="icon-button"
+              title="エクスポート"
+              aria-label="イントネーション付きお気に入りをエクスポート"
+            ><span aria-hidden="true">↓</span></button>
+            <button
+              type="button"
+              id="intonationFavoritesImportButton"
+              class="icon-button"
+              title="インポート"
+              aria-label="イントネーション付きお気に入りをインポート"
+            ><span aria-hidden="true">↑</span></button>
+            <input type="file" id="intonationFavoritesImportFile" accept=".json" hidden>
+          </div>
           <ul id="intonationFavoritesList" class="text-list" aria-label="イントネーション付きお気に入り"></ul>
         </div>
         <div class="favorites-section">

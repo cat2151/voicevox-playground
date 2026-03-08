@@ -347,10 +347,33 @@ canvas {
 #favoritesPanel[hidden] {
 	display: none;
 }
+.favorites-section__header {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-bottom: 6px;
+}
+.favorites-section__header .favorites-section__title {
+	margin-bottom: 0;
+	flex: 1;
+}
 .favorites-section__title {
 	font-weight: 600;
 	color: var(--muted-text);
 	margin-bottom: 6px;
+}
+.icon-button {
+	background: none;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	color: var(--muted-text);
+	cursor: pointer;
+	font-size: 14px;
+	line-height: 1;
+	padding: 2px 6px;
+}
+.icon-button:hover {
+	background: var(--border-color);
 }
 .text-list {
 	list-style: none;
