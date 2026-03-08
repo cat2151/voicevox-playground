@@ -1,4 +1,4 @@
-Last updated: 2026-03-08
+Last updated: 2026-03-09
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -233,8 +233,7 @@ Last updated: 2026-03-08
 - issue-notes/123.md
 - issue-notes/138.md
 - issue-notes/140.md
-- issue-notes/141.md
-- issue-notes/142.md
+- issue-notes/155.md
 - issue-notes/22.md
 - issue-notes/23.md
 - issue-notes/24.md
@@ -256,7 +255,6 @@ Last updated: 2026-03-08
 - issue-notes/80.md
 - issue-notes/89.md
 - issue-notes/92.md
-- issue-notes/97.md
 - package-lock.json
 - package.json
 - src/audio.ts
@@ -272,6 +270,7 @@ Last updated: 2026-03-08
 - src/intonation.ts
 - src/main.ts
 - src/playback.test.ts
+- src/playback.truncation.test.ts
 - src/playback.ts
 - src/settings.test.ts
 - src/settings.ts
@@ -302,14 +301,14 @@ Last updated: 2026-03-08
 - vite.config.ts
 
 ## 現在のオープンIssues
-## [Issue #149](../issue-notes/149.md): 大きなファイルの検出: 1個のファイルが500行を超えています
+## [Issue #157](../issue-notes/157.md): 大きなファイルの検出: 1個のファイルが500行を超えています
 以下のファイルが500行を超えています。リファクタリングを検討してください。
 
 ## 検出されたファイル
 
 | ファイル | 行数 | 超過行数 |
 |---------|------|----------|
-| `src/playback.test.ts` | 520 | +20 |
+| `src/main.ts` | 510 | +10 |
 
 ## テスト実施のお願い
 
@@ -318,28 +317,12 @@ Last updated: 2026-03-08
 
 ## 推奨事項
 
-1. 単一責任の原則に従い、ファイルを分...
+1. 単一責任の原則に従い、ファイルを分割する
+2. 共通...
 ラベル: refactoring, code-quality, automated
---- issue-notes/149.md の内容 ---
+--- issue-notes/157.md の内容 ---
 
 ```markdown
-
-```
-
-## [Issue #121](../issue-notes/121.md): イントネーション付きお気に入りのexportとimportをできるようにする
-[issue-notes/121.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/121.md)
-
-...
-ラベル: 
---- issue-notes/121.md の内容 ---
-
-```markdown
-# issue イントネーション付きお気に入りのexportとimportをできるようにする #121
-[issues #121](https://github.com/cat2151/voicevox-playground/issues/121)
-
-- 「イントネーション付きお気に入り」の見出しの右に、exportボタンとimportボタンをつける
-- exportもimportも、「イントネーション付きお気に入り」のlocal storageに保存される内容そのもの（複数まるごと）、とする
-- ひとまず複数まるごとでUX検証とする
 
 ```
 
@@ -414,21 +397,6 @@ Last updated: 2026-03-08
 - さらに続けたところ、コード破壊（既存機能を削除）
 - どうする？
   - 待ち。Opus4.6以上かCodex 5.1以上が使えるようになるまで待ち
-
-```
-
-## [Issue #97](../issue-notes/97.md): スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す
-[issue-notes/97.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/97.md)
-
-...
-ラベル: 
---- issue-notes/97.md の内容 ---
-
-```markdown
-# issue スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す #97
-[issues #97](https://github.com/cat2151/voicevox-playground/issues/97)
-
-
 
 ```
 
@@ -605,67 +573,6 @@ Last updated: 2026-03-08
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/21.md
-```md
-{% raw %}
-# issue project-summary の development-status 生成時、project-overviewが生成済みのproject-overview.mdもpromptに添付、を試す #21
-[issues #21](https://github.com/cat2151/github-actions/issues/21)
-
-# 何が困るの？
-- project-overview.mdがpromptに添付されていたほうが、Geminiの生成品質が改善できる可能性がある。
-    - メリットは、ファイル一覧、関数一覧、をGeminiにわたせること
-
-# 検討事項
-- 課題、その一覧に付記されている「ファイルや関数の要約」は、Geminiが「ファイル名や関数名を元に生成しただけ」で、「ファイル内容や関数内容を参照せずに生成した」可能性が高い
-    - 対策、project-overview.mdに依存しない。
-        - 方法、新規関数をagentに実装させる
-            - 新規関数で、ファイル一覧と関数一覧を生成する
-        - 根拠、そのほうが、シンプルに目的を達成できる可能性が高そう。
-        - 根拠、project-overview.mdだと、不具合として.github 配下のymlがlistに含まれておらず、ymlに関するissue、に関する生成、をするとき不具合の可能性がありそう。そういった、別機能の不具合に影響されがち。
-- 課題、早期に実施したほうが毎日好影響が出る可能性がある
-    - 対策、上記検討事項の対処は後回しにして、先に実装してみる
-    - agentに投げる
-- 課題、ProjectSummaryCoordinator をみたところ、並列処理されている
-    - なので、project-overview.mdを参照したいときに、まだ生成されていない、という可能性が高い
-    - 対策、前述の、新規関数で、ファイル一覧と関数一覧を生成させる
-
-# agentに投げるための整理
-- 編集対象ファイル
-    - prompt
-        - .github_automation/project_summary/prompts/development-status-prompt.md
-        - 編集内容
-            - projectのファイル一覧を埋め込む用の、プレースホルダーを追加する
-    - source
-        - .github_automation/project_summary/scripts/development/DevelopmentStatusGenerator.cjs
-        - 編集内容
-            - projectのファイル一覧を生成する関数、を実装し、
-            - それを前述のプレースホルダーに埋め込む
-
-# agentに投げて実装させた
-
-# test結果
-- 以下が不要
-    - .git/
-    - node_modules/
-
-# どうする？
-- agentに上記を変更させた
-- testする
-
-# 結果
-- test greenとなった
-
-# まとめ
-- issueのtitleからは仕様変更した。
-    - projectのfile一覧をpromptに含める、とした。
-    - そのほうがpromptとして、よい生成結果が期待できる、と判断した。
-- test greenとなった
-
-# closeとする
-
-{% endraw %}
-```
-
 ### .github/actions-tmp/issue-notes/3.md
 ```md
 {% raw %}
@@ -759,24 +666,6 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/9.md
-```md
-{% raw %}
-# issue 関数コールグラフhtmlビジュアライズが0件なので、原因を可視化する #9
-[issues #9](https://github.com/cat2151/github-actions/issues/9)
-
-# agentに修正させたり、人力で修正したりした
-- agentがハルシネーションし、いろいろ根の深いバグにつながる、エラー隠蔽などを仕込んでいたため、検知が遅れた
-- 詳しくはcommit logを参照のこと
-- WSL + actの環境を少し変更、act起動時のコマンドライン引数を変更し、generated-docsをmountする（ほかはデフォルト挙動であるcpだけにする）ことで、デバッグ情報をコンテナ外に出力できるようにし、デバッグを効率化した
-
-# test green
-
-# closeとする
-
-{% endraw %}
-```
-
 ### issue-notes/111.md
 ```md
 {% raw %}
@@ -839,683 +728,517 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### issue-notes/121.md
-```md
-{% raw %}
-# issue イントネーション付きお気に入りのexportとimportをできるようにする #121
-[issues #121](https://github.com/cat2151/voicevox-playground/issues/121)
-
-- 「イントネーション付きお気に入り」の見出しの右に、exportボタンとimportボタンをつける
-- exportもimportも、「イントネーション付きお気に入り」のlocal storageに保存される内容そのもの（複数まるごと）、とする
-- ひとまず複数まるごとでUX検証とする
-
-{% endraw %}
-```
-
-### issue-notes/97.md
-```md
-{% raw %}
-# issue スペクトログラム左のHzの桁数が3桁しかないので5桁にする。あわせてHzの右の不要な白い線を消す #97
-[issues #97](https://github.com/cat2151/voicevox-playground/issues/97)
-
-
-
-{% endraw %}
-```
-
-### src/intonation/playback.test.ts
+### src/main.ts
 ```ts
 {% raw %}
-/** @vitest-environment jsdom */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { playUpdatedIntonation } from "./playback";
-import { intonationState } from "./state";
-import { appState } from "../state";
-import type { AudioQuery } from "../config";
-
-const dummyAudioBuffer = {
-	length: 1,
-	numberOfChannels: 1,
-	sampleRate: 48000,
-	duration: 0.01,
-	getChannelData: () => new Float32Array(1),
-} as unknown as AudioBuffer;
-
-vi.mock("tone", () => ({
-	getContext: () => ({
-		rawContext: {
-			decodeAudioData: vi.fn(async () => dummyAudioBuffer),
-		},
-	}),
-}));
-
-vi.mock("../audio", () => ({
-	getAudioQuery: vi.fn(),
-	synthesize: vi.fn(async () => new ArrayBuffer(8)),
-}));
-
-vi.mock("../visualization", () => ({
-	drawRenderedWaveform: vi.fn(),
-	initializeVisualizationCanvases: vi.fn(),
-	playAudio: vi.fn(async () => ({ stopped: false })),
-}));
-
-vi.mock("../status", () => ({
-	showStatus: vi.fn(),
-	scheduleHideStatus: vi.fn(),
-}));
-
-vi.mock("../uiControls", () => ({
-	updateExportButtonState: vi.fn(),
-}));
-
-vi.mock("../styleManager", () => ({
-	getApiBaseForStyleId: vi.fn(() => "http://localhost:50021"),
-}));
-
-const stubQuery: AudioQuery = { accent_phrases: [] } as unknown as AudioQuery;
-
-beforeEach(() => {
-	document.body.innerHTML = `
-    <button id="playButton"></button>
-    <button id="exportButton"></button>
-    <canvas id="renderedWaveform"></canvas>
-    <canvas id="realtimeWaveform"></canvas>
-    <canvas id="spectrogram"></canvas>
-  `;
-	intonationState.currentIntonationQuery = stubQuery;
-	intonationState.currentIntonationStyleId = 1;
-	intonationState.intonationDirty = true;
-	intonationState.synthesisCache.clear();
-	appState.isProcessing = false;
-	appState.lastSynthesizedBuffer = null;
-});
-
-afterEach(() => {
-	vi.clearAllMocks();
-	intonationState.synthesisCache.clear();
-	intonationState.currentIntonationQuery = null;
-	intonationState.intonationDirty = false;
-	appState.isProcessing = false;
-	appState.lastSynthesizedBuffer = null;
-});
-
-describe("playUpdatedIntonation cache behavior", () => {
-	it("calls synthesize on cache miss and stores result in synthesisCache", async () => {
-		const { synthesize } = await import("../audio");
-
-		await playUpdatedIntonation();
-
-		expect(vi.mocked(synthesize)).toHaveBeenCalledTimes(1);
-		expect(intonationState.synthesisCache.size).toBe(1);
-	});
-
-	it("skips synthesize on cache hit and reuses the cached buffer", async () => {
-		const { synthesize } = await import("../audio");
-
-		await playUpdatedIntonation();
-		vi.mocked(synthesize).mockClear();
-
-		intonationState.intonationDirty = true;
-		await playUpdatedIntonation();
-
-		expect(vi.mocked(synthesize)).not.toHaveBeenCalled();
-		expect(intonationState.synthesisCache.size).toBe(1);
-	});
-
-	it("sets intonationDirty to false after successful synthesis", async () => {
-		await playUpdatedIntonation();
-
-		expect(intonationState.intonationDirty).toBe(false);
-	});
-
-	it("populates appState.lastSynthesizedBuffer after synthesis", async () => {
-		await playUpdatedIntonation();
-
-		expect(appState.lastSynthesizedBuffer).not.toBeNull();
-	});
-
-	it("caches different buffers for different queries", async () => {
-		const { synthesize } = await import("../audio");
-
-		await playUpdatedIntonation();
-
-		const query2 = {
-			accent_phrases: [{ moras: [] }],
-		} as unknown as AudioQuery;
-		intonationState.currentIntonationQuery = query2;
-		intonationState.intonationDirty = true;
-		await playUpdatedIntonation();
-
-		expect(vi.mocked(synthesize)).toHaveBeenCalledTimes(2);
-		expect(intonationState.synthesisCache.size).toBe(2);
-	});
-});
-
-{% endraw %}
-```
-
-### src/playback.test.ts
-```ts
-{% raw %}
-/** @vitest-environment jsdom */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import "./styles.css";
 import {
-	getAudioCacheKey,
+	AUTO_PLAY_DEBOUNCE_MS,
+	DELIMITER_STORAGE_KEY,
+	FrequencyScale,
+} from "./config";
+import {
+	getCurrentSettings,
+	loadSettings,
+	resetSettings,
+	setFrequencyTopPercent,
+	setVoicevoxNemoPort,
+	setVoicevoxPort,
+} from "./settings";
+import { initializeTextLists } from "./textLists";
+import {
+	adjustIntonationScale,
+	exportIntonationFavorites,
+	getIntonationKeyboardEnabled,
+	importIntonationFavorites,
+	initializeIntonationCanvas,
+	initializeIntonationElements,
+	refreshIntonationChart,
+	resetIntonationToInitial,
+	saveCurrentIntonationFavorite,
+	setHandlePlayHandler,
+	setIntonationKeyboardEnabled,
+	setStyleChangeHandler,
+	setupIntonationCanvasEvents,
+} from "./intonation";
+import { appState } from "./state";
+import { updateExportButtonState } from "./uiControls";
+import {
+	clearAudioCache,
+	downloadLastAudio,
 	handlePlay,
 	handlePlayButtonClick,
 	isPlayRequestPending,
+	scheduleAutoPlay,
 	setLoopCheckboxElement,
 	setPlayButtonAppearance,
 	setTextAndPlay,
 } from "./playback";
-import { stopActivePlayback } from "./visualization";
-import { TEXT_MAX_LENGTH } from "./config";
+import {
+	fetchVoiceStyles,
+	getSelectedStyleId,
+	populateStyleSelect,
+	populateSpeakerStyleSelect,
+	selectRandomStyleId,
+	setSelectedStyleId,
+} from "./styleManager";
+import {
+	getSpectrogramScale,
+	initializeVisualizationCanvases,
+	isPlaybackActive,
+	setSpectrogramScale,
+} from "./visualization";
+import { showStatus, scheduleHideStatus } from "./status";
 
-const dummyAudioBuffer = {
-	length: 1,
-	numberOfChannels: 1,
-	sampleRate: 48000,
-	duration: 0.01,
-	getChannelData: () => new Float32Array(1),
-} as unknown as AudioBuffer;
+let delimiterSaveTimer: number | null = null;
 
-vi.mock("tone", () => ({
-	getContext: () => ({
-		rawContext: {
-			decodeAudioData: vi.fn(async () => dummyAudioBuffer),
-		},
-	}),
-}));
+document.addEventListener("DOMContentLoaded", () => {
+	loadSettings();
+	const playButton = document.getElementById(
+		"playButton",
+	) as HTMLButtonElement | null;
+	const textArea = document.getElementById(
+		"text",
+	) as HTMLTextAreaElement | null;
+	const exportButton = document.getElementById(
+		"exportButton",
+	) as HTMLButtonElement | null;
+	const usageToggleButton = document.getElementById(
+		"usageToggleButton",
+	) as HTMLButtonElement | null;
+	const usagePanel = document.getElementById("usagePanel");
+	const spectrogramScaleToggle = document.getElementById(
+		"spectrogramScaleToggle",
+	) as HTMLButtonElement | null;
+	const styleSelect = document.getElementById(
+		"styleSelect",
+	) as HTMLSelectElement | null;
+	const speakerStyleSelect = document.getElementById(
+		"speakerStyleSelect",
+	) as HTMLSelectElement | null;
+	const delimiterInput = document.getElementById(
+		"delimiterInput",
+	) as HTMLInputElement | null;
+	const randomStyleCheckbox = document.getElementById(
+		"randomStyleCheckbox",
+	) as HTMLInputElement | null;
+	const favoritesToggleButton = document.getElementById(
+		"favoritesToggleButton",
+	) as HTMLButtonElement | null;
+	const favoritesPanel = document.getElementById("favoritesPanel");
+	const favoritesListEl = document.getElementById(
+		"favoritesList",
+	) as HTMLUListElement | null;
+	const historyListEl = document.getElementById(
+		"historyList",
+	) as HTMLUListElement | null;
+	const intonationFavoritesListEl = document.getElementById(
+		"intonationFavoritesList",
+	) as HTMLUListElement | null;
+	const intonationFavoritesExportButton = document.getElementById(
+		"intonationFavoritesExportButton",
+	) as HTMLButtonElement | null;
+	const intonationFavoritesImportButton = document.getElementById(
+		"intonationFavoritesImportButton",
+	) as HTMLButtonElement | null;
+	const intonationFavoritesImportFile = document.getElementById(
+		"intonationFavoritesImportFile",
+	) as HTMLInputElement | null;
+	const intonationCanvas = document.getElementById(
+		"intonationCanvas",
+	) as HTMLCanvasElement | null;
+	const intonationTimingEl = null;
+	const intonationLabelsEl = document.getElementById("intonationLabels");
+	const intonationMaxValueEl = document.getElementById("intonationMaxValue");
+	const intonationMinValueEl = document.getElementById("intonationMinValue");
+	const intonationExpandTop = document.getElementById(
+		"intonationExpandTop",
+	) as HTMLButtonElement | null;
+	const intonationShrinkTop = document.getElementById(
+		"intonationShrinkTop",
+	) as HTMLButtonElement | null;
+	const intonationShrinkBottom = document.getElementById(
+		"intonationShrinkBottom",
+	) as HTMLButtonElement | null;
+	const intonationExpandBottom = document.getElementById(
+		"intonationExpandBottom",
+	) as HTMLButtonElement | null;
+	const intonationKeyboardToggle = document.getElementById(
+		"intonationKeyboardToggle",
+	) as HTMLButtonElement | null;
+	const intonationResetButton = document.getElementById(
+		"intonationResetButton",
+	) as HTMLButtonElement | null;
+	const intonationFavoriteButton = document.getElementById(
+		"intonationFavoriteButton",
+	) as HTMLButtonElement | null;
+	const loopCheckboxEl = document.getElementById(
+		"loopCheckbox",
+	) as HTMLInputElement | null;
+	setLoopCheckboxElement(loopCheckboxEl);
 
-vi.mock("./status", () => ({
-	showStatus: vi.fn(),
-	scheduleHideStatus: vi.fn(),
-}));
+	const settingsToggleButton = document.getElementById(
+		"settingsToggleButton",
+	) as HTMLButtonElement | null;
+	const settingsPanel = document.getElementById("settingsPanel");
+	const voicevoxPortInput = document.getElementById(
+		"voicevoxPortInput",
+	) as HTMLInputElement | null;
+	const voicevoxNemoPortInput = document.getElementById(
+		"voicevoxNemoPortInput",
+	) as HTMLInputElement | null;
+	const frequencyTopPercentInput = document.getElementById(
+		"frequencyTopPercentInput",
+	) as HTMLInputElement | null;
+	const settingsResetButton = document.getElementById(
+		"settingsResetButton",
+	) as HTMLButtonElement | null;
 
-vi.mock("./textLists", () => ({
-	addToHistory: vi.fn(),
-}));
-
-vi.mock("./intonation", () => ({
-	fetchAndRenderIntonation: vi.fn(),
-	hasActiveIntonationQuery: vi.fn(() => false),
-	isIntonationActive: vi.fn(() => false),
-	isIntonationDirty: vi.fn(() => false),
-	playUpdatedIntonation: vi.fn(async () => {}),
-	replayCachedIntonationAudio: vi.fn(async () => true),
-	resetIntonationState: vi.fn(),
-}));
-
-vi.mock("./uiControls", () => ({
-	updateExportButtonState: vi.fn(),
-}));
-
-vi.mock("./styleManager", () => ({
-	buildTextSegments: vi.fn(() => [{ text: "hello", styleId: 1 }]),
-	getSelectedStyleId: vi.fn(() => 1),
-	getApiBaseForStyleId: vi.fn(() => "http://localhost:50021"),
-	parseDelimiterConfig: vi.fn(() => ({})),
-	setSelectedStyleId: vi.fn(),
-}));
-
-vi.mock("./audio", () => ({
-	combineAudioBuffers: vi.fn(() => dummyAudioBuffer),
-	encodeAudioBufferToWav: vi.fn(() => new ArrayBuffer(4)),
-	getAudioQuery: vi.fn(async () => ({})),
-	synthesize: vi.fn(async () => new ArrayBuffer(8)),
-}));
-
-vi.mock("./visualization", () => {
-	let active = false;
-	let resolvePlayback: ((result: { stopped: boolean }) => void) | null = null;
-	const stopActivePlayback = vi.fn(() => {
-		active = false;
-		resolvePlayback?.({ stopped: true });
-		resolvePlayback = null;
-	});
-	const playAudio = vi.fn(async () => {
-		active = true;
-		return new Promise<{ stopped: boolean }>((resolve) => {
-			resolvePlayback = resolve;
-		});
-	});
-	return {
-		drawRenderedWaveform: vi.fn(),
-		initializeVisualizationCanvases: vi.fn(),
-		isPlaybackActive: vi.fn(() => active),
-		playAudio,
-		stopActivePlayback,
+	const applySettingsToInputs = () => {
+		const s = getCurrentSettings();
+		if (voicevoxPortInput) voicevoxPortInput.value = String(s.voicevoxPort);
+		if (voicevoxNemoPortInput)
+			voicevoxNemoPortInput.value = String(s.voicevoxNemoPort);
+		if (frequencyTopPercentInput)
+			frequencyTopPercentInput.value = String(s.frequencyTopPercent);
 	};
-});
+	applySettingsToInputs();
 
-afterEach(() => {
-	document.body.innerHTML = "";
-	vi.clearAllMocks();
-});
+	const refreshStylesAfterPortChange = () => {
+		clearAudioCache();
+		void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null);
+	};
 
-describe("getAudioCacheKey", () => {
-	it("combines style id and text", () => {
-		expect(getAudioCacheKey("hello", 42)).toBe("42::hello");
+	if (settingsToggleButton && settingsPanel) {
+		settingsToggleButton.addEventListener("click", () => {
+			const isHidden = settingsPanel.hidden;
+			settingsPanel.hidden = !isHidden;
+			settingsToggleButton.setAttribute("aria-expanded", String(isHidden));
+		});
+	}
+
+	if (voicevoxPortInput) {
+		voicevoxPortInput.addEventListener("change", () => {
+			const port = Number(voicevoxPortInput.value);
+			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
+				setVoicevoxPort(port);
+				refreshStylesAfterPortChange();
+			} else {
+				applySettingsToInputs();
+			}
+		});
+	}
+
+	if (voicevoxNemoPortInput) {
+		voicevoxNemoPortInput.addEventListener("change", () => {
+			const port = Number(voicevoxNemoPortInput.value);
+			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
+				setVoicevoxNemoPort(port);
+				refreshStylesAfterPortChange();
+			} else {
+				applySettingsToInputs();
+			}
+		});
+	}
+
+	if (frequencyTopPercentInput) {
+		frequencyTopPercentInput.addEventListener("change", () => {
+			const pct = Number(frequencyTopPercentInput.value);
+			if (Number.isFinite(pct) && pct >= 0.1 && pct <= 100) {
+				setFrequencyTopPercent(pct);
+			} else {
+				applySettingsToInputs();
+			}
+		});
+	}
+
+	if (settingsResetButton) {
+		settingsResetButton.addEventListener("click", () => {
+			resetSettings();
+			applySettingsToInputs();
+			refreshStylesAfterPortChange();
+		});
+	}
+
+	const applyStyleSelection = (styleId: number) => {
+		setSelectedStyleId(styleId);
+		if (styleSelect) {
+			styleSelect.value = String(styleId);
+		}
+		populateSpeakerStyleSelect(speakerStyleSelect, styleId);
+	};
+	const applyRandomStyleSelection = () => {
+		const randomStyleId = selectRandomStyleId();
+		applyStyleSelection(randomStyleId);
+		return randomStyleId;
+	};
+
+	if (loopCheckboxEl) {
+		loopCheckboxEl.addEventListener("change", () => {
+			if (
+				loopCheckboxEl.checked &&
+				!appState.isProcessing &&
+				!isPlaybackActive() &&
+				!isPlayRequestPending()
+			) {
+				void handlePlay();
+			}
+		});
+	}
+
+	setStyleChangeHandler((styleId) => {
+		applyStyleSelection(styleId);
 	});
-});
 
-describe("setPlayButtonAppearance", () => {
-	it("sets play and stop button states", () => {
-		const button = document.createElement("button");
-		button.id = "playButton";
-		document.body.appendChild(button);
+	setHandlePlayHandler(() => void handlePlay());
 
+	if (playButton) {
+		playButton.addEventListener("click", handlePlayButtonClick);
 		setPlayButtonAppearance("play");
-		expect(button.getAttribute("aria-label")).toBe("Play");
-		expect(button.title).toBe("Play");
-		expect(button.dataset.icon).toBe("play");
-		expect(button.querySelector("svg.icon--play")).not.toBeNull();
+		playButton.focus();
+	}
 
-		setPlayButtonAppearance("stop");
-		expect(button.getAttribute("aria-label")).toBe("Stop");
-		expect(button.title).toBe("Stop");
-		expect(button.dataset.icon).toBe("stop");
-		expect(button.querySelector("svg.icon--stop")).not.toBeNull();
-	});
-});
+	if (textArea) {
+		textArea.addEventListener("input", scheduleAutoPlay);
+	}
 
-describe("handlePlayButtonClick", () => {
-	it("stops playback even when a play request is pending", async () => {
-		document.body.innerHTML = `
-      <textarea id="text">hello</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
+	if (exportButton) {
+		exportButton.addEventListener("click", downloadLastAudio);
+		updateExportButtonState(exportButton);
+	}
 
-		const playPromise = handlePlay();
-		expect(isPlayRequestPending()).toBe(true);
+	if (styleSelect) {
+		populateStyleSelect(styleSelect);
+		styleSelect.addEventListener("change", () => {
+			const parsed = Number(styleSelect.value);
+			if (!Number.isNaN(parsed)) {
+				applyStyleSelection(parsed);
+				scheduleAutoPlay();
+			}
+		});
+		applyStyleSelection(getSelectedStyleId());
+	}
 
-		await new Promise((resolve) => setTimeout(resolve, 0));
-		handlePlayButtonClick();
+	if (randomStyleCheckbox) {
+		randomStyleCheckbox.addEventListener("change", () => {
+			if (randomStyleCheckbox.checked) {
+				applyRandomStyleSelection();
+			}
+			scheduleAutoPlay();
+		});
+	}
 
-		expect(stopActivePlayback).toHaveBeenCalledTimes(1);
+	if (speakerStyleSelect) {
+		speakerStyleSelect.addEventListener("change", () => {
+			const parsed = Number(speakerStyleSelect.value);
+			if (!Number.isNaN(parsed)) {
+				applyStyleSelection(parsed);
+				scheduleAutoPlay();
+			}
+		});
+	}
+	void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null).then(
+		(success) => {
+			if (success) {
+				showStatus(
+					"ローカルサーバーとの通信成功。音声合成の準備ができました",
+					"success",
+				);
+				scheduleHideStatus(5000);
+			} else {
+				alert("ローカルVOICEVOXサーバーを起動してください");
+			}
+			if (randomStyleCheckbox?.checked) {
+				applyRandomStyleSelection();
+			}
+		},
+	);
 
-		await playPromise;
-	});
-});
-
-describe("setTextAndPlay", () => {
-	it("stops active playback before scheduling auto-play", async () => {
-		document.body.innerHTML = `
-      <textarea id="text">hello</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" checked />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
-
-		const loopCheckbox = document.getElementById(
-			"loopCheckbox",
-		) as HTMLInputElement;
-		setLoopCheckboxElement(loopCheckbox);
-
+	if (delimiterInput) {
 		try {
-			vi.useFakeTimers();
-			const playPromise = handlePlay();
-			await vi.runAllTimersAsync();
+			const savedDelimiter = localStorage.getItem(DELIMITER_STORAGE_KEY);
+			if (savedDelimiter !== null) {
+				delimiterInput.value = savedDelimiter;
+			}
+		} catch (error) {
+			console.warn("Failed to restore delimiter config:", error);
+		}
 
-			setTextAndPlay("new text");
+		const saveDelimiter = () => {
+			try {
+				localStorage.setItem(DELIMITER_STORAGE_KEY, delimiterInput.value);
+			} catch (error) {
+				console.warn("Failed to save delimiter config:", error);
+			}
+		};
+		const scheduleSaveDelimiter = () => {
+			if (delimiterSaveTimer !== null) {
+				window.clearTimeout(delimiterSaveTimer);
+			}
+			delimiterSaveTimer = window.setTimeout(
+				saveDelimiter,
+				AUTO_PLAY_DEBOUNCE_MS,
+			);
+		};
+		delimiterInput.addEventListener("input", scheduleSaveDelimiter);
+	}
 
-			expect(stopActivePlayback).toHaveBeenCalled();
-			expect(loopCheckbox.checked).toBe(false);
+	if (usageToggleButton && usagePanel) {
+		usageToggleButton.addEventListener("click", () => {
+			const isHidden = usagePanel.hidden;
+			usagePanel.hidden = !isHidden;
+			usageToggleButton.setAttribute("aria-expanded", String(isHidden));
+		});
+	}
 
-			vi.clearAllTimers();
-			await playPromise;
-		} finally {
-			vi.useRealTimers();
-			setLoopCheckboxElement(null);
+	if (favoritesToggleButton && favoritesPanel) {
+		favoritesPanel.hidden = true;
+		favoritesToggleButton.setAttribute("aria-expanded", "false");
+		favoritesToggleButton.addEventListener("click", () => {
+			const isHidden = favoritesPanel.hidden;
+			favoritesPanel.hidden = !isHidden;
+			favoritesToggleButton.setAttribute("aria-expanded", String(isHidden));
+		});
+	}
+
+	initializeTextLists({
+		favoritesList: favoritesListEl,
+		historyList: historyListEl,
+		onSelectText: setTextAndPlay,
+	});
+
+	initializeIntonationElements({
+		canvas: intonationCanvas,
+		timingEl: intonationTimingEl,
+		labelsEl: intonationLabelsEl,
+		maxValueEl: intonationMaxValueEl,
+		minValueEl: intonationMinValueEl,
+		favoritesListEl: intonationFavoritesListEl,
+		loopCheckbox: loopCheckboxEl,
+	});
+
+	if (intonationFavoritesExportButton) {
+		intonationFavoritesExportButton.addEventListener("click", () => {
+			exportIntonationFavorites();
+		});
+	}
+
+	if (intonationFavoritesImportButton && intonationFavoritesImportFile) {
+		intonationFavoritesImportButton.addEventListener("click", () => {
+			intonationFavoritesImportFile.value = "";
+			intonationFavoritesImportFile.click();
+		});
+		intonationFavoritesImportFile.addEventListener("change", () => {
+			const file = intonationFavoritesImportFile.files?.[0];
+			if (file) {
+				importIntonationFavorites(file, () => {
+					intonationFavoritesImportFile.value = "";
+				});
+			}
+		});
+	}
+
+	const updateSpectrogramScaleLabel = () => {
+		if (spectrogramScaleToggle) {
+			const scale = getSpectrogramScale();
+			const isLogScale = scale === "log";
+			const nextLabel = isLogScale ? "リニアにする" : "対数にする";
+			spectrogramScaleToggle.textContent = nextLabel;
+			spectrogramScaleToggle.setAttribute("aria-pressed", String(isLogScale));
+			spectrogramScaleToggle.setAttribute(
+				"aria-label",
+				`スペクトログラムのスケールを${nextLabel}`,
+			);
+		}
+	};
+
+	if (spectrogramScaleToggle) {
+		updateSpectrogramScaleLabel();
+		spectrogramScaleToggle.addEventListener("click", () => {
+			const nextScale: FrequencyScale =
+				getSpectrogramScale() === "linear" ? "log" : "linear";
+			setSpectrogramScale(nextScale);
+			updateSpectrogramScaleLabel();
+		});
+	}
+
+	const updateIntonationKeyboardToggle = () => {
+		if (intonationKeyboardToggle) {
+			const enabled = getIntonationKeyboardEnabled();
+			intonationKeyboardToggle.textContent = enabled
+				? "キーボード操作: ON"
+				: "キーボード操作: OFF";
+			intonationKeyboardToggle.setAttribute("aria-pressed", String(enabled));
+			intonationKeyboardToggle.setAttribute(
+				"aria-label",
+				enabled ? "キーボード操作を無効にする" : "キーボード操作を有効にする",
+			);
+		}
+	};
+
+	if (intonationKeyboardToggle) {
+		updateIntonationKeyboardToggle();
+		intonationKeyboardToggle.addEventListener("click", () => {
+			setIntonationKeyboardEnabled(!getIntonationKeyboardEnabled());
+			updateIntonationKeyboardToggle();
+			if (getIntonationKeyboardEnabled() && intonationCanvas) {
+				intonationCanvas.focus();
+			}
+			refreshIntonationChart();
+		});
+	}
+
+	if (intonationResetButton) {
+		intonationResetButton.addEventListener("click", () => {
+			resetIntonationToInitial();
+			if (getIntonationKeyboardEnabled() && intonationCanvas) {
+				intonationCanvas.focus();
+			}
+		});
+	}
+
+	if (intonationFavoriteButton) {
+		intonationFavoriteButton.addEventListener("click", () =>
+			saveCurrentIntonationFavorite(getSelectedStyleId()),
+		);
+	}
+
+	if (intonationExpandTop) {
+		intonationExpandTop.addEventListener("click", () =>
+			adjustIntonationScale("top", 2),
+		);
+	}
+	if (intonationShrinkTop) {
+		intonationShrinkTop.addEventListener("click", () =>
+			adjustIntonationScale("top", 0.5),
+		);
+	}
+	if (intonationShrinkBottom) {
+		intonationShrinkBottom.addEventListener("click", () =>
+			adjustIntonationScale("bottom", 0.5),
+		);
+	}
+	if (intonationExpandBottom) {
+		intonationExpandBottom.addEventListener("click", () =>
+			adjustIntonationScale("bottom", 2),
+		);
+	}
+
+	setupIntonationCanvasEvents(intonationCanvas);
+
+	window.addEventListener("keydown", (event: KeyboardEvent) => {
+		if (event.key === "Enter" && (event.shiftKey || event.ctrlKey)) {
+			event.preventDefault();
+			handlePlayButtonClick();
 		}
 	});
-});
 
-describe("handlePlay with active intonation", () => {
-	it("calls replayCachedIntonationAudio instead of re-synthesizing when intonation is active and not dirty (loop playback)", async () => {
-		document.body.innerHTML = `
-      <textarea id="text">hello</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
-
-		const {
-			hasActiveIntonationQuery,
-			isIntonationDirty,
-			playUpdatedIntonation,
-			replayCachedIntonationAudio,
-		} = await import("./intonation");
-		const { getAudioQuery } = await import("./audio");
-
-		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
-		vi.mocked(isIntonationDirty).mockReturnValue(false);
-
-		await handlePlay();
-
-		expect(replayCachedIntonationAudio).toHaveBeenCalledTimes(1);
-		expect(playUpdatedIntonation).not.toHaveBeenCalled();
-		expect(getAudioQuery).not.toHaveBeenCalled();
-
-		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
-		vi.mocked(isIntonationDirty).mockReturnValue(false);
-	});
-
-	it("calls playUpdatedIntonation when intonation is active and dirty", async () => {
-		document.body.innerHTML = `
-      <textarea id="text">hello</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
-
-		const {
-			hasActiveIntonationQuery,
-			isIntonationDirty,
-			playUpdatedIntonation,
-			replayCachedIntonationAudio,
-		} = await import("./intonation");
-		const { getAudioQuery } = await import("./audio");
-
-		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
-		vi.mocked(isIntonationDirty).mockReturnValue(true);
-
-		await handlePlay();
-
-		expect(playUpdatedIntonation).toHaveBeenCalledTimes(1);
-		expect(replayCachedIntonationAudio).not.toHaveBeenCalled();
-		expect(getAudioQuery).not.toHaveBeenCalled();
-
-		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
-		vi.mocked(isIntonationDirty).mockReturnValue(false);
-	});
-
-	it("shows confirm dialog and resets intonation when intonation is active but text changed", async () => {
-		document.body.innerHTML = `
-      <textarea id="text">hello</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-      <div id="playConfirmDialog" hidden>
-        <button id="playConfirmReset"></button>
-        <button id="playConfirmCancel"></button>
-      </div>
-    `;
-
-		const { isIntonationActive, resetIntonationState } = await import(
-			"./intonation"
-		);
-		vi.mocked(isIntonationActive).mockReturnValue(true);
-
-		const playPromise = handlePlay();
-
-		await new Promise((resolve) => setTimeout(resolve, 0));
-		const resetButton = document.getElementById(
-			"playConfirmReset",
-		) as HTMLButtonElement;
-		resetButton.click();
-
-		// Wait for synthesis to start then stop it so playPromise resolves
-		await new Promise((resolve) => setTimeout(resolve, 0));
-		handlePlayButtonClick();
-
-		await playPromise;
-
-		expect(resetIntonationState).toHaveBeenCalledTimes(1);
-
-		vi.mocked(isIntonationActive).mockReturnValue(false);
-	});
-
-	it("cancels playback when user declines the intonation reset dialog", async () => {
-		document.body.innerHTML = `
-      <textarea id="text">hello</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-      <div id="playConfirmDialog" hidden>
-        <button id="playConfirmReset"></button>
-        <button id="playConfirmCancel"></button>
-      </div>
-    `;
-
-		const { isIntonationActive, resetIntonationState } = await import(
-			"./intonation"
-		);
-		const { getAudioQuery } = await import("./audio");
-		vi.mocked(isIntonationActive).mockReturnValue(true);
-
-		const playPromise = handlePlay();
-
-		await new Promise((resolve) => setTimeout(resolve, 0));
-		const cancelButton = document.getElementById(
-			"playConfirmCancel",
-		) as HTMLButtonElement;
-		cancelButton.click();
-
-		await playPromise;
-
-		expect(resetIntonationState).not.toHaveBeenCalled();
-		expect(getAudioQuery).not.toHaveBeenCalled();
-	});
-});
-
-describe("handlePlay with multiple styles", () => {
-	it("resets intonation state and skips intonation fetch when multiple styles are used", async () => {
-		document.body.innerHTML = `
-      <textarea id="text">hello world</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
-
-		const {
-			isIntonationActive,
-			fetchAndRenderIntonation,
-			resetIntonationState,
-		} = await import("./intonation");
-		const { buildTextSegments } = await import("./styleManager");
-		const { playAudio } = await import("./visualization");
-
-		vi.mocked(isIntonationActive).mockReturnValue(false);
-		vi.mocked(buildTextSegments).mockReturnValueOnce([
-			{ text: "hello", styleId: 1 },
-			{ text: " world", styleId: 2 },
-		]);
-		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
-
-		await handlePlay();
-
-		expect(fetchAndRenderIntonation).not.toHaveBeenCalled();
-		expect(resetIntonationState).not.toHaveBeenCalled();
-	});
-
-	it("silently resets active intonation without confirmation dialog when switching to multi-style", async () => {
-		document.body.innerHTML = `
-      <textarea id="text">hello world</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
-
-		const {
-			isIntonationActive,
-			fetchAndRenderIntonation,
-			resetIntonationState,
-		} = await import("./intonation");
-		const { buildTextSegments } = await import("./styleManager");
-		const { playAudio } = await import("./visualization");
-
-		vi.mocked(isIntonationActive).mockReturnValue(true);
-		vi.mocked(buildTextSegments).mockReturnValueOnce([
-			{ text: "hello", styleId: 1 },
-			{ text: " world", styleId: 2 },
-		]);
-		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
-
-		const confirmSpy = vi.spyOn(window, "confirm");
-
-		await handlePlay();
-
-		expect(resetIntonationState).toHaveBeenCalled();
-		expect(fetchAndRenderIntonation).not.toHaveBeenCalled();
-		expect(confirmSpy).not.toHaveBeenCalled();
-
-		confirmSpy.mockRestore();
-		vi.mocked(isIntonationActive).mockReturnValue(false);
-	});
-});
-
-describe("handlePlay text truncation", () => {
-	const makeDOM = (text: string) => {
-		document.body.innerHTML = `
-      <textarea id="text">${text}</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
-	};
-
-	it("passes text unchanged when within limit", async () => {
-		const shortText = "あ".repeat(TEXT_MAX_LENGTH - 1);
-		makeDOM(shortText);
-
-		const { buildTextSegments } = await import("./styleManager");
-		const { playAudio } = await import("./visualization");
-		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
-
-		await handlePlay();
-
-		expect(vi.mocked(buildTextSegments)).toHaveBeenCalledWith(
-			shortText,
-			expect.anything(),
-			expect.anything(),
-		);
-
-		const { showStatus } = await import("./status");
-		const statusCalls = vi.mocked(showStatus).mock.calls;
-		const completionCall = statusCalls.find(([msg]) =>
-			(msg as string).includes("再生完了"),
-		);
-		expect(completionCall?.[0]).toBe("再生完了！");
-	});
-
-	it("truncates text to TEXT_MAX_LENGTH when over limit", async () => {
-		const longText = "あ".repeat(TEXT_MAX_LENGTH + 100);
-		makeDOM(longText);
-
-		const { buildTextSegments } = await import("./styleManager");
-		const { playAudio } = await import("./visualization");
-		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
-
-		await handlePlay();
-
-		const expectedText = "あ".repeat(TEXT_MAX_LENGTH);
-		expect(vi.mocked(buildTextSegments)).toHaveBeenCalledWith(
-			expectedText,
-			expect.anything(),
-			expect.anything(),
-		);
-	});
-
-	it("shows truncation notice in status when text is over limit", async () => {
-		const longText = "あ".repeat(TEXT_MAX_LENGTH + 1);
-		makeDOM(longText);
-
-		const { playAudio } = await import("./visualization");
-		vi.mocked(playAudio).mockResolvedValueOnce({ stopped: false });
-
-		await handlePlay();
-
-		const { showStatus } = await import("./status");
-		const statusCalls = vi
-			.mocked(showStatus)
-			.mock.calls.map(([msg]) => msg as string);
-		expect(statusCalls.some((msg) => msg.includes("カット"))).toBe(true);
-		const completionMsg = statusCalls.find((msg) => msg.includes("再生完了"));
-		expect(completionMsg).toContain("カット");
-	});
-
-	it("shows truncation notice when playUpdatedIntonation path is taken with long text", async () => {
-		const longText = "あ".repeat(TEXT_MAX_LENGTH + 1);
-		document.body.innerHTML = `
-      <textarea id="text">${longText}</textarea>
-      <button id="playButton"></button>
-      <button id="exportButton"></button>
-      <canvas id="renderedWaveform"></canvas>
-      <canvas id="realtimeWaveform"></canvas>
-      <canvas id="spectrogram"></canvas>
-      <input id="loopCheckbox" type="checkbox" />
-      <select id="styleSelect"></select>
-      <input id="delimiterInput" />
-    `;
-
-		const {
-			hasActiveIntonationQuery,
-			isIntonationDirty,
-			playUpdatedIntonation,
-		} = await import("./intonation");
-		const { showStatus } = await import("./status");
-		vi.mocked(hasActiveIntonationQuery).mockReturnValue(true);
-		vi.mocked(isIntonationDirty).mockReturnValue(true);
-
-		await handlePlay();
-
-		expect(playUpdatedIntonation).toHaveBeenCalledTimes(1);
-		const statusCalls = vi
-			.mocked(showStatus)
-			.mock.calls.map(([msg]) => msg as string);
-		expect(statusCalls.some((msg) => msg.includes("カット"))).toBe(true);
-
-		vi.mocked(hasActiveIntonationQuery).mockReturnValue(false);
-		vi.mocked(isIntonationDirty).mockReturnValue(false);
+	initializeVisualizationCanvases();
+	initializeIntonationCanvas();
+	window.addEventListener("resize", () => {
+		initializeVisualizationCanvases();
+		initializeIntonationCanvas();
+		refreshIntonationChart();
 	});
 });
 
@@ -1524,37 +1247,37 @@ describe("handlePlay text truncation", () => {
 
 ## 最近の変更（過去7日間）
 ### コミット履歴:
-047dbba Merge pull request #148 from cat2151/copilot/fix-ci-deploy-github-pages
-d50951a Fix CI: add missing label property to IntonationPoint in handlers.test.ts
-f05099e Initial plan
-0c9bf16 Merge pull request #146 from cat2151/copilot/fix-keyboard-operation-issues
-f6b30f4 Fix: early return when text input focused; fix Space+modifier bypass; add missing input focus tests
-6dda768 Fix: skip keyboard-mode shortcuts when textarea/input focused; add Shift/Ctrl+Enter global play key
-050520c Initial plan
-22a4949 Merge pull request #145 from cat2151/copilot/fix-play-button-delay
-3e91a16 test: add playback cache behavior tests for playUpdatedIntonation
-05336c5 feat: replace single-buffer cache with Map<synthesisJSON, ArrayBuffer> in playUpdatedIntonation
+15916ad Merge pull request #156 from cat2151/copilot/fix-loop-playback-issue
+5383739 fix: address PR review comments on fallback branch and test robustness
+2282ec1 fix: stop loop playback when applying intonation favorite (issue #155)
+55f7da7 Initial plan
+42fa749 Add issue note for #155 [auto]
+a31a383 Merge pull request #154 from cat2151/copilot/fix-deploy-to-github-pages
+11d061b Fix CI: remove `as const` from stubQuery in intonation.test.ts
+1b95de0 Initial plan
+b60b817 Merge pull request #151 from cat2151/copilot/enable-export-import-favorites
+4e1608e fix: apply PR review feedback for intonation export/import
 
 ### 変更されたファイル:
 generated-docs/development-status-generated-prompt.md
 generated-docs/development-status.md
 generated-docs/project-overview-generated-prompt.md
 generated-docs/project-overview.md
+index.html
+issue-notes/141.md
 issue-notes/142.md
-src/config.ts
+issue-notes/155.md
+issue-notes/97.md
 src/intonation.test.ts
 src/intonation.ts
-src/intonation/display.ts
-src/intonation/handlers.test.ts
-src/intonation/handlers.ts
-src/intonation/playback.test.ts
-src/intonation/playback.ts
 src/intonation/state.ts
-src/intonation/utils.ts
 src/main.ts
 src/playback.test.ts
-src/playback.ts
+src/playback.truncation.test.ts
+src/styles/base.css
+src/visualization/spectrogram.ts
+src/visualization/timeAxis.ts
 
 
 ---
-Generated at: 2026-03-08 07:01:15 JST
+Generated at: 2026-03-09 07:01:17 JST

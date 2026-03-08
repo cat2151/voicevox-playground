@@ -1,21 +1,33 @@
-Last updated: 2026-03-08
+Last updated: 2026-03-09
 
 # Project Overview
 
 ## プロジェクト概要
-- VOICEVOXローカルサーバーと連携し、テキストを音声に変換して再生するWebアプリケーションです。
-- 複数の音声スタイル（キャラクター）でテキスト読み上げ、イントネーション調整、音声の波形・周波数可視化が可能です。
-- WebページからVOICEVOXを手軽に操作できることを実証し、カスタムクライアント開発を容易にすることを目指します。
+- VOICEVOXローカルサーバーと連携し、Webブラウザ上でテキストを音声に変換して再生するWebアプリケーションです。
+- 複数のキャラクターの音声を選択し、入力されたテキストを即座に読み上げ、イントネーションの編集も可能です。
+- VOICEVOXをWebから簡単に操作できることを実証し、手軽なクライアントアプリ開発を支援することを目的としています。
 
 ## 技術スタック
-- フロントエンド: TypeScript (型安全なJavaScriptのスーパーセット)、Vite (高速な開発サーバーとビルドツール)
-- 音楽・オーディオ: Tone.js v15 (Web Audio APIを抽象化した音楽・オーディオフレームワーク)、VOICEVOX API (VOICEVOXエンジンと連携し、音声合成機能を提供)
-- 開発ツール: Vitest (高速なユニットテストフレームワーク)、JSDOM (Node.js環境でDOMをエミュレート)、@biomejs/biome (コードフォーマッタ、リンタ)
-- テスト: Vitest (ユニットテスト実行環境)、JSDOM (ブラウザDOMのシミュレーション環境)
-- ビルドツール: Vite (アプリケーションのビルドとバンドルを処理)
-- 言語機能: TypeScript (静的型付けによるコード品質向上と開発効率化)
-- 自動化・CI/CD: (GitHub Actionsを利用したREADMEの自動翻訳など、間接的にCI/CDの要素を使用)
-- 開発標準: @biomejs/biome (コードのスタイルと品質を自動的に統一)
+- フロントエンド:
+  - TypeScript: 型安全なJavaScript開発を可能にする言語。
+  - Vite: 高速な開発サーバーとモダンなビルドプロセスを提供する開発ツール。
+  - GitHub Pages: Webアプリケーションを公開・デプロイするためのホスティングサービス。
+- 音楽・オーディオ:
+  - Tone.js v15: Web Audio APIをベースにした、Web上での音楽・オーディオ処理のための強力なフレームワーク。
+  - VOICEVOX API: 音声合成エンジンVOICEVOXのローカルHTTPサーバーと連携するためのインターフェース。
+- 開発ツール:
+  - npm: Node.jsのパッケージマネージャーで、プロジェクトの依存関係の管理に使用されます。
+- テスト:
+  - Vitest: 高速な単体テストフレームワークで、各種テストの実行に利用されます。
+  - jsdom: Node.js環境でブラウザのDOM（Document Object Model）をエミュレートし、DOM操作を伴うテストを可能にします。
+- ビルドツール:
+  - Vite: (上記フロントエンドと重複しますが、ビルドプロセスを担当) 高速な開発サーバーとモダンなビルドプロセスを提供します。
+- 言語機能:
+  - TypeScript: JavaScriptに静的型付けを追加し、大規模なアプリケーション開発の堅牢性を高めます。
+- 自動化・CI/CD:
+  - GitHub Actions: GitHubリポジトリ上で様々なタスクを自動化するためのプラットフォーム。本プロジェクトではREADMEの自動翻訳などに利用されています。
+- 開発標準:
+  - @biomejs/biome: 高速なコードフォーマッタ、リンタ、およびテストランナーを兼ね備え、コード品質と一貫性を維持します。
 
 ## ファイル階層ツリー
 ```
@@ -43,8 +55,7 @@ Last updated: 2026-03-08
   📖 123.md
   📖 138.md
   📖 140.md
-  📖 141.md
-  📖 142.md
+  📖 155.md
   📖 22.md
   📖 23.md
   📖 24.md
@@ -66,7 +77,6 @@ Last updated: 2026-03-08
   📖 80.md
   📖 89.md
   📖 92.md
-  📖 97.md
 📊 package-lock.json
 📊 package.json
 📁 src/
@@ -84,6 +94,7 @@ Last updated: 2026-03-08
   📘 intonation.ts
   📘 main.ts
   📘 playback.test.ts
+  📘 playback.truncation.test.ts
   📘 playback.ts
   📘 settings.test.ts
   📘 settings.ts
@@ -117,252 +128,248 @@ Last updated: 2026-03-08
 ```
 
 ## ファイル詳細説明
-- **index.html**: アプリケーションのエントリーポイントとなるHTMLファイルです。ユーザーインターフェースの骨格を定義し、各種JavaScriptやCSSファイルを読み込みます。
-- **.gitignore**: Gitのバージョン管理から除外するファイルやディレクトリを指定する設定ファイルです。
-- **AGENTS.md**: AIエージェントに関する情報やガイドラインを記述するMarkdownファイルです。
-- **LICENSE**: プロジェクトのライセンス情報が記述されています。
-- **README.ja.md**: プロジェクトの日本語版説明書です。機能、使い方、開発方法などが記載されています。
-- **README.md**: プロジェクトの英語版説明書です。日本語版の自動翻訳によって生成されます。
-- **biome.json**: Biome（コードフォーマッタ兼リンタ）の設定ファイルです。コードスタイルと品質を統一するために使用されます。
-- **generated-docs/**: 自動生成されたドキュメントが格納されるディレクトリです。
-- **issue-notes/**: 開発中の課題や設計上のメモが格納されたディレクトリです。
-- **package-lock.json**: `npm install`コマンド実行時に生成されるファイルで、プロジェクトの依存関係ツリーの正確なバージョンを記録します。
-- **package.json**: プロジェクトのメタデータ（名前、バージョン、スクリプト、依存関係など）を定義するファイルです。
-- **tsconfig.json**: TypeScriptコンパイラの設定ファイルです。TypeScriptコードのコンパイル方法を定義します。
-- **vite.config.ts**: Viteのビルド設定ファイルです。開発サーバーの挙動やビルドプロセスをカスタマイズします。
-- **src/audio.ts**: VOICEVOX APIとの連携を担当し、音声クエリの取得、音声合成、オーディオバッファの結合・エンコードなど、音声処理全般を扱います。
-- **src/config.ts**: アプリケーション全体で使用される定数や設定値を管理するファイルです。VOICEVOXサーバーのポート番号などが含まれます。
-- **src/intonation/display.ts**: イントネーション調整UIの描画ロジックと、ユーザー操作（ホイール操作など）による表示範囲の更新ロジックを管理します。ピッチの表示範囲計算、描画、ポイントの検出を行います。
-- **src/intonation/handlers.test.ts**: イントネーション編集に関するUIイベントハンドラ（キーボード、ポインターなど）のテストコードが含まれています。
-- **src/intonation/handlers.ts**: イントネーション編集UIにおけるユーザー操作（ポインター操作、キーボード操作など）を処理するイベントハンドラ群を定義します。ピッチ変更の適用ロジックも含まれます。
-- **src/intonation/playback.test.ts**: イントネーション編集後の音声再生機能に関するテストコードです。
-- **src/intonation/playback.ts**: イントネーション編集後の音声再生、キャッシュ管理、および状態表示ロジックを扱います。VOICEVOX APIからの音声データ取得も担当します。
-- **src/intonation/state.ts**: イントネーション編集に関連するアプリケーションの状態（タイミング、アクティブなポイントなど）を管理します。
-- **src/intonation/utils.ts**: イントネーション関連で共通的に使用されるユーティリティ関数（AudioQueryの形状チェック、クローンなど）を提供します。
-- **src/intonation.test.ts**: イントネーション関連の主要機能（状態管理、再生など）のテストコードです。
-- **src/intonation.ts**: イントネーション編集機能全体の初期化、状態管理、お気に入り機能、UIイベント設定などを統括するファイルです。
-- **src/main.ts**: アプリケーションのメインエントリポイントです。UI要素の初期化、設定の適用、イベントリスナーの設定など、全体的なセットアップを行います。
-- **src/playback.test.ts**: 音声再生機能に関する詳細なテストコードです。
-- **src/playback.ts**: 音声の再生、一時停止、ループ、ダウンロード、自動再生、状態表示など、主要な再生関連機能を管理します。Tone.jsを利用して音声を出力します。
-- **src/settings.test.ts**: アプリケーションの設定管理機能のテストコードです。
-- **src/settings.ts**: VOICEVOX APIのエンドポイント設定や、周波数表示に関する設定など、アプリケーションの永続的な設定を読み書きします。
-- **src/state.ts**: アプリケーションのグローバル状態を定義・管理するファイルです。
-- **src/status.ts**: アプリケーションのステータス表示（メッセージ表示、色変数の管理など）を扱います。
-- **src/styleManager.test.ts**: 音声スタイル（キャラクター）の選択と管理機能のテストコードです。
-- **src/styleManager.ts**: VOICEVOXの音声スタイル（話者、スタイルID）の取得、選択、表示、区切り文字設定のパースなどを管理するファイルです。
-- **src/styles/base.css**: アプリケーションの基本的なレイアウトやUI要素のスタイルを定義するCSSファイルです。
-- **src/styles/intonation.css**: イントネーション編集UIに特化したスタイルを定義するCSSファイルです。
-- **src/styles.css**: 全体的なスタイルシートのインポートを管理するメインのCSSファイルです。
-- **src/textLists.test.ts**: テキストリスト（履歴、お気に入りなど）管理機能のテストコードです。
-- **src/textLists.ts**: ユーザーが入力したテキストの履歴やお気に入りリストを管理し、永続化・表示する機能を提供します。
-- **src/uiControls.ts**: UI要素の状態更新（例: エクスポートボタンの有効/無効化）を制御するユーティリティ関数を提供します。
-- **src/visualization/canvas.ts**: Canvas要素の準備や初期化に関するユーティリティ関数をまとめます。
-- **src/visualization/fft.ts**: 高速フーリエ変換 (FFT) アルゴリズムの実装を提供します。
-- **src/visualization/fftMaxFreq.ts**: FFT結果から最大周波数を検出するロジックを実装しています。
-- **src/visualization/fftOverlay.test.ts**: FFTオーバーレイ描画機能のテストコードです。
-- **src/visualization/fftOverlay.ts**: リアルタイムFFTの描画、ピーク検出、周波数表示など、FFT可視化の主要なロジックを管理します。
-- **src/visualization/fftUtils.ts**: FFT関連の計算（周波数変換、補間など）に用いるユーティリティ関数を提供します。
-- **src/visualization/spectrogram.ts**: スペクトログラムの分析、描画、色マッピングなど、スペクトログラム可視化の主要なロジックを管理します。
-- **src/visualization/spectrogramCache.ts**: スペクトログラム画像のキャッシュ管理、分析、初期化処理を扱います。
-- **src/visualization/timeAxis.ts**: 時間軸の描画、目盛り計算、ラベルフォーマットなど、時間軸表示に関するロジックを提供します。
-- **src/visualization/waveform.ts**: 音声波形の描画、リアルタイム波形表示、セグメント相関計算などを担当します。
-- **src/visualization.test.ts**: 音声可視化機能全般に関するテストコードです。
-- **src/visualization.ts**: 音声波形、スペクトログラム、FFTなどの可視化機能全体を統括します。Tone.jsとの連携、再生中のリアルタイム更新も担当します。
-- **src/vite-env.d.ts**: Vite環境向けのTypeScript型定義ファイルです。
+- **.gitignore**: Gitのバージョン管理から除外するファイルやディレクトリを指定します。
+- **AGENTS.md**: プロジェクトで協力しているAIエージェントや自動化ツールに関する情報が記述されている可能性があります。
+- **LICENSE**: プロジェクトのライセンス情報（著作権や利用条件）を記述します。
+- **README.ja.md**: プロジェクトの概要、機能、使い方、開発方法などを日本語で説明するメインのドキュメントです。
+- **README.md**: `README.ja.md` の英語版で、プロジェクトのグローバルな情報提供に使用されます。
+- **biome.json**: コードフォーマッタ・リンタであるBiomeの設定ファイルです。
+- **generated-docs/**: 自動生成されたドキュメントを格納するためのディレクトリです。
+- **index.html**: WebアプリケーションのエントリーポイントとなるHTMLファイルです。
+- **issue-notes/**: 開発中に検討された課題やアイデア、メモを記録するためのファイル群が格納されています。
+- **package-lock.json**: `package.json` に記述された依存関係の正確なバージョンとツリー構造を記録し、ビルドの一貫性を保証します。
+- **package.json**: プロジェクトのメタデータ（名前、バージョンなど）と、依存するnpmパッケージを定義します。
+- **src/audio.ts**: VOICEVOX APIへのリクエスト送信、音声データの取得、オーディオバッファの結合・エンコードなど、オーディオ処理に関する主要なロジックを扱います。
+- **src/config.ts**: アプリケーション全体で使用される設定値や定数を定義します。
+- **src/intonation/display.ts**: イントネーション表示用のキャンバスの描画、ピッチ範囲の計算、ユーザーインターフェースの更新など、視覚化と表示に関するロジックを管理します。
+- **src/intonation/handlers.test.ts**: `src/intonation/handlers.ts` の機能をテストするコードです。
+- **src/intonation/handlers.ts**: イントネーションの編集に関するユーザーインタラクション（ポインタ操作、キーボード操作など）を処理するイベントハンドラを定義します。
+- **src/intonation/playback.test.ts**: `src/intonation/playback.ts` の機能をテストするコードです。
+- **src/intonation/playback.ts**: イントネーション編集後の音声再生、キャッシュ管理、VOICEVOXからの音声取得とレンダリングに関するロジックを扱います。
+- **src/intonation/state.ts**: イントネーション編集の状態管理（タイミング情報の更新など）を行います。
+- **src/intonation/utils.ts**: イントネーション関連の共通ユーティリティ関数（オーディオクエリの検証や複製など）を提供します。
+- **src/intonation.test.ts**: イントネーション関連の全体的な機能をテストするコードです。
+- **src/intonation.ts**: イントネーションのお気に入り管理、状態リセット、イベントハンドラの設定、描画更新など、イントネーション機能の統合的な管理を行います。
+- **src/main.ts**: アプリケーションのメインエントリーポイントで、初期設定の適用、スタイル選択、各種UI要素の初期化とイベントリスナーの設定を行います。
+- **src/playback.test.ts**: 音声再生機能の全体的なテストコードです。
+- **src/playback.truncation.test.ts**: 音声再生の切り捨て（truncation）に関するテストコードです。
+- **src/playback.ts**: 音声の再生、停止、ループ、ダウンロード、キャッシュ管理など、再生に関する全てのロジックを担います。
+- **src/settings.test.ts**: 設定管理機能のテストコードです。
+- **src/settings.ts**: アプリケーションの設定（VOICEVOXポート、周波数パーセンテージなど）の読み込み、保存、リセットを行います。
+- **src/state.ts**: アプリケーション全体で共有されるシンプルな状態管理を行います。
+- **src/status.ts**: アプリケーションのステータス表示（メッセージの表示・非表示、色の取得など）を管理します。
+- **src/styleManager.test.ts**: スタイル管理機能のテストコードです。
+- **src/styleManager.ts**: VOICEVOXのスタイル（話者、話速など）の選択、管理、取得、およびUIへの反映に関するロジックを扱います。
+- **src/styles/base.css**: アプリケーションの基本的なスタイルを定義するCSSファイルです。
+- **src/styles/intonation.css**: イントネーション表示部分に特化したスタイルを定義するCSSファイルです。
+- **src/styles.css**: 全体的なスタイルシートの統合や、追加のスタイル定義を行うCSSファイルです。
+- **src/textLists.test.ts**: テキストリスト管理機能のテストコードです。
+- **src/textLists.ts**: テキストの履歴やお気に入りリストの管理、永続化、レンダリングを行います。
+- **src/uiControls.ts**: UIコントロール（例: エクスポートボタンの状態更新）に関するユーティリティ関数を提供します。
+- **src/visualization/canvas.ts**: キャンバス要素の準備や初期化に関する基本的なユーティリティを提供します。
+- **src/visualization/fft.ts**: 高速フーリエ変換 (FFT) の計算ロジックを提供します。
+- **src/visualization/fftMaxFreq.ts**: FFT結果から最大周波数を検出するためのロジックを提供します。
+- **src/visualization/fftOverlay.test.ts**: FFTオーバーレイ表示のテストコードです。
+- **src/visualization/fftOverlay.ts**: リアルタイムFFTの描画、ピーク検出、ラベル表示など、FFTの視覚化に関するロジックを扱います。
+- **src/visualization/fftUtils.ts**: FFTのデータ変換（周波数とビン、Y座標間の変換）に関するユーティリティ関数を提供します。
+- **src/visualization/spectrogram.ts**: スペクトログラムの計算、色変換、描画、オーディオコンテンツハッシュの生成など、スペクトログラム表示に関するロジックを扱います。
+- **src/visualization/spectrogramCache.ts**: スペクトログラム画像のキャッシュ管理、分析、初期化に関するロジックを扱います。
+- **src/visualization/timeAxis.ts**: タイム軸のラベルフォーマット、ティックの構築、描画など、時間表示に関するロジックを扱います。
+- **src/visualization/waveform.ts**: ウェーブフォーム（波形）の統計計算、相関抽出、リアルタイムおよびレンダリングされた波形の描画に関するロジックを扱います。
+- **src/visualization.test.ts**: 視覚化機能の全体的なテストコードです。
+- **src/visualization.ts**: 視覚化キャンバスの初期化、再生中の波形・スペクトログラム描画、進捗バーの更新など、オーディオ視覚化の全体的な管理を行います。
+- **src/vite-env.d.ts**: Vite環境固有の型定義ファイルです。
+- **vite.config.ts**: Viteのビルド設定を定義するファイルです。
 
 ## 関数詳細説明
-- **getAudioQuery(src/audio.ts)**: 指定されたテキストと音声スタイルIDに基づいて、VOICEVOX APIから音声合成に必要なクエリ（イントネーションやアクセント情報）を取得します。
-- **synthesize()**: 取得した音声クエリとスタイルIDを用いて、VOICEVOX APIに音声合成をリクエストし、音声データ（WAV形式など）を取得します。
-- **combineAudioBuffers()**: 複数のAudioBuffer（音声データ）を単一のAudioBufferに結合します。
-- **encodeAudioBufferToWav()**: Web Audio APIのAudioBufferオブジェクトをWAV形式のバイナリデータにエンコードします。
-- **writeString()**: バイト配列に文字列を書き込むユーティリティ関数です。
-- **clamp()**: 数値を指定された最小値と最大値の範囲内に制限（クランプ）します。
-- **if()**: 条件に基づいてコードの実行パスを決定する一般的な条件分岐です。
-- **catch()**: try-catchブロックで発生したエラーを捕捉し、処理を行うエラーハンドリングです。
-- **for()**: 繰り返し処理を実行するループ構造です。
-- **getPitchRange(src/intonation/display.ts)**: イントネーション表示のY軸におけるピッチ（音高）の表示範囲を計算し取得します。
-- **calculateBasePadding()**: ピッチ表示のベースラインからのパディング（余白）を計算します。
-- **getBaseDisplayRange()**: イントネーション表示の基本的なピッチ表示範囲を定義します。
-- **calculateDisplayRange()**: ユーザー操作やデータに基づいて、ピッチ表示の動的な表示範囲を計算します。
-- **clampRangeExtra()**: 表示範囲に適用される追加のマージン値を指定された限界内に制限します。
-- **applyRangeExtra()**: 計算された追加のマージンを表示範囲に適用します。
-- **refreshDisplayRange()**: イントネーション表示の範囲を更新し、UIに反映させます。
-- **clampPitchToDisplayRange()**: あるピッチ値を、現在定義されている表示範囲内に制限します。
-- **calculateStepSize()**: イントネーション編集時にピッチを調整する際のステップサイズ（増減量）を計算します。
-- **calculateLetterKeyAdjustment()**: キーボード操作でイントネーションポイントを移動させる際の文字単位の調整量を計算します。
-- **handleIntonationWheel()**: イントネーション編集UI上でのマウスホイール操作を処理し、表示範囲のズームやスクロールを行います。
-- **ensureWheelHandler()**: イントネーションUIにホイールイベントハンドラが確実に設定されているかを確認します。
-- **updateInitialRangeFromPoints()**: イントネーションポイントのデータから、表示範囲の初期値を計算し更新します。
-- **initializeIntonationCanvas()**: イントネーション編集用のHTML Canvas要素を初期化し、描画準備を整えます。
-- **buildIntonationPointsFromQuery()**: VOICEVOXのAudioQueryデータから、イントネーションチャート描画用のポイントデータを構築します。
-- **renderIntonationLabels()**: イントネーションチャート上のピッチや文字に対応するラベルを描画します。
-- **updateHoveredLabel()**: マウスがホバーしているイントネーションポイントに対応するラベルの表示を更新します。
-- **drawIntonationChart()**: イントネーションのピッチカーブや関連する情報をキャンバスに描画します。
-- **adjustIntonationScale()**: イントネーションチャートのスケール（表示倍率）を調整し、ズームイン/アウトなどを実現します。
-- **pitchFromY()**: イントネーションチャートのY座標から対応するピッチ値（周波数）を計算します。
-- **findNearestIntonationPoint()**: 指定された座標に最も近いイントネーションポイントを検索します。
-- **makeKeyEvent(src/intonation/handlers.test.ts)**: テスト用にキーボードイベントオブジェクトを生成します。
-- **enableKeyboard()**: キーボード操作によるイントネーション編集機能を有効にします。
-- **disableLoopOnIntonationEdit(src/intonation/handlers.ts)**: イントネーションが編集されている間、音声のループ再生を一時的に無効にします。
-- **applyPitchToQuery()**: UIで編集されたピッチ情報をAudioQueryデータに適用し、音声合成準備を更新します。
-- **applyPitchEdit()**: ユーザーによるピッチ編集操作を処理し、ピッチ情報の更新ロジックを実行します。
-- **handleIntonationPointerDown()**: イントネーションUI上でのポインター（マウスやタッチ）の「押し下げ」イベントを処理します。
-- **handleIntonationPointerMove()**: イントネーションUI上でのポインターの「移動」イベントを処理します。
-- **handleIntonationPointerUp()**: イントネーションUI上でのポインターの「離す」イベントを処理します。
-- **handleIntonationMouseMove()**: イントネーションUI上でのマウスの「移動」イベントを処理します。
-- **handleIntonationMouseLeave()**: イントネーションUIからマウスカーソルが「離れた」イベントを処理します。
-- **handleIntonationKeyDown()**: イントネーションUIにフォーカスがある状態でキーボードの「キー押し下げ」イベントを処理します。
-- **scheduleIntonationPlayback(src/intonation/playback.ts)**: イントネーションが更新された後、音声再生をスケジュールします。
-- **replayCachedIntonationAudio()**: キャッシュされているイントネーション編集後の音声データを再再生します。
-- **showPlaybackStatus()**: 音声再生の状態（再生中、停止中など）をUIに表示します。
-- **buildSynthesisCacheKey()**: 音声合成リクエストのパラメータに基づいて、キャッシュキーを生成します。
-- **playUpdatedIntonation()**: 更新されたイントネーション情報を用いて音声を合成し、再生します。
-- **fetchAndRenderIntonation()**: イントネーションデータをVOICEVOX APIからフェッチし、チャートにレンダリングします。
-- **resetIntonationToInitial()**: イントネーション編集を初期状態に戻します。
-- **updateIntonationTiming(src/intonation/state.ts)**: イントネーションのタイミング情報（各音素の時間など）を更新します。
-- **isValidAudioQueryShape(src/intonation/utils.ts)**: 指定されたオブジェクトがAudioQueryの期待される形状と一致するかどうかを検証します。
-- **cloneAudioQuery()**: AudioQueryオブジェクトをディープクローンし、元のオブジェクトに影響を与えずに操作できるようにします。
-- **dedupeIntonationFavorites(src/intonation.ts)**: イントネーションのお気に入りリストから重複するエントリを削除します。
-- **loadIntonationFavorites()**: ブラウザのストレージからイントネーションのお気に入りリストを読み込みます。
-- **persistIntonationFavorites()**: 現在のイントネーションのお気に入りリストをブラウザのストレージに保存（永続化）します。
-- **resetIntonationState()**: イントネーション編集に関連するすべての状態を初期値にリセットします。
-- **setStyleChangeHandler()**: 音声スタイルが変更された際に実行されるハンドラを設定します。
-- **initializeIntonationElements()**: イントネーション編集UIに関連するHTML要素を初期化し、イベントリスナーを設定します。
-- **isIntonationDirty()**: イントネーションが前回の保存状態から変更されているかどうかをチェックします。
-- **isIntonationActive()**: イントネーション編集UIが現在アクティブ（表示され操作可能）かどうかをチェックします。
-- **hasActiveIntonationQuery()**: 現在編集中のアクティブなイントネーションクエリデータが存在するかどうかをチェックします。
-- **setIntonationKeyboardEnabled()**: キーボードショートカットによるイントネーション編集機能を有効または無効にします。
-- **getIntonationKeyboardEnabled()**: キーボードショートカットによるイントネーション編集機能が現在有効かどうかを返します。
-- **renderIntonationFavoritesList()**: イントネーションのお気に入りリストをUIに表示します。
-- **removeIntonationFavorite()**: お気に入りリストから指定されたイントネーションエントリを削除します。
-- **applyIntonationFavorite()**: お気に入りリストから選択されたイントネーション設定を現在のテキストに適用します。
-- **saveCurrentIntonationFavorite()**: 現在のイントネーション設定を新しいお気に入りとして保存します。
-- **refreshIntonationChart()**: イントネーションチャートの表示を更新し、最新のデータを反映させます。
-- **setupIntonationCanvasEvents()**: イントネーション編集用のキャンバスにポインターやキーボードなどのイベントリスナーを設定します。
-- **applySettingsToInputs(src/main.ts)**: アプリケーションの設定値を、対応するUI入力要素に適用し表示を更新します。
-- **refreshStylesAfterPortChange()**: VOICEVOXサーバーのポート番号が変更された後に、関連するスタイルや設定をリフレッシュします。
-- **applyStyleSelection()**: ユーザーが選択した音声スタイルをアプリケーション全体に適用します。
-- **applyRandomStyleSelection()**: ランダムな音声スタイルを選択し、アプリケーションに適用します。
-- **saveDelimiter()**: テキストの区切り文字設定を保存します。
-- **scheduleSaveDelimiter()**: テキストの区切り文字設定の保存を遅延実行するようにスケジュールします。
-- **updateSpectrogramScaleLabel()**: スペクトログラムの表示スケールを示すラベルを更新します。
-- **updateIntonationKeyboardToggle()**: イントネーション編集におけるキーボード操作の有効/無効を切り替えるUI要素の状態を更新します。
-- **makeDOM(src/playback.test.ts)**: テスト環境でDOM（文書オブジェクトモデル）構造をシミュレートして生成します。
-- **clearAudioCache(src/playback.ts)**: アプリケーション内で一時的に保存されている音声データをクリアします。
-- **setLoopCheckboxElement()**: 音声のループ再生を制御するチェックボックスUI要素を設定します。
-- **setPlayButtonAppearance()**: 再生/停止ボタンの外観（アイコンやテキスト）を現在の再生状態に応じて更新します。
-- **isPlayRequestPending()**: 現在、音声再生のリクエストが処理を待っている状態かどうかをチェックします。
-- **stopPlaybackAndResetLoop()**: 現在再生中の音声を停止し、ループ再生設定をリセットします。
-- **getAudioCacheKey()**: 再生する音声データの特性に基づいて、キャッシュに使用する一意のキーを生成します。
-- **setTextAndPlay()**: 指定されたテキストを設定し、そのテキストを合成して再生します。
-- **downloadLastAudio()**: 最後に再生された音声データをダウンロード可能なファイルとして提供します。
-- **scheduleAutoPlay()**: 特定の条件が満たされたときに、音声の自動再生をスケジュールします。
-- **confirmResetIntonationBeforePlay()**: 再生前にイントネーションが編集されている場合、リセットするかどうかをユーザーに確認します。
-- **handlePlayButtonClick()**: 再生ボタンがクリックされた際のイベントを処理し、再生を開始または停止します。
-- **handlePlay()**: 実際の音声再生処理を開始します。
-- **clearRealtimeWaveformCanvas()**: リアルタイムで音声波形を表示するキャンバスをクリアします。
-- **triggerPlay()**: 再生処理をトリガー（開始）します。
-- **cleanup()**: アプリケーションや再生状態のリソースを解放するためのクリーンアップ処理を実行します。
-- **handleReset()**: アプリケーションの状態や設定を初期値にリセットする操作を処理します。
-- **handleCancel()**: 実行中の操作（例: 音声合成）をキャンセルする操作を処理します。
-- **loadSettings(src/settings.ts)**: ブラウザのローカルストレージからアプリケーションの設定を読み込みます。
-- **saveSettings()**: 現在のアプリケーション設定をブラウザのローカルストレージに保存します。
-- **resetSettings()**: アプリケーション設定をデフォルト値にリセットします。
-- **getVoicevoxApiBase()**: VOICEVOX APIのベースURL（エンドポイント）を取得します。
-- **getVoicevoxNemoApiBase()**: VOICEVOX Nemo APIのベースURLを取得します。
-- **getFrequencyTopPercent()**: スペクトログラム表示などで使用される、周波数の上位何パーセントを表示するかという設定値を取得します。
-- **getCurrentSettings()**: 現在のアクティブなアプリケーション設定オブジェクト全体を取得します。
-- **setVoicevoxPort()**: VOICEVOXサーバーのポート番号を設定します。
-- **setVoicevoxNemoPort()**: VOICEVOX Nemoサーバーのポート番号を設定します。
-- **setFrequencyTopPercent()**: 周波数上位パーセンテージの値を設定します。
-- **showStatus(src/status.ts)**: アプリケーションのステータスメッセージをUIに表示します。
-- **hideStatus()**: 現在表示されているステータスメッセージをUIから非表示にします。
-- **scheduleHideStatus()**: 一定時間経過後にステータスメッセージを自動的に非表示にするようスケジュールします。
-- **invalidateColorVariableCache()**: CSSカスタムプロパティから取得した色変数のキャッシュを無効化します。
-- **getColorVariable()**: CSSカスタムプロパティ（CSS変数）から色の値を読み取ります。
-- **getSelectedStyleId(src/styleManager.ts)**: 現在選択されている音声スタイル（キャラクター）のIDを取得します。
-- **setSelectedStyleId()**: 指定されたIDの音声スタイルを選択状態に設定します。
-- **selectRandomStyleId()**: ランダムに音声スタイルを選択します。
-- **getStyleLabel()**: スタイルIDから、ユーザーに表示するためのスタイル名（ラベル）を取得します。
-- **getStyleById()**: スタイルIDに基づいて、そのスタイルに関する詳細情報を取得します。
-- **getApiBaseForStyleId()**: 特定のスタイルIDに対応するVOICEVOX APIのベースURLを取得します。
-- **getSpeakerStylesByStyleId()**: 指定されたスタイルIDを持つスピーカーに関連する全てのスタイル情報を取得します。
-- **resolveStyleMarker()**: テキスト内のスタイル指定マーカーを解析し、適切なスタイルIDに解決します。
-- **parseDelimiterConfig()**: テキストの区切り文字設定を解析し、テキスト分割のための情報を生成します。
-- **addSegment()**: 音声合成のためにテキストを小さなセグメントに分割する処理で、新しいセグメントを追加します。
-- **buildTextSegments()**: 入力テキストを、音声スタイルや区切り文字に基づいて複数のセグメントに分割します。
-- **populateStyleSelect()**: 音声スタイル選択用のドロップダウンメニューに利用可能なスタイルオプションを投入します。
-- **populateSpeakerStyleSelect()**: スピーカーに紐づくスタイル選択用のドロップダウンメニューにオプションを投入します。
-- **fetchVoiceStyles()**: VOICEVOX APIから利用可能な音声スタイル（話者、スタイルIDなど）のリストを取得します。
-- **while()**: 条件が真である間、ブロック内のコードを繰り返し実行するループ構造です。
-- **loadStoredList(src/textLists.ts)**: ブラウザのローカルストレージから、テキストの履歴やお気に入りなどのリストを読み込みます。
-- **persistList()**: 指定されたリストをブラウザのローカルストレージに保存（永続化）します。
-- **persistLists()**: 複数のテキストリスト（履歴、お気に入りなど）をまとめて永続化します。
-- **dedupeAndLimit()**: リストから重複するエントリを削除し、指定されたアイテム数に制限します。
-- **renderList()**: 指定されたリストのアイテムをUIに描画します。
-- **renderTextLists()**: 履歴リストとお気に入りリストの両方をUIに描画します。
-- **moveToFavorites()**: 履歴リストなどから選択されたテキストアイテムをお気に入りリストに移動します。
-- **moveToHistory()**: 現在のテキストアイテムを履歴リストに移動または追加します。
-- **addToHistory()**: 新しいテキストアイテムを履歴リストに追加します。
-- **initializeTextLists()**: テキストリスト（履歴、お気に入り）機能を初期化し、UI要素を設定します。
-- **updateExportButtonState(src/uiControls.ts)**: 音声エクスポートボタンの有効/無効状態を更新します。
-- **prepareCanvas(src/visualization/canvas.ts)**: 指定されたHTML Canvas要素を初期化し、描画可能な状態に準備します。
-- **getHannWindow(src/visualization/fft.ts)**: 音声分析に使用するハニング窓関数を生成します。
-- **fftRadix2()**: 高速フーリエ変換（FFT）のRadix-2アルゴリズムを実行し、周波数スペクトルを計算します。
-- **getMaxFreqByThreshold(src/visualization/fftMaxFreq.ts)**: 指定されたしきい値を超える周波数成分の中から、最大の周波数を検出します。
-- **drawRealtimeFFT(src/visualization/fftOverlay.ts)**: リアルタイムで音声のFFTスペクトルをキャンバスに描画します。
-- **getTopFreqInfo()**: FFT結果から、支配的な周波数に関する情報を（ピーク位置など）取得します。
-- **findPeakPosition()**: FFTスペクトルの中から、周波数ピークの位置を検出します。
-- **drawPeakLine()**: FFTチャート上に検出されたピークを示すラインを描画します。
-- **drawFFTLine()**: FFTスペクトルデータに基づいて、周波数分布を示すラインを描画します。
-- **drawTopBinLine()**: FFTチャート上に、特定の周波数ビン（例えば、トップ周波数ビン）を示すラインを描画します。
-- **drawPeakLabel()**: FFTチャート上に、ピーク周波数や関連する情報を示すラベルを描画します。
-- **xToFreq(src/visualization/fftUtils.ts)**: キャンバス上のX座標を対応する周波数値に変換します。
-- **freqToBinF()**: 周波数値をFFTのビンインデックス（浮動小数点）に変換します。
-- **getInterpolatedValue()**: データポイント間の値を線形補間などによって推定します。
-- **fftValueToY()**: FFTの振幅値をキャンバス上のY座標に変換します。
-- **lerpColor(src/visualization/spectrogram.ts)**: 2つの色間で線形補間を行い、中間の色を生成します。
-- **mapIntensityToSpectrogramColor()**: 音声の強度（振幅）値をスペクトログラムの色にマッピングします。
-- **determineSpectrogramCeiling()**: スペクトログラム描画における強度の最大値（天井値）を決定します。
-- **analyzeSpectrogramFrames()**: 音声データをフレームごとに分析し、スペクトログラム生成に必要な情報を抽出します。
-- **drawSpectrogram()**: 音声のスペクトログラム全体をキャンバスに描画します。
-- **drawSpectrogramColumn()**: スペクトログラムの一つの時間軸における周波数分布（列）をキャンバスに描画します。
-- **drawOfflineSpectrogram()**: リアルタイムではなく、事前に処理された音声データからスペクトログラムを描画します。
-- **computeAudioContentHash()**: 音声コンテンツのハッシュ値を計算し、キャッシュキーとして利用します。
-- **buildSpectrogramSignature()**: スペクトログラムのユニークな識別子（シグネチャ）を構築します。
-- **processChunk()**: 音声データを小さなチャンク（塊）に分割し、それぞれのチャンクを処理します。
-- **getSpectrogramScale(src/visualization/spectrogramCache.ts)**: スペクトログラム表示の現在のスケール（ズームレベル）を取得します。
-- **setSpectrogramScale()**: スペクトログラム表示のスケールを設定します。
-- **requestSpectrogramReset()**: スペクトログラム表示のリセットを要求し、再描画の準備をします。
-- **createSpectrogramImageCache()**: スペクトログラム画像のキャッシュを初期化または作成します。
-- **analyzeAndCacheSpectrogram()**: 音声データを分析し、生成されたスペクトログラムをキャッシュします。
-- **handleSpectrogramInitialization()**: スペクトログラムの初期化プロセスを処理します。
-- **resetSpectrogramCaches()**: すべてのスペクトログラム関連キャッシュをクリアし、リセットします。
-- **formatTimeLabel(src/visualization/timeAxis.ts)**: 時間軸に表示するタイムラベルを整形します。
-- **buildTimeTicks()**: 時間軸に表示する目盛りの位置とラベルを計算し、構築します。
-- **drawTimeTicks()**: 時間軸の目盛りと対応するラベルをキャンバスに描画します。
-- **computeSegmentStats(src/visualization/waveform.ts)**: 音声セグメントの統計情報（平均振幅など）を計算します。
-- **computeSegmentCorrelation()**: 複数の音声セグメント間の相関関係を計算します。
-- **extractAlignedRealtimeSegment()**: リアルタイム音声から、特定の位置にアラインされたセグメントを抽出します。
-- **drawRenderedWaveform()**: レンダリング（事前に処理）された音声波形をキャンバスに描画します。
-- **drawRealtimeWaveformBackground()**: リアルタイム波形表示キャンバスの背景を描画します。
-- **drawRealtimeWaveformOnly()**: リアルタイムで入力される音声の波形データのみをキャンバスに描画します。
-- **constructor(src/visualization.test.ts)**: オブジェクトのインスタンスを生成する際に呼び出される特殊な関数です（テストファイル内）。
-- **isPlaybackActive(src/visualization.ts)**: 現在音声が再生中であるかどうかをチェックします。
-- **stopActivePlayback()**: 現在アクティブな音声再生を停止します。
-- **initializeVisualizationCanvases()**: 音声可視化用のすべてのCanvas要素を初期化します。
-- **clearWaveformCanvas()**: 波形表示キャンバスの内容をクリアします。
-- **playAudio()**: 音声データを受け取り、再生を開始します。
-- **setProgressPosition()**: 再生プログレスバーの現在の位置を設定し、UIに反映させます。
-- **updateProgressLines()**: 再生プログレスを示すライン（線）を更新します。
-- **clearProgressLines()**: 再生プログレスを示すラインをキャンバスからクリアします。
-- **drawRealtimeVisuals()**: リアルタイムで音声の波形やFFTなどの可視化要素を描画します。
-- **handleSpectrogramDraw()**: スペクトログラムの描画処理を管理します。
-- **cleanupPlayback()**: 再生終了時に、可視化関連のリソースをクリーンアップします。
-- **requestSpectrogramDraw()**: スペクトログラムの描画を要求します。
-- **render()**: 可視化要素のフレームを描画します。
-- **finalize()**: 可視化プロセスの最終処理を実行します。
-- **stopPlayback()**: 音声再生を完全に停止します。
+- **getAudioQuery** (src/audio.ts): VOICEVOX APIからテキストに対応する音声クエリ（イントネーション情報など）を取得します。
+- **synthesize** (src/audio.ts): 音声クエリに基づいてVOICEVOX APIから音声データを合成・取得します。
+- **combineAudioBuffers** (src/audio.ts): 複数のAudioBufferオブジェクトを一つに結合します。
+- **encodeAudioBufferToWav** (src/audio.ts): AudioBufferをWAV形式のバイナリデータにエンコードします。
+- **writeString** (src/audio.ts): 文字列データを指定されたフォーマットで書き出す、あるいは処理する機能です。
+- **clamp** (src/audio.ts): 数値を指定された最小値と最大値の範囲内に制限します。
+- **getPitchRange** (src/intonation/display.ts): イントネーション表示のためのピッチ（音高）の表示範囲を計算します。
+- **calculateBasePadding** (src/intonation/display.ts): イントネーション表示のベースパディング（余白）を計算します。
+- **getBaseDisplayRange** (src/intonation/display.ts): イントネーション表示の基本となる表示範囲を取得します。
+- **calculateDisplayRange** (src/intonation/display.ts): イントネーション表示の動的な表示範囲を計算します。
+- **clampRangeExtra** (src/intonation/display.ts): 表示範囲の超過部分をクランプ（制限）します。
+- **applyRangeExtra** (src/intonation/display.ts): 表示範囲の超過部分を適用します。
+- **refreshDisplayRange** (src/intonation/display.ts): イントネーション表示の範囲をリフレッシュします。
+- **clampPitchToDisplayRange** (src/intonation/display.ts): ピッチ値を表示範囲内にクランプします。
+- **calculateStepSize** (src/intonation/display.ts): イントネーション編集のステップサイズを計算します。
+- **calculateLetterKeyAdjustment** (src/intonation/display.ts): キーボード操作による文字ごとの調整量を計算します。
+- **handleIntonationWheel** (src/intonation/display.ts): イントネーション表示上でのマウスホイール操作を処理します。
+- **ensureWheelHandler** (src/intonation/display.ts): ホイールイベントハンドラが適切に設定されていることを確認します。
+- **updateInitialRangeFromPoints** (src/intonation/display.ts): イントネーションポイントから初期表示範囲を更新します。
+- **initializeIntonationCanvas** (src/intonation/display.ts): イントネーション表示用キャンバスを初期化します。
+- **buildIntonationPointsFromQuery** (src/intonation/display.ts): 音声クエリからイントネーション表示用のポイントデータを構築します。
+- **renderIntonationLabels** (src/intonation/display.ts): イントネーション表示上のラベル（文字など）をレンダリングします。
+- **updateHoveredLabel** (src/intonation/display.ts): マウスオーバーされたイントネーションラベルを更新します。
+- **drawIntonationChart** (src/intonation/display.ts): イントネーションのチャートを描画します。
+- **adjustIntonationScale** (src/intonation/display.ts): イントネーションの表示スケールを調整します。
+- **pitchFromY** (src/intonation/display.ts): Y座標からピッチ値に変換します。
+- **findNearestIntonationPoint** (src/intonation/display.ts): 指定された位置に最も近いイントネーションポイントを見つけます。
+- **disableLoopOnIntonationEdit** (src/intonation/handlers.ts): イントネーション編集時にループ再生を無効にします。
+- **applyPitchToQuery** (src/intonation/handlers.ts): 編集されたピッチ情報を音声クエリに適用します。
+- **applyPitchEdit** (src/intonation/handlers.ts): ピッチ編集を適用し、関連するUIを更新します。
+- **handleIntonationPointerDown** (src/intonation/handlers.ts): イントネーション表示上でのポインタダウンイベントを処理します。
+- **handleIntonationPointerMove** (src/intonation/handlers.ts): イントネーション表示上でのポインタムーブイベントを処理します。
+- **handleIntonationPointerUp** (src/intonation/handlers.ts): イントネーション表示上でのポインタアップイベントを処理します。
+- **handleIntonationMouseMove** (src/intonation/handlers.ts): イントネーション表示上でのマウスムーブイベントを処理します。
+- **handleIntonationMouseLeave** (src/intonation/handlers.ts): イントネーション表示からマウスが離れたイベントを処理します。
+- **handleIntonationKeyDown** (src/intonation/handlers.ts): イントネーション編集時のキーボードダウンイベントを処理します。
+- **scheduleIntonationPlayback** (src/intonation/playback.ts): イントネーション編集後の音声再生をスケジュールします。
+- **replayCachedIntonationAudio** (src/intonation/playback.ts): キャッシュされたイントネーション音声を再再生します。
+- **showPlaybackStatus** (src/intonation/playback.ts): 再生ステータスを表示します。
+- **buildSynthesisCacheKey** (src/intonation/playback.ts): 音声合成のキャッシュキーを構築します。
+- **playUpdatedIntonation** (src/intonation/playback.ts): 更新されたイントネーションで音声を再生します。
+- **fetchAndRenderIntonation** (src/intonation/playback.ts): イントネーションデータを取得し、視覚化をレンダリングします。
+- **resetIntonationToInitial** (src/intonation/playback.ts): イントネーションを初期状態にリセットします。
+- **updateIntonationTiming** (src/intonation/state.ts): イントネーションのタイミング情報を更新します。
+- **isValidAudioQueryShape** (src/intonation/utils.ts): AudioQueryオブジェクトの形式が正しいか検証します。
+- **cloneAudioQuery** (src/intonation/utils.ts): AudioQueryオブジェクトを複製します。
+- **dedupeIntonationFavorites** (src/intonation.ts): イントネーションのお気に入りリストから重複を削除します。
+- **parseIntonationFavoritesArray** (src/intonation.ts): イントネーションのお気に入り配列を解析します。
+- **loadIntonationFavorites** (src/intonation.ts): 保存されたイントネーションのお気に入りリストを読み込みます。
+- **persistIntonationFavorites** (src/intonation.ts): イントネーションのお気に入りリストを永続化（保存）します。
+- **resetIntonationState** (src/intonation.ts): イントネーション関連の状態をリセットします。
+- **setStyleChangeHandler** (src/intonation.ts): スタイル変更時のハンドラを設定します。
+- **setHandlePlayHandler** (src/intonation.ts): 再生ボタンが押された際のハンドラを設定します。
+- **initializeIntonationElements** (src/intonation.ts): イントネーション関連のHTML要素を初期化します。
+- **isIntonationDirty** (src/intonation.ts): イントネーションが編集されているか（ダーティ状態か）を判定します。
+- **isIntonationActive** (src/intonation.ts): イントネーション機能がアクティブであるか（表示されているか）を判定します。
+- **hasActiveIntonationQuery** (src/intonation.ts): アクティブなイントネーションクエリが存在するかを判定します。
+- **setIntonationKeyboardEnabled** (src/intonation.ts): イントネーション編集時のキーボード操作の有効/無効を設定します。
+- **getIntonationKeyboardEnabled** (src/intonation.ts): イントネーション編集時のキーボード操作が有効かを返します。
+- **renderIntonationFavoritesList** (src/intonation.ts): イントネーションのお気に入りリストをレンダリングします。
+- **removeIntonationFavorite** (src/intonation.ts): イントネーションのお気に入りから項目を削除します。
+- **applyIntonationFavorite** (src/intonation.ts): 選択されたイントネーションのお気に入りを適用します。
+- **exportIntonationFavorites** (src/intonation.ts): イントネーションのお気に入りリストをエクスポートします。
+- **importIntonationFavorites** (src/intonation.ts): イントネーションのお気に入りリストをインポートします。
+- **saveCurrentIntonationFavorite** (src/intonation.ts): 現在のイントネーションの状態をお気に入りとして保存します。
+- **refreshIntonationChart** (src/intonation.ts): イントネーションチャートをリフレッシュ（再描画）します。
+- **setupIntonationCanvasEvents** (src/intonation.ts): イントネーションキャンバスのイベントリスナーを設定します。
+- **applySettingsToInputs** (src/main.ts): 現在の設定値をUIの入力フィールドに適用します。
+- **refreshStylesAfterPortChange** (src/main.ts): ポート変更後にスタイル関連の表示をリフレッシュします。
+- **applyStyleSelection** (src/main.ts): 選択されたスタイルをアプリケーションに適用します。
+- **applyRandomStyleSelection** (src/main.ts): ランダムなスタイルを選択して適用します。
+- **saveDelimiter** (src/main.ts): テキストの区切り文字設定を保存します。
+- **scheduleSaveDelimiter** (src/main.ts): テキストの区切り文字設定の保存をスケジュールします。
+- **updateSpectrogramScaleLabel** (src/main.ts): スペクトログラムのスケール表示ラベルを更新します。
+- **updateIntonationKeyboardToggle** (src/main.ts): イントネーションキーボードトグルの状態を更新します。
+- **clearAudioCache** (src/playback.ts): 音声キャッシュをクリアします。
+- **setLoopCheckboxElement** (src/playback.ts): ループ再生のチェックボックス要素を設定します。
+- **setPlayButtonAppearance** (src/playback.ts): 再生ボタンの見た目を更新します。
+- **isPlayRequestPending** (src/playback.ts): 再生リクエストが保留中であるかを確認します。
+- **stopPlaybackAndResetLoop** (src/playback.ts): 再生を停止し、ループ設定をリセットします。
+- **getAudioCacheKey** (src/playback.ts): オーディオキャッシュのキーを生成します。
+- **setTextAndPlay** (src/playback.ts): テキストを設定し、再生を開始します。
+- **downloadLastAudio** (src/playback.ts): 最後に再生された音声をダウンロードします。
+- **scheduleAutoPlay** (src/playback.ts): 自動再生をスケジュールします。
+- **confirmResetIntonationBeforePlay** (src/playback.ts): 再生前にイントネーションのリセットを確認します。
+- **handlePlayButtonClick** (src/playback.ts): 再生ボタンクリックイベントを処理します。
+- **handlePlay** (src/playback.ts): 音声再生を開始します。
+- **clearRealtimeWaveformCanvas** (src/playback.ts): リアルタイム波形表示キャンバスをクリアします。
+- **triggerPlay** (src/playback.ts): 再生処理をトリガーします。
+- **cleanup** (src/playback.ts): 再生関連のリソースをクリーンアップします。
+- **handleReset** (src/playback.ts): リセットイベントを処理します。
+- **handleCancel** (src/playback.ts): キャンセルイベントを処理します。
+- **loadSettings** (src/settings.ts): アプリケーション設定を読み込みます。
+- **saveSettings** (src/settings.ts): アプリケーション設定を保存します。
+- **resetSettings** (src/settings.ts): アプリケーション設定をデフォルトにリセットします。
+- **getVoicevoxApiBase** (src/settings.ts): VOICEVOX APIのベースURLを取得します。
+- **getVoicevoxNemoApiBase** (src/settings.ts): VOICEVOX Nemo APIのベースURLを取得します。
+- **getFrequencyTopPercent** (src/settings.ts): 周波数トップパーセンテージ設定を取得します。
+- **getCurrentSettings** (src/settings.ts): 現在のアプケーション設定を取得します。
+- **setVoicevoxPort** (src/settings.ts): VOICEVOXのポート番号を設定します。
+- **setVoicevoxNemoPort** (src/settings.ts): VOICEVOX Nemoのポート番号を設定します。
+- **setFrequencyTopPercent** (src/settings.ts): 周波数トップパーセンテージを設定します。
+- **showStatus** (src/status.ts): ステータスメッセージを表示します。
+- **hideStatus** (src/status.ts): ステータスメッセージを非表示にします。
+- **scheduleHideStatus** (src/status.ts): ステータスメッセージを一定時間後に非表示にするようスケジュールします。
+- **invalidateColorVariableCache** (src/status.ts): カラー変数キャッシュを無効化します。
+- **getColorVariable** (src/status.ts): CSSカスタムプロパティから色変数の値を取得します。
+- **getSelectedStyleId** (src/styleManager.ts): 現在選択されているスタイルIDを取得します。
+- **setSelectedStyleId** (src/styleManager.ts): スタイルIDを設定します。
+- **selectRandomStyleId** (src/styleManager.ts): ランダムなスタイルIDを選択します。
+- **getStyleLabel** (src/styleManager.ts): スタイルIDに対応するラベルを取得します。
+- **getStyleById** (src/styleManager.ts): スタイルIDに対応するスタイル情報を取得します。
+- **getApiBaseForStyleId** (src/styleManager.ts): スタイルIDに対応するAPIベースURLを取得します。
+- **getSpeakerStylesByStyleId** (src/styleManager.ts): スタイルIDに対応する話者のスタイルリストを取得します。
+- **resolveStyleMarker** (src/styleManager.ts): スタイルマーカーを解決します。
+- **parseDelimiterConfig** (src/styleManager.ts): 区切り文字の設定を解析します。
+- **addSegment** (src/styleManager.ts): テキストセグメントを追加します。
+- **buildTextSegments** (src/styleManager.ts): テキストからセグメントを構築します。
+- **populateStyleSelect** (src/styleManager.ts): スタイル選択ドロップダウンをデータで埋めます。
+- **populateSpeakerStyleSelect** (src/styleManager.ts): 話者スタイル選択ドロップダウンをデータで埋めます。
+- **fetchVoiceStyles** (src/styleManager.ts): VOICEVOX APIから音声スタイル一覧を取得します。
+- **loadStoredList** (src/textLists.ts): 保存されたテキストリスト（履歴やお気に入り）を読み込みます。
+- **persistList** (src/textLists.ts): テキストリストを永続化（保存）します。
+- **persistLists** (src/textLists.ts): 複数のテキストリストを永続化します。
+- **dedupeAndLimit** (src/textLists.ts): テキストリストの重複を削除し、項目数を制限します。
+- **renderList** (src/textLists.ts): テキストリストをHTMLにレンダリングします。
+- **renderTextLists** (src/textLists.ts): 全てのテキストリスト（履歴とお気に入り）をレンダリングします。
+- **moveToFavorites** (src/textLists.ts): テキストを履歴からお気に入りに移動します。
+- **moveToHistory** (src/textLists.ts): テキストをお気に入りから履歴に移動します。
+- **addToHistory** (src/textLists.ts): テキストを履歴リストに追加します。
+- **initializeTextLists** (src/textLists.ts): テキストリスト機能を初期化します。
+- **updateExportButtonState** (src/uiControls.ts): エクスポートボタンの有効/無効状態を更新します。
+- **prepareCanvas** (src/visualization/canvas.ts): 指定されたキャンバス要素を視覚化のために準備します。
+- **getHannWindow** (src/visualization/fft.ts): ハン窓関数を生成します。
+- **fftRadix2** (src/visualization/fft.ts, src/visualization/fftMaxFreq.ts): ラディックス2アルゴリズムに基づく高速フーリエ変換を実行します。
+- **getMaxFreqByThreshold** (src/visualization/fftMaxFreq.ts): しきい値に基づいて最大周波数を検出します。
+- **drawRealtimeFFT** (src/visualization/fftOverlay.ts): リアルタイムのFFT（周波数スペクトル）をキャンバスに描画します。
+- **getTopFreqInfo** (src/visualization/fftOverlay.ts): 最も優勢な周波数情報（ピーク）を取得します。
+- **findPeakPosition** (src/visualization/fftOverlay.ts): スペクトルデータ内のピーク位置を見つけます。
+- **drawPeakLine** (src/visualization/fftOverlay.ts): ピーク周波数を示すラインを描画します。
+- **drawFFTLine** (src/visualization/fftOverlay.ts): FFTスペクトルのラインを描画します。
+- **drawTopBinLine** (src/visualization/fftOverlay.ts): 最も高いビン（周波数帯）を示すラインを描画します。
+- **drawPeakLabel** (src/visualization/fftOverlay.ts): ピーク周波数のラベルを描画します。
+- **xToFreq** (src/visualization/fftUtils.ts): X座標を周波数に変換します。
+- **freqToBinF** (src/visualization/fftUtils.ts): 周波数をFFTビン番号に変換します。
+- **getInterpolatedValue** (src/visualization/fftUtils.ts): 補間された値を取得します。
+- **fftValueToY** (src/visualization/fftUtils.ts): FFTの値をY座標に変換します。
+- **lerpColor** (src/visualization/spectrogram.ts): 2つの色の間で線形補間を行います。
+- **mapIntensityToSpectrogramColor** (src/visualization/spectrogram.ts): 音響強度をスペクトログラムの色にマッピングします。
+- **determineSpectrogramCeiling** (src/visualization/spectrogram.ts): スペクトログラムの天井値（最大強度）を決定します。
+- **analyzeSpectrogramFrames** (src/visualization/spectrogram.ts): スペクトログラムのフレームを分析します。
+- **drawSpectrogram** (src/visualization/spectrogram.ts): スペクトログラム全体を描画します。
+- **drawSpectrogramColumn** (src/visualization/spectrogram.ts): スペクトログラムの一列（特定の時間点での周波数強度）を描画します。
+- **drawOfflineSpectrogram** (src/visualization/spectrogram.ts): オフライン（録音済み）のスペクトログラムを描画します。
+- **computeAudioContentHash** (src/visualization/spectrogram.ts): オーディオコンテンツのハッシュを計算し、キャッシュキーなどに利用します。
+- **buildSpectrogramSignature** (src/visualization/spectrogram.ts): スペクトログラムのシグネチャを構築します。
+- **processChunk** (src/visualization/spectrogram.ts): オーディオデータのチャンク（断片）を処理します。
+- **getSpectrogramScale** (src/visualization/spectrogramCache.ts): スペクトログラムの現在のスケールを取得します。
+- **setSpectrogramScale** (src/visualization/spectrogramCache.ts): スペクトログラムのスケールを設定します。
+- **requestSpectrogramReset** (src/visualization/spectrogramCache.ts): スペクトログラムのリセットを要求します。
+- **createSpectrogramImageCache** (src/visualization/spectrogramCache.ts): スペクトログラムの画像キャッシュを作成します。
+- **analyzeAndCacheSpectrogram** (src/visualization/spectrogramCache.ts): スペクトログラムを分析し、キャッシュします。
+- **handleSpectrogramInitialization** (src/visualization/spectrogramCache.ts): スペクトログラムの初期化処理をハンドルします。
+- **resetSpectrogramCaches** (src/visualization/spectrogramCache.ts): スペクトログラム関連のキャッシュをリセットします。
+- **formatTimeLabel** (src/visualization/timeAxis.ts): 時間ラベルの表示形式を整形します。
+- **buildTimeTicks** (src/visualization/timeAxis.ts): タイム軸のティック（目盛り）を構築します。
+- **drawTimeTicks** (src/visualization/timeAxis.ts): タイム軸のティックを描画します。
+- **computeSegmentStats** (src/visualization/waveform.ts): ウェーブフォームセグメントの統計情報を計算します。
+- **computeSegmentCorrelation** (src/visualization/waveform.ts): ウェーブフォームセグメント間の相関を計算します。
+- **extractAlignedRealtimeSegment** (src/visualization/waveform.ts): 整列されたリアルタイムセグメントを抽出します。
+- **drawRenderedWaveform** (src/visualization/waveform.ts): レンダリングされた（合成済み）ウェーブフォームを描画します。
+- **drawRealtimeWaveformBackground** (src/visualization/waveform.ts): リアルタイムウェーブフォームの背景を描画します。
+- **drawRealtimeWaveformOnly** (src/visualization/waveform.ts): リアルタイムウェーブフォームのみを描画します。
+- **isPlaybackActive** (src/visualization.ts): 再生がアクティブであるかを確認します。
+- **stopActivePlayback** (src/visualization.ts): アクティブな再生を停止します。
+- **initializeVisualizationCanvases** (src/visualization.ts): 視覚化用のキャンバスを初期化します。
+- **clearWaveformCanvas** (src/visualization.ts): ウェーブフォームキャンバスをクリアします。
+- **playAudio** (src/visualization.ts): 音声再生を開始し、視覚化と同期します。
+- **setProgressPosition** (src/visualization.ts): 再生進捗バーの位置を設定します。
+- **updateProgressLines** (src/visualization.ts): 進捗ラインを更新します。
+- **clearProgressLines** (src/visualization.ts): 進捗ラインをクリアします。
+- **drawRealtimeVisuals** (src/visualization.ts): リアルタイム視覚化要素を描画します。
+- **handleSpectrogramDraw** (src/visualization.ts): スペクトログラムの描画処理をハンドルします。
+- **cleanupPlayback** (src/visualization.ts): 再生関連の視覚化リソースをクリーンアップします。
+- **requestSpectrogramDraw** (src/visualization.ts): スペクトログラムの描画を要求します。
+- **render** (src/visualization.ts): 視覚化のレンダリングループを実行します。
+- **finalize** (src/visualization.ts): 視覚化処理を最終処理します。
+- **stopPlayback** (src/visualization.ts): 視覚化を伴う再生を停止します。
 
 ## 関数呼び出し階層ツリー
 ```
@@ -420,9 +427,11 @@ Last updated: 2026-03-08
       - drawRenderedWaveform ()
       - initializeVisualizationCanvases ()
       - playAudio ()
-  - isValidAudioQueryShape (src/intonation/utils.ts)
-  - dedupeIntonationFavorites (src/intonation.ts)
-    - loadIntonationFavorites ()
+  - setHandlePlayHandler ()
+    - isValidAudioQueryShape (src/intonation/utils.ts)
+    - dedupeIntonationFavorites (src/intonation.ts)
+      - parseIntonationFavoritesArray ()
+      - loadIntonationFavorites ()
       - persistIntonationFavorites ()
       - resetIntonationState ()
       - setStyleChangeHandler ()
@@ -435,9 +444,12 @@ Last updated: 2026-03-08
       - renderIntonationFavoritesList ()
       - removeIntonationFavorite ()
       - applyIntonationFavorite ()
+      - exportIntonationFavorites ()
+      - importIntonationFavorites ()
       - saveCurrentIntonationFavorite ()
       - refreshIntonationChart ()
       - setupIntonationCanvasEvents ()
+      - stopActivePlayback ()
   - applySettingsToInputs (src/main.ts)
     - refreshStylesAfterPortChange ()
       - applyStyleSelection ()
@@ -478,7 +490,6 @@ Last updated: 2026-03-08
       - parseDelimiterConfig ()
       - buildTextSegments ()
       - addToHistory ()
-      - stopActivePlayback ()
   - saveSettings ()
     - getVoicevoxApiBase ()
       - getVoicevoxNemoApiBase ()
@@ -551,10 +562,10 @@ Last updated: 2026-03-08
 - for (src/audio.ts)
 - saveDelimiter (src/main.ts)
 - scheduleSaveDelimiter (src/main.ts)
-- makeDOM (src/playback.test.ts)
+- makeDOM (src/playback.truncation.test.ts)
 - triggerPlay (src/playback.ts)
 - handleReset (src/playback.ts)
 - while (src/styleManager.ts)
 
 ---
-Generated at: 2026-03-08 07:02:19 JST
+Generated at: 2026-03-09 07:02:03 JST

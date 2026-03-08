@@ -1,58 +1,68 @@
-Last updated: 2026-03-08
+Last updated: 2026-03-09
 
 # Development Status
 
 ## 現在のIssues
-- `src/playback.test.ts`が500行を超過しており、リファクタリングが推奨されています ([Issue #149](../issue-notes/149.md))。
-- イントネーション付きお気に入りのexportとimport機能の追加が求められています ([Issue #121](../issue-notes/121.md))。
-- スペクトログラムのHz表示桁数を5桁に増やし、不要な白い線を削除するUI改善が提案されています ([Issue #97](../issue-notes/97.md))。
+- 現在、`src/main.ts`が500行を超え肥大化しており、リファクタリングが推奨されています（[Issue #157](../issue-notes/157.md)）。
+- スペクトログラムの表示最適化（[Issue #115](../issue-notes/115.md)）や波形全体表示への推定周波数描画（[Issue #113](../issue-notes/113.md)）は保留中です。
+- リアルタイムFFTのリニア・対数表示切り替え機能（[Issue #111](../issue-notes/111.md)）もLLMのハルシネーションにより保留されています。
 
 ## 次の一手候補
-1. `src/playback.test.ts` のリファクタリング ([Issue #149](../issue-notes/149.md))
-   - 最初の小さな一歩: `src/playback.test.ts` の内容を分析し、独立性の高い `describe` ブロックを特定する。
-   - Agent実行プロンプ:
-     ```
-     対象ファイル: `src/playback.test.ts`
-
-     実行内容: `src/playback.test.ts` の内容を分析し、テストファイルの構造と各`describe`ブロックの役割についてmarkdown形式でまとめてください。特に、切り出し候補となる独立したテストグループ（`describe`ブロック）とその理由をリストアップしてください。
-
-     確認事項: 現在のテストがどのように構成されているか、依存関係（モックのセットアップなど）があるかを確認してください。ファイルの分割が既存のテストに影響を与えないよう注意してください。
-
-     期待する出力: 以下の項目を含むmarkdown形式の分析結果。
-     - ファイル全体のテスト構成の概要
-     - 各`describe`ブロックの簡潔な説明
-     - 分割候補となる`describe`ブロックの提案と、それらを分割する際の考慮事項
-     - 分割後のファイル名案（例: `src/playback.handlePlay.test.ts`など）
-     ```
-
-2. イントネーション付きお気に入りのexport/importボタンのUI追加 ([Issue #121](../issue-notes/121.md))
-   - 最初の小さな一歩: `index.html`にexportボタンとimportボタンのUI要素を追加する。
+1. `src/main.ts` の`settings`関連UIロジックを`src/settings.ts`に移動し整理する ([Issue #157](../issue-notes/157.md))
+   - 最初の小さな一歩: `src/main.ts` 内の `settingsToggleButton`, `voicevoxPortInput`, `voicevoxNemoPortInput`, `frequencyTopPercentInput`, `settingsResetButton` に関するDOM取得とイベントリスナー設定ロジックを抽出し、`src/settings.ts` に新しい初期化関数 `initializeSettingsUI()` を作成して移動する。
    - Agent実行プロンプト:
      ```
-     対象ファイル: `index.html`
+     対象ファイル: src/main.ts, src/settings.ts
 
-     実行内容: `index.html`内の「イントネーション付きお気に入り」セクションに、exportボタンとimportボタンのHTML要素を追加してください。これらのボタンは、既存のUIデザインに合わせてスタイルを適用できるように、適切なclassやidを設定してください。最初は機能を持たせず、UI要素のみを追加します。
+     実行内容:
+     1. `src/main.ts` から `settingsToggleButton`, `voicevoxPortInput`, `voicevoxNemoPortInput`, `frequencyTopPercentInput`, `settingsResetButton` のDOM取得、イベントリスナー設定、および `applySettingsToInputs` 関数の定義を削除してください。
+     2. `src/settings.ts` に新しい関数 `initializeSettingsUI(settingsToggleButton: HTMLButtonElement, settingsPanel: HTMLElement, voicevoxPortInput: HTMLInputElement, voicevoxNemoPortInput: HTMLInputElement, frequencyTopPercentInput: HTMLInputElement, settingsResetButton: HTMLButtonElement)` を定義し、削除したロジックを移動してください。
+     3. `initializeSettingsUI` 関数内で `loadSettings` と `getCurrentSettings` を利用するようにし、`refreshStylesAfterPortChange` 関数は `initializeSettingsUI` の内部で適切に呼び出すか、必要に応じて `playback.ts` や `styleManager.ts` などから公開されている関数を利用するように修正してください。
+     4. `src/main.ts` から `initializeSettingsUI` を呼び出すように変更してください。
 
-     確認事項: 既存のHTML構造やCSSスタイルに悪影響を与えないことを確認してください。追加するボタンが「イントネーション付きお気に入り」の見出しの右側に配置されるように調整してください。
+     確認事項:
+     - 既存のUI機能が正しく動作すること（設定パネルの表示/非表示、ポート設定の変更と反映、周波数設定の変更、設定のリセット）を確認してください。
+     - `voicevoxPort` や `voicevoxNemoPort` の変更が `fetchVoiceStyles` に適切に伝播し、スタイルが再ロードされることを確認してください。
+     - `settings.ts` は既に設定値の保存/ロードを担っているため、UI関連のロジックが追加されても責務の範囲内であることを確認してください。
 
-     期待する出力: 変更後の`index.html`のコード全体。
+     期待する出力: `src/main.ts` から設定UI関連のロジックが削減され、`src/settings.ts` にそれらのロジックが追加されたTypeScriptコード。リファクタリング前後の差分説明をMarkdown形式で出力してください。
      ```
 
-3. スペクトログラムのHz表示の桁数改善と不要な線の削除 ([Issue #97](../issue-notes/97.md))
-   - 最初の小さな一歩: `src/visualization/spectrogram.ts`を特定し、Hzのラベル描画およびグリッド線描画に関するコードを分析する。
+2. `src/main.ts` の`usagePanel`関連UIロジックを`src/uiControls.ts`に移動する ([Issue #157](../issue-notes/157.md))
+   - 最初の小さな一歩: `src/main.ts` 内の `usageToggleButton` と `usagePanel` に関するDOM取得とイベントリスナー設定ロジックを抽出し、`src/uiControls.ts` に新しい初期化関数 `initializeUsageUI()` を作成して移動する。
    - Agent実行プロンプト:
      ```
-     対象ファイル: `src/visualization/spectrogram.ts`
+     対象ファイル: src/main.ts, src/uiControls.ts
 
-     実行内容: `src/visualization/spectrogram.ts`内でスペクトログラムのHz軸ラベル描画および垂直グリッド線描画に関連するコード箇所を特定し、その機能と実装についてmarkdown形式で分析してください。特に、現在のHz表示の桁数を制御している部分と、Hzの右側の白い線を生成している可能性のある部分に焦点を当ててください。
+     実行内容:
+     1. `src/main.ts` から `usageToggleButton` と `usagePanel` のDOM取得とイベントリスナー設定ロジックを削除してください。
+     2. `src/uiControls.ts` に新しい関数 `initializeUsageUI(usageToggleButton: HTMLButtonElement, usagePanel: HTMLElement)` を定義し、削除したロジックを移動してください。
+     3. `src/main.ts` から `initializeUsageUI` を呼び出すように変更してください。
 
-     確認事項: このファイルが本当にHz軸ラベルとグリッド線描画の主要なロジックを含んでいるかを確認してください。他の関連ファイルとの依存関係がないか、描画ロジックがどのように連携しているかを把握してください。
+     確認事項:
+     - `usagePanel` の表示/非表示トグル機能が正しく動作することを確認してください。
+     - `uiControls.ts` にUI関連のロジックを集中させることで、単一責任の原則が促進されることを確認してください。
 
-     期待する出力: 以下の項目を含むmarkdown形式の分析結果。
-     - Hz軸ラベルを描画している関数やコードブロックの特定
-     - Hz表示の桁数（フォーマット）を制御している部分の特定
-     - 不要な白い線が生成されている可能性のあるコード箇所の特定
-     - これらの箇所を修正するために必要な変更の概要
+     期待する出力: `src/main.ts` から `usagePanel` 関連のロジックが削減され、`src/uiControls.ts` にそれらのロジックが追加されたTypeScriptコード。リファクタリング前後の差分説明をMarkdown形式で出力してください。
+     ```
+
+3. `src/main.ts` の`favoritesPanel`関連UIロジックを`src/uiControls.ts`に移動する ([Issue #157](../issue-notes/157.md))
+   - 最初の小さな一歩: `src/main.ts` 内の `favoritesToggleButton` と `favoritesPanel` に関するDOM取得とイベントリスナー設定ロジックを抽出し、`src/uiControls.ts` に新しい初期化関数 `initializeFavoritesUI()` を作成して移動する。
+   - Agent実行プロンプト:
+     ```
+     対象ファイル: src/main.ts, src/uiControls.ts
+
+     実行内容:
+     1. `src/main.ts` から `favoritesToggleButton` と `favoritesPanel` のDOM取得とイベントリスナー設定ロジックを削除してください。
+     2. `src/uiControls.ts` に新しい関数 `initializeFavoritesUI(favoritesToggleButton: HTMLButtonElement, favoritesPanel: HTMLElement)` を定義し、削除したロジックを移動してください。
+     3. `src/main.ts` から `initializeFavoritesUI` を呼び出すように変更してください。
+
+     確認事項:
+     - `favoritesPanel` の表示/非表示トグル機能が正しく動作することを確認してください。
+     - `uiControls.ts` にUI関連のロジックを集中させることで、単一責任の原則が促進されることを確認してください。
+
+     期待する出力: `src/main.ts` から `favoritesPanel` 関連のロジックが削減され、`src/uiControls.ts` にそれらのロジックが追加されたTypeScriptコード。リファクタリング前後の差分説明をMarkdown形式で出力してください。
+     ```
 
 ---
-Generated at: 2026-03-08 07:01:29 JST
+Generated at: 2026-03-09 07:01:38 JST
