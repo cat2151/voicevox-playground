@@ -178,7 +178,7 @@ const stubQuery = {
 	postPhonemeLength: 0.1,
 	outputSamplingRate: 24000,
 	outputStereo: false,
-} as const;
+};
 
 describe("exportIntonationFavorites", () => {
 	let anchorClicked: boolean;
