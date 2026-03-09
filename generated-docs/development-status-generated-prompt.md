@@ -1,4 +1,4 @@
-Last updated: 2026-03-09
+Last updated: 2026-03-10
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -233,7 +233,7 @@ Last updated: 2026-03-09
 - issue-notes/123.md
 - issue-notes/138.md
 - issue-notes/140.md
-- issue-notes/155.md
+- issue-notes/159.md
 - issue-notes/22.md
 - issue-notes/23.md
 - issue-notes/24.md
@@ -260,20 +260,26 @@ Last updated: 2026-03-09
 - src/audio.ts
 - src/config.ts
 - src/intonation/display.ts
+- src/intonation/favorites.ts
 - src/intonation/handlers.test.ts
 - src/intonation/handlers.ts
 - src/intonation/playback.test.ts
 - src/intonation/playback.ts
+- src/intonation/setup.ts
 - src/intonation/state.ts
 - src/intonation/utils.ts
 - src/intonation.test.ts
 - src/intonation.ts
 - src/main.ts
+- src/playback/audioCache.ts
+- src/playback/confirmDialog.ts
 - src/playback.test.ts
 - src/playback.truncation.test.ts
 - src/playback.ts
 - src/settings.test.ts
 - src/settings.ts
+- src/settingsPanel.test.ts
+- src/settingsPanel.ts
 - src/state.ts
 - src/status.ts
 - src/styleManager.test.ts
@@ -301,31 +307,6 @@ Last updated: 2026-03-09
 - vite.config.ts
 
 ## 現在のオープンIssues
-## [Issue #157](../issue-notes/157.md): 大きなファイルの検出: 1個のファイルが500行を超えています
-以下のファイルが500行を超えています。リファクタリングを検討してください。
-
-## 検出されたファイル
-
-| ファイル | 行数 | 超過行数 |
-|---------|------|----------|
-| `src/main.ts` | 510 | +10 |
-
-## テスト実施のお願い
-
-- リファクタリング前後にテストを実行し、それぞれのテスト失敗件数を報告してください
-- リファクタリング前後のどちらかでテストがredの場合、まず別issueでtest greenにしてからリファクタリングしてください
-
-## 推奨事項
-
-1. 単一責任の原則に従い、ファイルを分割する
-2. 共通...
-ラベル: refactoring, code-quality, automated
---- issue-notes/157.md の内容 ---
-
-```markdown
-
-```
-
 ## [Issue #115](../issue-notes/115.md): （保留中）スペクトログラムについて、リニア表示たと、上半分が真っ暗で、メインの部分が狭くなってしまっている
 [issue-notes/115.md](https://github.com/cat2151/voicevox-playground/blob/main/issue-notes/115.md)
 
@@ -654,18 +635,6 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### .github/actions-tmp/issue-notes/7.md
-```md
-{% raw %}
-# issue issue note生成できるかのtest用 #7
-[issues #7](https://github.com/cat2151/github-actions/issues/7)
-
-- 生成できた
-- closeとする
-
-{% endraw %}
-```
-
 ### issue-notes/111.md
 ```md
 {% raw %}
@@ -728,556 +697,45 @@ env: で値を渡し、process.env で参照するのが正しい
 {% endraw %}
 ```
 
-### src/main.ts
-```ts
-{% raw %}
-import "./styles.css";
-import {
-	AUTO_PLAY_DEBOUNCE_MS,
-	DELIMITER_STORAGE_KEY,
-	FrequencyScale,
-} from "./config";
-import {
-	getCurrentSettings,
-	loadSettings,
-	resetSettings,
-	setFrequencyTopPercent,
-	setVoicevoxNemoPort,
-	setVoicevoxPort,
-} from "./settings";
-import { initializeTextLists } from "./textLists";
-import {
-	adjustIntonationScale,
-	exportIntonationFavorites,
-	getIntonationKeyboardEnabled,
-	importIntonationFavorites,
-	initializeIntonationCanvas,
-	initializeIntonationElements,
-	refreshIntonationChart,
-	resetIntonationToInitial,
-	saveCurrentIntonationFavorite,
-	setHandlePlayHandler,
-	setIntonationKeyboardEnabled,
-	setStyleChangeHandler,
-	setupIntonationCanvasEvents,
-} from "./intonation";
-import { appState } from "./state";
-import { updateExportButtonState } from "./uiControls";
-import {
-	clearAudioCache,
-	downloadLastAudio,
-	handlePlay,
-	handlePlayButtonClick,
-	isPlayRequestPending,
-	scheduleAutoPlay,
-	setLoopCheckboxElement,
-	setPlayButtonAppearance,
-	setTextAndPlay,
-} from "./playback";
-import {
-	fetchVoiceStyles,
-	getSelectedStyleId,
-	populateStyleSelect,
-	populateSpeakerStyleSelect,
-	selectRandomStyleId,
-	setSelectedStyleId,
-} from "./styleManager";
-import {
-	getSpectrogramScale,
-	initializeVisualizationCanvases,
-	isPlaybackActive,
-	setSpectrogramScale,
-} from "./visualization";
-import { showStatus, scheduleHideStatus } from "./status";
-
-let delimiterSaveTimer: number | null = null;
-
-document.addEventListener("DOMContentLoaded", () => {
-	loadSettings();
-	const playButton = document.getElementById(
-		"playButton",
-	) as HTMLButtonElement | null;
-	const textArea = document.getElementById(
-		"text",
-	) as HTMLTextAreaElement | null;
-	const exportButton = document.getElementById(
-		"exportButton",
-	) as HTMLButtonElement | null;
-	const usageToggleButton = document.getElementById(
-		"usageToggleButton",
-	) as HTMLButtonElement | null;
-	const usagePanel = document.getElementById("usagePanel");
-	const spectrogramScaleToggle = document.getElementById(
-		"spectrogramScaleToggle",
-	) as HTMLButtonElement | null;
-	const styleSelect = document.getElementById(
-		"styleSelect",
-	) as HTMLSelectElement | null;
-	const speakerStyleSelect = document.getElementById(
-		"speakerStyleSelect",
-	) as HTMLSelectElement | null;
-	const delimiterInput = document.getElementById(
-		"delimiterInput",
-	) as HTMLInputElement | null;
-	const randomStyleCheckbox = document.getElementById(
-		"randomStyleCheckbox",
-	) as HTMLInputElement | null;
-	const favoritesToggleButton = document.getElementById(
-		"favoritesToggleButton",
-	) as HTMLButtonElement | null;
-	const favoritesPanel = document.getElementById("favoritesPanel");
-	const favoritesListEl = document.getElementById(
-		"favoritesList",
-	) as HTMLUListElement | null;
-	const historyListEl = document.getElementById(
-		"historyList",
-	) as HTMLUListElement | null;
-	const intonationFavoritesListEl = document.getElementById(
-		"intonationFavoritesList",
-	) as HTMLUListElement | null;
-	const intonationFavoritesExportButton = document.getElementById(
-		"intonationFavoritesExportButton",
-	) as HTMLButtonElement | null;
-	const intonationFavoritesImportButton = document.getElementById(
-		"intonationFavoritesImportButton",
-	) as HTMLButtonElement | null;
-	const intonationFavoritesImportFile = document.getElementById(
-		"intonationFavoritesImportFile",
-	) as HTMLInputElement | null;
-	const intonationCanvas = document.getElementById(
-		"intonationCanvas",
-	) as HTMLCanvasElement | null;
-	const intonationTimingEl = null;
-	const intonationLabelsEl = document.getElementById("intonationLabels");
-	const intonationMaxValueEl = document.getElementById("intonationMaxValue");
-	const intonationMinValueEl = document.getElementById("intonationMinValue");
-	const intonationExpandTop = document.getElementById(
-		"intonationExpandTop",
-	) as HTMLButtonElement | null;
-	const intonationShrinkTop = document.getElementById(
-		"intonationShrinkTop",
-	) as HTMLButtonElement | null;
-	const intonationShrinkBottom = document.getElementById(
-		"intonationShrinkBottom",
-	) as HTMLButtonElement | null;
-	const intonationExpandBottom = document.getElementById(
-		"intonationExpandBottom",
-	) as HTMLButtonElement | null;
-	const intonationKeyboardToggle = document.getElementById(
-		"intonationKeyboardToggle",
-	) as HTMLButtonElement | null;
-	const intonationResetButton = document.getElementById(
-		"intonationResetButton",
-	) as HTMLButtonElement | null;
-	const intonationFavoriteButton = document.getElementById(
-		"intonationFavoriteButton",
-	) as HTMLButtonElement | null;
-	const loopCheckboxEl = document.getElementById(
-		"loopCheckbox",
-	) as HTMLInputElement | null;
-	setLoopCheckboxElement(loopCheckboxEl);
-
-	const settingsToggleButton = document.getElementById(
-		"settingsToggleButton",
-	) as HTMLButtonElement | null;
-	const settingsPanel = document.getElementById("settingsPanel");
-	const voicevoxPortInput = document.getElementById(
-		"voicevoxPortInput",
-	) as HTMLInputElement | null;
-	const voicevoxNemoPortInput = document.getElementById(
-		"voicevoxNemoPortInput",
-	) as HTMLInputElement | null;
-	const frequencyTopPercentInput = document.getElementById(
-		"frequencyTopPercentInput",
-	) as HTMLInputElement | null;
-	const settingsResetButton = document.getElementById(
-		"settingsResetButton",
-	) as HTMLButtonElement | null;
-
-	const applySettingsToInputs = () => {
-		const s = getCurrentSettings();
-		if (voicevoxPortInput) voicevoxPortInput.value = String(s.voicevoxPort);
-		if (voicevoxNemoPortInput)
-			voicevoxNemoPortInput.value = String(s.voicevoxNemoPort);
-		if (frequencyTopPercentInput)
-			frequencyTopPercentInput.value = String(s.frequencyTopPercent);
-	};
-	applySettingsToInputs();
-
-	const refreshStylesAfterPortChange = () => {
-		clearAudioCache();
-		void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null);
-	};
-
-	if (settingsToggleButton && settingsPanel) {
-		settingsToggleButton.addEventListener("click", () => {
-			const isHidden = settingsPanel.hidden;
-			settingsPanel.hidden = !isHidden;
-			settingsToggleButton.setAttribute("aria-expanded", String(isHidden));
-		});
-	}
-
-	if (voicevoxPortInput) {
-		voicevoxPortInput.addEventListener("change", () => {
-			const port = Number(voicevoxPortInput.value);
-			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
-				setVoicevoxPort(port);
-				refreshStylesAfterPortChange();
-			} else {
-				applySettingsToInputs();
-			}
-		});
-	}
-
-	if (voicevoxNemoPortInput) {
-		voicevoxNemoPortInput.addEventListener("change", () => {
-			const port = Number(voicevoxNemoPortInput.value);
-			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
-				setVoicevoxNemoPort(port);
-				refreshStylesAfterPortChange();
-			} else {
-				applySettingsToInputs();
-			}
-		});
-	}
-
-	if (frequencyTopPercentInput) {
-		frequencyTopPercentInput.addEventListener("change", () => {
-			const pct = Number(frequencyTopPercentInput.value);
-			if (Number.isFinite(pct) && pct >= 0.1 && pct <= 100) {
-				setFrequencyTopPercent(pct);
-			} else {
-				applySettingsToInputs();
-			}
-		});
-	}
-
-	if (settingsResetButton) {
-		settingsResetButton.addEventListener("click", () => {
-			resetSettings();
-			applySettingsToInputs();
-			refreshStylesAfterPortChange();
-		});
-	}
-
-	const applyStyleSelection = (styleId: number) => {
-		setSelectedStyleId(styleId);
-		if (styleSelect) {
-			styleSelect.value = String(styleId);
-		}
-		populateSpeakerStyleSelect(speakerStyleSelect, styleId);
-	};
-	const applyRandomStyleSelection = () => {
-		const randomStyleId = selectRandomStyleId();
-		applyStyleSelection(randomStyleId);
-		return randomStyleId;
-	};
-
-	if (loopCheckboxEl) {
-		loopCheckboxEl.addEventListener("change", () => {
-			if (
-				loopCheckboxEl.checked &&
-				!appState.isProcessing &&
-				!isPlaybackActive() &&
-				!isPlayRequestPending()
-			) {
-				void handlePlay();
-			}
-		});
-	}
-
-	setStyleChangeHandler((styleId) => {
-		applyStyleSelection(styleId);
-	});
-
-	setHandlePlayHandler(() => void handlePlay());
-
-	if (playButton) {
-		playButton.addEventListener("click", handlePlayButtonClick);
-		setPlayButtonAppearance("play");
-		playButton.focus();
-	}
-
-	if (textArea) {
-		textArea.addEventListener("input", scheduleAutoPlay);
-	}
-
-	if (exportButton) {
-		exportButton.addEventListener("click", downloadLastAudio);
-		updateExportButtonState(exportButton);
-	}
-
-	if (styleSelect) {
-		populateStyleSelect(styleSelect);
-		styleSelect.addEventListener("change", () => {
-			const parsed = Number(styleSelect.value);
-			if (!Number.isNaN(parsed)) {
-				applyStyleSelection(parsed);
-				scheduleAutoPlay();
-			}
-		});
-		applyStyleSelection(getSelectedStyleId());
-	}
-
-	if (randomStyleCheckbox) {
-		randomStyleCheckbox.addEventListener("change", () => {
-			if (randomStyleCheckbox.checked) {
-				applyRandomStyleSelection();
-			}
-			scheduleAutoPlay();
-		});
-	}
-
-	if (speakerStyleSelect) {
-		speakerStyleSelect.addEventListener("change", () => {
-			const parsed = Number(speakerStyleSelect.value);
-			if (!Number.isNaN(parsed)) {
-				applyStyleSelection(parsed);
-				scheduleAutoPlay();
-			}
-		});
-	}
-	void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null).then(
-		(success) => {
-			if (success) {
-				showStatus(
-					"ローカルサーバーとの通信成功。音声合成の準備ができました",
-					"success",
-				);
-				scheduleHideStatus(5000);
-			} else {
-				alert("ローカルVOICEVOXサーバーを起動してください");
-			}
-			if (randomStyleCheckbox?.checked) {
-				applyRandomStyleSelection();
-			}
-		},
-	);
-
-	if (delimiterInput) {
-		try {
-			const savedDelimiter = localStorage.getItem(DELIMITER_STORAGE_KEY);
-			if (savedDelimiter !== null) {
-				delimiterInput.value = savedDelimiter;
-			}
-		} catch (error) {
-			console.warn("Failed to restore delimiter config:", error);
-		}
-
-		const saveDelimiter = () => {
-			try {
-				localStorage.setItem(DELIMITER_STORAGE_KEY, delimiterInput.value);
-			} catch (error) {
-				console.warn("Failed to save delimiter config:", error);
-			}
-		};
-		const scheduleSaveDelimiter = () => {
-			if (delimiterSaveTimer !== null) {
-				window.clearTimeout(delimiterSaveTimer);
-			}
-			delimiterSaveTimer = window.setTimeout(
-				saveDelimiter,
-				AUTO_PLAY_DEBOUNCE_MS,
-			);
-		};
-		delimiterInput.addEventListener("input", scheduleSaveDelimiter);
-	}
-
-	if (usageToggleButton && usagePanel) {
-		usageToggleButton.addEventListener("click", () => {
-			const isHidden = usagePanel.hidden;
-			usagePanel.hidden = !isHidden;
-			usageToggleButton.setAttribute("aria-expanded", String(isHidden));
-		});
-	}
-
-	if (favoritesToggleButton && favoritesPanel) {
-		favoritesPanel.hidden = true;
-		favoritesToggleButton.setAttribute("aria-expanded", "false");
-		favoritesToggleButton.addEventListener("click", () => {
-			const isHidden = favoritesPanel.hidden;
-			favoritesPanel.hidden = !isHidden;
-			favoritesToggleButton.setAttribute("aria-expanded", String(isHidden));
-		});
-	}
-
-	initializeTextLists({
-		favoritesList: favoritesListEl,
-		historyList: historyListEl,
-		onSelectText: setTextAndPlay,
-	});
-
-	initializeIntonationElements({
-		canvas: intonationCanvas,
-		timingEl: intonationTimingEl,
-		labelsEl: intonationLabelsEl,
-		maxValueEl: intonationMaxValueEl,
-		minValueEl: intonationMinValueEl,
-		favoritesListEl: intonationFavoritesListEl,
-		loopCheckbox: loopCheckboxEl,
-	});
-
-	if (intonationFavoritesExportButton) {
-		intonationFavoritesExportButton.addEventListener("click", () => {
-			exportIntonationFavorites();
-		});
-	}
-
-	if (intonationFavoritesImportButton && intonationFavoritesImportFile) {
-		intonationFavoritesImportButton.addEventListener("click", () => {
-			intonationFavoritesImportFile.value = "";
-			intonationFavoritesImportFile.click();
-		});
-		intonationFavoritesImportFile.addEventListener("change", () => {
-			const file = intonationFavoritesImportFile.files?.[0];
-			if (file) {
-				importIntonationFavorites(file, () => {
-					intonationFavoritesImportFile.value = "";
-				});
-			}
-		});
-	}
-
-	const updateSpectrogramScaleLabel = () => {
-		if (spectrogramScaleToggle) {
-			const scale = getSpectrogramScale();
-			const isLogScale = scale === "log";
-			const nextLabel = isLogScale ? "リニアにする" : "対数にする";
-			spectrogramScaleToggle.textContent = nextLabel;
-			spectrogramScaleToggle.setAttribute("aria-pressed", String(isLogScale));
-			spectrogramScaleToggle.setAttribute(
-				"aria-label",
-				`スペクトログラムのスケールを${nextLabel}`,
-			);
-		}
-	};
-
-	if (spectrogramScaleToggle) {
-		updateSpectrogramScaleLabel();
-		spectrogramScaleToggle.addEventListener("click", () => {
-			const nextScale: FrequencyScale =
-				getSpectrogramScale() === "linear" ? "log" : "linear";
-			setSpectrogramScale(nextScale);
-			updateSpectrogramScaleLabel();
-		});
-	}
-
-	const updateIntonationKeyboardToggle = () => {
-		if (intonationKeyboardToggle) {
-			const enabled = getIntonationKeyboardEnabled();
-			intonationKeyboardToggle.textContent = enabled
-				? "キーボード操作: ON"
-				: "キーボード操作: OFF";
-			intonationKeyboardToggle.setAttribute("aria-pressed", String(enabled));
-			intonationKeyboardToggle.setAttribute(
-				"aria-label",
-				enabled ? "キーボード操作を無効にする" : "キーボード操作を有効にする",
-			);
-		}
-	};
-
-	if (intonationKeyboardToggle) {
-		updateIntonationKeyboardToggle();
-		intonationKeyboardToggle.addEventListener("click", () => {
-			setIntonationKeyboardEnabled(!getIntonationKeyboardEnabled());
-			updateIntonationKeyboardToggle();
-			if (getIntonationKeyboardEnabled() && intonationCanvas) {
-				intonationCanvas.focus();
-			}
-			refreshIntonationChart();
-		});
-	}
-
-	if (intonationResetButton) {
-		intonationResetButton.addEventListener("click", () => {
-			resetIntonationToInitial();
-			if (getIntonationKeyboardEnabled() && intonationCanvas) {
-				intonationCanvas.focus();
-			}
-		});
-	}
-
-	if (intonationFavoriteButton) {
-		intonationFavoriteButton.addEventListener("click", () =>
-			saveCurrentIntonationFavorite(getSelectedStyleId()),
-		);
-	}
-
-	if (intonationExpandTop) {
-		intonationExpandTop.addEventListener("click", () =>
-			adjustIntonationScale("top", 2),
-		);
-	}
-	if (intonationShrinkTop) {
-		intonationShrinkTop.addEventListener("click", () =>
-			adjustIntonationScale("top", 0.5),
-		);
-	}
-	if (intonationShrinkBottom) {
-		intonationShrinkBottom.addEventListener("click", () =>
-			adjustIntonationScale("bottom", 0.5),
-		);
-	}
-	if (intonationExpandBottom) {
-		intonationExpandBottom.addEventListener("click", () =>
-			adjustIntonationScale("bottom", 2),
-		);
-	}
-
-	setupIntonationCanvasEvents(intonationCanvas);
-
-	window.addEventListener("keydown", (event: KeyboardEvent) => {
-		if (event.key === "Enter" && (event.shiftKey || event.ctrlKey)) {
-			event.preventDefault();
-			handlePlayButtonClick();
-		}
-	});
-
-	initializeVisualizationCanvases();
-	initializeIntonationCanvas();
-	window.addEventListener("resize", () => {
-		initializeVisualizationCanvases();
-		initializeIntonationCanvas();
-		refreshIntonationChart();
-	});
-});
-
-{% endraw %}
-```
-
 ## 最近の変更（過去7日間）
 ### コミット履歴:
-15916ad Merge pull request #156 from cat2151/copilot/fix-loop-playback-issue
-5383739 fix: address PR review comments on fallback branch and test robustness
-2282ec1 fix: stop loop playback when applying intonation favorite (issue #155)
-55f7da7 Initial plan
-42fa749 Add issue note for #155 [auto]
-a31a383 Merge pull request #154 from cat2151/copilot/fix-deploy-to-github-pages
-11d061b Fix CI: remove `as const` from stubQuery in intonation.test.ts
-1b95de0 Initial plan
-b60b817 Merge pull request #151 from cat2151/copilot/enable-export-import-favorites
-4e1608e fix: apply PR review feedback for intonation export/import
+dbdc16f Merge pull request #162 from cat2151/copilot/fix-deploy-to-github-pages
+d64c06c fix: resolve TS6133 unused declaration errors causing CI build failure
+a6950f3 Initial plan
+e1c54dd Merge pull request #161 from cat2151/copilot/refactor-main-ts-orchestrator
+b3427ef refactor: split 500+ line files following single responsibility principle
+1df9980 refactor: make main.ts a thin orchestrator (448→49 lines)
+a6bbc2c Add issue note for #159 [auto]
+fab2b01 Initial plan
+ee2683e Merge pull request #158 from cat2151/copilot/refactor-large-file-in-main-ts
+46e3903 test: add unit tests for initializeSettingsPanel
 
 ### 変更されたファイル:
 generated-docs/development-status-generated-prompt.md
 generated-docs/development-status.md
 generated-docs/project-overview-generated-prompt.md
 generated-docs/project-overview.md
-index.html
 issue-notes/141.md
 issue-notes/142.md
-issue-notes/155.md
+issue-notes/159.md
 issue-notes/97.md
 src/intonation.test.ts
 src/intonation.ts
+src/intonation/display.ts
+src/intonation/favorites.ts
+src/intonation/setup.ts
 src/intonation/state.ts
 src/main.ts
-src/playback.test.ts
-src/playback.truncation.test.ts
-src/styles/base.css
-src/visualization/spectrogram.ts
-src/visualization/timeAxis.ts
+src/playback.ts
+src/playback/audioCache.ts
+src/playback/confirmDialog.ts
+src/settingsPanel.test.ts
+src/settingsPanel.ts
+src/styleManager.ts
+src/textLists.ts
+src/uiControls.ts
+src/visualization.ts
 
 
 ---
-Generated at: 2026-03-09 07:01:17 JST
+Generated at: 2026-03-10 07:03:46 JST

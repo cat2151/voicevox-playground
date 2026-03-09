@@ -1,4 +1,4 @@
-Last updated: 2026-03-09
+Last updated: 2026-03-10
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -188,7 +188,7 @@ npm run preview
   📖 123.md
   📖 138.md
   📖 140.md
-  📖 155.md
+  📖 159.md
   📖 22.md
   📖 23.md
   📖 24.md
@@ -217,20 +217,27 @@ npm run preview
   📘 config.ts
   📁 intonation/
     📘 display.ts
+    📘 favorites.ts
     📘 handlers.test.ts
     📘 handlers.ts
     📘 playback.test.ts
     📘 playback.ts
+    📘 setup.ts
     📘 state.ts
     📘 utils.ts
   📘 intonation.test.ts
   📘 intonation.ts
   📘 main.ts
+  📁 playback/
+    📘 audioCache.ts
+    📘 confirmDialog.ts
   📘 playback.test.ts
   📘 playback.truncation.test.ts
   📘 playback.ts
   📘 settings.test.ts
   📘 settings.ts
+  📘 settingsPanel.test.ts
+  📘 settingsPanel.ts
   📘 state.ts
   📘 status.ts
   📘 styleManager.test.ts
@@ -272,9 +279,13 @@ npm run preview
   - 関数: なし
   - インポート: なし
 
-**src/intonation/display.ts** (430行, 12490バイト)
-  - 関数: getPitchRange, calculateBasePadding, getBaseDisplayRange, calculateDisplayRange, clampRangeExtra, applyRangeExtra, refreshDisplayRange, clampPitchToDisplayRange, calculateStepSize, calculateLetterKeyAdjustment, handleIntonationWheel, ensureWheelHandler, updateInitialRangeFromPoints, initializeIntonationCanvas, buildIntonationPointsFromQuery, renderIntonationLabels, updateHoveredLabel, drawIntonationChart, adjustIntonationScale, pitchFromY, findNearestIntonationPoint, if, for
+**src/intonation/display.ts** (435行, 12612バイト)
+  - 関数: getPitchRange, calculateBasePadding, getBaseDisplayRange, calculateDisplayRange, clampRangeExtra, applyRangeExtra, refreshDisplayRange, clampPitchToDisplayRange, calculateStepSize, calculateLetterKeyAdjustment, handleIntonationWheel, ensureWheelHandler, updateInitialRangeFromPoints, initializeIntonationCanvas, buildIntonationPointsFromQuery, renderIntonationLabels, updateHoveredLabel, drawIntonationChart, adjustIntonationScale, pitchFromY, findNearestIntonationPoint, refreshIntonationChart, if, for
   - インポート: ../config, ../status, ./state
+
+**src/intonation/favorites.ts** (268行, 8013バイト)
+  - 関数: dedupeIntonationFavorites, parseIntonationFavoritesArray, loadIntonationFavorites, persistIntonationFavorites, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, exportIntonationFavorites, importIntonationFavorites, saveCurrentIntonationFavorite, for, catch, if
+  - インポート: ../status, ./state, ./utils
 
 **src/intonation/handlers.test.ts** (193行, 6201バイト)
   - 関数: makeKeyEvent, enableKeyboard
@@ -292,8 +303,12 @@ npm run preview
   - 関数: scheduleIntonationPlayback, replayCachedIntonationAudio, showPlaybackStatus, buildSynthesisCacheKey, playUpdatedIntonation, fetchAndRenderIntonation, resetIntonationToInitial, if, catch
   - インポート: tone, ../config, ../audio
 
-**src/intonation/state.ts** (92行, 2921バイト)
-  - 関数: updateIntonationTiming, if
+**src/intonation/setup.ts** (185行, 6083バイト)
+  - 関数: initializeIntonationElements, setupIntonationCanvasEvents, initializeIntonationControls, updateIntonationKeyboardToggle, if
+  - インポート: ./state, ./playback, ../styleManager
+
+**src/intonation/state.ts** (131行, 4217バイト)
+  - 関数: updateIntonationTiming, getIntonationKeyboardEnabled, setIntonationKeyboardEnabled, resetIntonationState, if
   - インポート: なし
 
 **src/intonation/utils.ts** (14行, 388バイト)
@@ -304,13 +319,21 @@ npm run preview
   - 関数: if
   - インポート: vitest, ./intonation/state, ./intonation/playback
 
-**src/intonation.ts** (422行, 12510バイト)
-  - 関数: dedupeIntonationFavorites, parseIntonationFavoritesArray, loadIntonationFavorites, persistIntonationFavorites, resetIntonationState, setStyleChangeHandler, setHandlePlayHandler, initializeIntonationElements, isIntonationDirty, isIntonationActive, hasActiveIntonationQuery, setIntonationKeyboardEnabled, getIntonationKeyboardEnabled, renderIntonationFavoritesList, removeIntonationFavorite, applyIntonationFavorite, exportIntonationFavorites, importIntonationFavorites, saveCurrentIntonationFavorite, refreshIntonationChart, setupIntonationCanvasEvents, for, catch, if
-  - インポート: ./status, ./intonation/state, ./intonation/utils
+**src/intonation.ts** (80行, 1922バイト)
+  - 関数: setStyleChangeHandler, setHandlePlayHandler, isIntonationDirty, isIntonationActive, hasActiveIntonationQuery
+  - インポート: ./intonation/state
 
-**src/main.ts** (511行, 14723バイト)
-  - 関数: applySettingsToInputs, refreshStylesAfterPortChange, applyStyleSelection, applyRandomStyleSelection, saveDelimiter, scheduleSaveDelimiter, updateSpectrogramScaleLabel, updateIntonationKeyboardToggle, if, catch
-  - インポート: ./textLists, ./state, ./uiControls
+**src/main.ts** (49行, 1518バイト)
+  - 関数: なし
+  - インポート: ./settings, ./settingsPanel, ./textLists
+
+**src/playback/audioCache.ts** (26行, 646バイト)
+  - 関数: clearAudioCache, getAudioCacheKey, getCachedAudio, setCachedAudio, if
+  - インポート: ../config
+
+**src/playback/confirmDialog.ts** (51行, 1643バイト)
+  - 関数: confirmResetIntonationBeforePlay, cleanup, handleReset, handleCancel, if
+  - インポート: なし
 
 **src/playback.test.ts** (409行, 12589バイト)
   - 関数: なし
@@ -320,9 +343,9 @@ npm run preview
   - 関数: makeDOM
   - インポート: vitest, ./playback, ./config
 
-**src/playback.ts** (500行, 13306バイト)
-  - 関数: clearAudioCache, setLoopCheckboxElement, setPlayButtonAppearance, isPlayRequestPending, stopPlaybackAndResetLoop, getAudioCacheKey, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, confirmResetIntonationBeforePlay, handlePlayButtonClick, handlePlay, clearRealtimeWaveformCanvas, triggerPlay, cleanup, handleReset, handleCancel, if, for, catch
-  - インポート: tone, ./textLists, ./state
+**src/playback.ts** (489行, 12758バイト)
+  - 関数: setLoopCheckboxElement, setPlayButtonAppearance, isPlayRequestPending, stopPlaybackAndResetLoop, setTextAndPlay, downloadLastAudio, scheduleAutoPlay, handlePlayButtonClick, handlePlay, clearRealtimeWaveformCanvas, initializePlaybackControls, triggerPlay, if, for, catch
+  - インポート: tone, ./config, ./textLists
 
 **src/settings.test.ts** (227行, 5948バイト)
   - 関数: なし
@@ -331,6 +354,14 @@ npm run preview
 **src/settings.ts** (96行, 2721バイト)
   - 関数: loadSettings, saveSettings, resetSettings, getVoicevoxApiBase, getVoicevoxNemoApiBase, getFrequencyTopPercent, getCurrentSettings, setVoicevoxPort, setVoicevoxNemoPort, setFrequencyTopPercent, if, catch
   - インポート: なし
+
+**src/settingsPanel.test.ts** (315行, 8232バイト)
+  - 関数: makeInput, makeButton, makePanel, fireChange
+  - インポート: vitest, ./settingsPanel, ./playback
+
+**src/settingsPanel.ts** (127行, 3700バイト)
+  - 関数: initializeSettingsPanelFromDOM, initializeSettingsPanel, applySettingsToInputs, refreshStylesAfterPortChange, if
+  - インポート: ./playback, ./styleManager
 
 **src/state.ts** (6行, 153バイト)
   - 関数: なし
@@ -344,9 +375,9 @@ npm run preview
   - 関数: なし
   - インポート: vitest, jsdom
 
-**src/styleManager.ts** (309行, 8123バイト)
-  - 関数: getSelectedStyleId, setSelectedStyleId, selectRandomStyleId, getStyleLabel, getStyleById, getApiBaseForStyleId, getSpeakerStylesByStyleId, resolveStyleMarker, parseDelimiterConfig, addSegment, buildTextSegments, populateStyleSelect, populateSpeakerStyleSelect, fetchVoiceStyles, if, while, for
-  - インポート: ./settings
+**src/styleManager.ts** (386行, 10158バイト)
+  - 関数: getSelectedStyleId, setSelectedStyleId, selectRandomStyleId, getStyleLabel, getStyleById, getApiBaseForStyleId, getSpeakerStylesByStyleId, resolveStyleMarker, parseDelimiterConfig, addSegment, buildTextSegments, populateStyleSelect, populateSpeakerStyleSelect, fetchVoiceStyles, applyStyleSelection, initializeStyleControls, if, while, for
+  - インポート: ./settings, ./status
 
 **src/styles/base.css** (492行, 9359バイト)
   - 関数: なし
@@ -364,13 +395,13 @@ npm run preview
   - 関数: なし
   - インポート: vitest, ./textLists
 
-**src/textLists.ts** (146行, 4127バイト)
+**src/textLists.ts** (152行, 4361バイト)
   - 関数: loadStoredList, persistList, persistLists, dedupeAndLimit, renderList, renderTextLists, moveToFavorites, moveToHistory, addToHistory, initializeTextLists, catch, for, if
   - インポート: なし
 
-**src/uiControls.ts** (11行, 237バイト)
-  - 関数: updateExportButtonState, if
-  - インポート: ./state
+**src/uiControls.ts** (77行, 2227バイト)
+  - 関数: updateExportButtonState, initializePanelToggles, initializeDelimiterInput, saveDelimiter, if, catch
+  - インポート: ./config, ./state
 
 **src/visualization/canvas.ts** (22行, 687バイト)
   - 関数: prepareCanvas, if
@@ -416,8 +447,8 @@ npm run preview
   - 関数: constructor
   - インポート: vitest
 
-**src/visualization.ts** (366行, 9797バイト)
-  - 関数: isPlaybackActive, stopActivePlayback, initializeVisualizationCanvases, clearWaveformCanvas, playAudio, setProgressPosition, updateProgressLines, clearProgressLines, drawRealtimeVisuals, handleSpectrogramDraw, cleanupPlayback, requestSpectrogramDraw, render, finalize, stopPlayback, if
+**src/visualization.ts** (395行, 10666バイト)
+  - 関数: isPlaybackActive, stopActivePlayback, initializeVisualizationCanvases, clearWaveformCanvas, playAudio, setProgressPosition, updateProgressLines, clearProgressLines, drawRealtimeVisuals, handleSpectrogramDraw, cleanupPlayback, requestSpectrogramDraw, render, finalize, stopPlayback, initializeSpectrogramScaleToggle, updateLabel, if
   - インポート: tone, ./config, ./status
 
 **src/vite-env.d.ts** (2行, 38バイト)
@@ -457,7 +488,24 @@ npm run preview
       - adjustIntonationScale ()
       - pitchFromY ()
       - findNearestIntonationPoint ()
+      - refreshIntonationChart ()
       - getColorVariable ()
+  - dedupeIntonationFavorites (src/intonation/favorites.ts)
+    - parseIntonationFavoritesArray ()
+      - loadIntonationFavorites ()
+      - persistIntonationFavorites ()
+      - renderIntonationFavoritesList ()
+      - removeIntonationFavorite ()
+      - applyIntonationFavorite ()
+      - exportIntonationFavorites ()
+      - importIntonationFavorites ()
+      - saveCurrentIntonationFavorite ()
+      - playUpdatedIntonation ()
+      - isValidAudioQueryShape ()
+      - cloneAudioQuery ()
+      - showStatus ()
+      - scheduleHideStatus ()
+      - stopActivePlayback ()
   - disableLoopOnIntonationEdit (src/intonation/handlers.ts)
     - applyPitchToQuery ()
       - applyPitchEdit ()
@@ -471,85 +519,67 @@ npm run preview
       - replayCachedIntonationAudio ()
       - showPlaybackStatus ()
   - buildSynthesisCacheKey ()
-    - playUpdatedIntonation ()
-      - fetchAndRenderIntonation ()
+    - fetchAndRenderIntonation ()
       - resetIntonationToInitial ()
       - updateIntonationTiming ()
-      - cloneAudioQuery ()
-      - showStatus ()
-      - scheduleHideStatus ()
       - getApiBaseForStyleId ()
       - updateExportButtonState ()
       - drawRenderedWaveform ()
       - initializeVisualizationCanvases ()
       - playAudio ()
+  - initializeIntonationElements (src/intonation/setup.ts)
+    - setupIntonationCanvasEvents ()
+      - initializeIntonationControls ()
+      - updateIntonationKeyboardToggle ()
+      - getIntonationKeyboardEnabled ()
+      - setIntonationKeyboardEnabled ()
+      - getSelectedStyleId ()
+  - resetIntonationState ()
   - setHandlePlayHandler ()
-    - isValidAudioQueryShape (src/intonation/utils.ts)
-    - dedupeIntonationFavorites (src/intonation.ts)
-      - parseIntonationFavoritesArray ()
-      - loadIntonationFavorites ()
-      - persistIntonationFavorites ()
-      - resetIntonationState ()
-      - setStyleChangeHandler ()
-      - initializeIntonationElements ()
+    - setStyleChangeHandler (src/intonation.ts)
       - isIntonationDirty ()
       - isIntonationActive ()
       - hasActiveIntonationQuery ()
-      - setIntonationKeyboardEnabled ()
-      - getIntonationKeyboardEnabled ()
-      - renderIntonationFavoritesList ()
-      - removeIntonationFavorite ()
-      - applyIntonationFavorite ()
-      - exportIntonationFavorites ()
-      - importIntonationFavorites ()
-      - saveCurrentIntonationFavorite ()
-      - refreshIntonationChart ()
-      - setupIntonationCanvasEvents ()
-      - stopActivePlayback ()
-  - applySettingsToInputs (src/main.ts)
-    - refreshStylesAfterPortChange ()
-      - applyStyleSelection ()
-      - applyRandomStyleSelection ()
-      - updateSpectrogramScaleLabel ()
-      - updateIntonationKeyboardToggle ()
-      - clearAudioCache ()
-      - setLoopCheckboxElement ()
-      - setPlayButtonAppearance ()
+  - clearAudioCache (src/playback/audioCache.ts)
+    - getAudioCacheKey ()
+      - getCachedAudio ()
+      - setCachedAudio ()
+  - confirmResetIntonationBeforePlay (src/playback/confirmDialog.ts)
+    - cleanup ()
+      - handleCancel ()
+  - setLoopCheckboxElement (src/playback.ts)
+    - setPlayButtonAppearance ()
       - isPlayRequestPending ()
+      - stopPlaybackAndResetLoop ()
+      - setTextAndPlay ()
+      - downloadLastAudio ()
       - scheduleAutoPlay ()
       - handlePlayButtonClick ()
       - handlePlay ()
-      - loadSettings ()
+      - clearRealtimeWaveformCanvas ()
+      - initializePlaybackControls ()
+      - setSelectedStyleId ()
+      - selectRandomStyleId ()
+      - parseDelimiterConfig ()
+      - buildTextSegments ()
+      - populateSpeakerStyleSelect ()
+      - addToHistory ()
+      - isPlaybackActive ()
+  - loadSettings (src/settings.ts)
+    - saveSettings ()
       - resetSettings ()
+      - getVoicevoxApiBase ()
+      - getVoicevoxNemoApiBase ()
+      - getFrequencyTopPercent ()
       - getCurrentSettings ()
       - setVoicevoxPort ()
       - setVoicevoxNemoPort ()
       - setFrequencyTopPercent ()
-      - getSelectedStyleId ()
-      - setSelectedStyleId ()
-      - selectRandomStyleId ()
-      - populateStyleSelect ()
-      - populateSpeakerStyleSelect ()
+  - initializeSettingsPanelFromDOM (src/settingsPanel.ts)
+    - initializeSettingsPanel ()
+      - applySettingsToInputs ()
+      - refreshStylesAfterPortChange ()
       - fetchVoiceStyles ()
-      - initializeTextLists ()
-      - getSpectrogramScale ()
-      - setSpectrogramScale ()
-      - isPlaybackActive ()
-  - stopPlaybackAndResetLoop ()
-    - getAudioCacheKey ()
-      - setTextAndPlay ()
-      - downloadLastAudio ()
-      - confirmResetIntonationBeforePlay ()
-      - clearRealtimeWaveformCanvas ()
-      - cleanup ()
-      - handleCancel ()
-      - parseDelimiterConfig ()
-      - buildTextSegments ()
-      - addToHistory ()
-  - saveSettings ()
-    - getVoicevoxApiBase ()
-      - getVoicevoxNemoApiBase ()
-      - getFrequencyTopPercent ()
   - hideStatus ()
     - invalidateColorVariableCache ()
   - getStyleLabel ()
@@ -557,6 +587,9 @@ npm run preview
       - getSpeakerStylesByStyleId ()
       - resolveStyleMarker ()
       - addSegment ()
+      - populateStyleSelect ()
+      - applyStyleSelection ()
+      - initializeStyleControls ()
   - loadStoredList (src/textLists.ts)
     - persistList ()
       - persistLists ()
@@ -565,6 +598,9 @@ npm run preview
       - renderTextLists ()
       - moveToFavorites ()
       - moveToHistory ()
+      - initializeTextLists ()
+  - initializePanelToggles ()
+    - initializeDelimiterInput ()
   - prepareCanvas (src/visualization/canvas.ts)
   - getHannWindow (src/visualization/fft.ts)
     - fftRadix2 ()
@@ -592,8 +628,10 @@ npm run preview
       - processChunk ()
       - drawTimeTicks ()
   - catch (src/audio.ts)
-  - requestSpectrogramReset ()
-    - createSpectrogramImageCache ()
+  - getSpectrogramScale (src/visualization/spectrogramCache.ts)
+    - setSpectrogramScale ()
+      - requestSpectrogramReset ()
+      - createSpectrogramImageCache ()
       - analyzeAndCacheSpectrogram ()
       - handleSpectrogramInitialization ()
       - resetSpectrogramCaches ()
@@ -615,13 +653,14 @@ npm run preview
       - render ()
       - finalize ()
       - stopPlayback ()
+      - initializeSpectrogramScaleToggle ()
+      - updateLabel ()
 - for (src/audio.ts)
-- saveDelimiter (src/main.ts)
-- scheduleSaveDelimiter (src/main.ts)
+- handleReset (src/playback/confirmDialog.ts)
 - makeDOM (src/playback.truncation.test.ts)
 - triggerPlay (src/playback.ts)
-- handleReset (src/playback.ts)
 - while (src/styleManager.ts)
+- saveDelimiter (src/uiControls.ts)
 
 
 ## プロジェクト構造（ファイル一覧）
@@ -645,7 +684,7 @@ issue-notes/122.md
 issue-notes/123.md
 issue-notes/138.md
 issue-notes/140.md
-issue-notes/155.md
+issue-notes/159.md
 issue-notes/22.md
 issue-notes/23.md
 issue-notes/24.md
@@ -667,4 +706,4 @@ package-lock.json
 
 
 ---
-Generated at: 2026-03-09 07:01:17 JST
+Generated at: 2026-03-10 07:03:46 JST
