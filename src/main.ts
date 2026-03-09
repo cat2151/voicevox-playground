@@ -4,14 +4,8 @@ import {
 	DELIMITER_STORAGE_KEY,
 	FrequencyScale,
 } from "./config";
-import {
-	getCurrentSettings,
-	loadSettings,
-	resetSettings,
-	setFrequencyTopPercent,
-	setVoicevoxNemoPort,
-	setVoicevoxPort,
-} from "./settings";
+import { loadSettings } from "./settings";
+import { initializeSettingsPanel } from "./settingsPanel";
 import { initializeTextLists } from "./textLists";
 import {
 	adjustIntonationScale,
@@ -31,7 +25,6 @@ import {
 import { appState } from "./state";
 import { updateExportButtonState } from "./uiControls";
 import {
-	clearAudioCache,
 	downloadLastAudio,
 	handlePlay,
 	handlePlayButtonClick,
@@ -161,71 +154,16 @@ document.addEventListener("DOMContentLoaded", () => {
 		"settingsResetButton",
 	) as HTMLButtonElement | null;
 
-	const applySettingsToInputs = () => {
-		const s = getCurrentSettings();
-		if (voicevoxPortInput) voicevoxPortInput.value = String(s.voicevoxPort);
-		if (voicevoxNemoPortInput)
-			voicevoxNemoPortInput.value = String(s.voicevoxNemoPort);
-		if (frequencyTopPercentInput)
-			frequencyTopPercentInput.value = String(s.frequencyTopPercent);
-	};
-	applySettingsToInputs();
-
-	const refreshStylesAfterPortChange = () => {
-		clearAudioCache();
-		void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null);
-	};
-
-	if (settingsToggleButton && settingsPanel) {
-		settingsToggleButton.addEventListener("click", () => {
-			const isHidden = settingsPanel.hidden;
-			settingsPanel.hidden = !isHidden;
-			settingsToggleButton.setAttribute("aria-expanded", String(isHidden));
-		});
-	}
-
-	if (voicevoxPortInput) {
-		voicevoxPortInput.addEventListener("change", () => {
-			const port = Number(voicevoxPortInput.value);
-			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
-				setVoicevoxPort(port);
-				refreshStylesAfterPortChange();
-			} else {
-				applySettingsToInputs();
-			}
-		});
-	}
-
-	if (voicevoxNemoPortInput) {
-		voicevoxNemoPortInput.addEventListener("change", () => {
-			const port = Number(voicevoxNemoPortInput.value);
-			if (Number.isInteger(port) && port >= 1 && port <= 65535) {
-				setVoicevoxNemoPort(port);
-				refreshStylesAfterPortChange();
-			} else {
-				applySettingsToInputs();
-			}
-		});
-	}
-
-	if (frequencyTopPercentInput) {
-		frequencyTopPercentInput.addEventListener("change", () => {
-			const pct = Number(frequencyTopPercentInput.value);
-			if (Number.isFinite(pct) && pct >= 0.1 && pct <= 100) {
-				setFrequencyTopPercent(pct);
-			} else {
-				applySettingsToInputs();
-			}
-		});
-	}
-
-	if (settingsResetButton) {
-		settingsResetButton.addEventListener("click", () => {
-			resetSettings();
-			applySettingsToInputs();
-			refreshStylesAfterPortChange();
-		});
-	}
+	initializeSettingsPanel({
+		settingsToggleButton,
+		settingsPanel,
+		voicevoxPortInput,
+		voicevoxNemoPortInput,
+		frequencyTopPercentInput,
+		settingsResetButton,
+		styleSelect,
+		speakerStyleSelect,
+	});
 
 	const applyStyleSelection = (styleId: number) => {
 		setSelectedStyleId(styleId);
