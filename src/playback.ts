@@ -36,7 +36,6 @@ import {
 	stopActivePlayback,
 } from "./visualization";
 import {
-	clearAudioCache,
 	getCachedAudio,
 	getAudioCacheKey,
 	setCachedAudio,

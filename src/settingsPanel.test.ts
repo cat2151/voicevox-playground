@@ -43,10 +43,6 @@ function makeButton(): HTMLButtonElement {
 	return document.createElement("button");
 }
 
-function makeSelect(): HTMLSelectElement {
-	return document.createElement("select");
-}
-
 function makePanel(): HTMLElement {
 	const el = document.createElement("div");
 	el.hidden = true;
