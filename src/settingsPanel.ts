@@ -19,6 +19,33 @@ interface SettingsPanelElements {
 	speakerStyleSelect: HTMLSelectElement | null;
 }
 
+export function initializeSettingsPanelFromDOM(): void {
+	initializeSettingsPanel({
+		settingsToggleButton: document.getElementById(
+			"settingsToggleButton",
+		) as HTMLButtonElement | null,
+		settingsPanel: document.getElementById("settingsPanel"),
+		voicevoxPortInput: document.getElementById(
+			"voicevoxPortInput",
+		) as HTMLInputElement | null,
+		voicevoxNemoPortInput: document.getElementById(
+			"voicevoxNemoPortInput",
+		) as HTMLInputElement | null,
+		frequencyTopPercentInput: document.getElementById(
+			"frequencyTopPercentInput",
+		) as HTMLInputElement | null,
+		settingsResetButton: document.getElementById(
+			"settingsResetButton",
+		) as HTMLButtonElement | null,
+		styleSelect: document.getElementById(
+			"styleSelect",
+		) as HTMLSelectElement | null,
+		speakerStyleSelect: document.getElementById(
+			"speakerStyleSelect",
+		) as HTMLSelectElement | null,
+	});
+}
+
 export function initializeSettingsPanel(elements: SettingsPanelElements): void {
 	const {
 		settingsToggleButton,

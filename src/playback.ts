@@ -497,3 +497,55 @@ function clearRealtimeWaveformCanvas(canvas: HTMLCanvasElement | null) {
 	ctx.lineTo(canvas.width, canvas.height / 2);
 	ctx.stroke();
 }
+
+export function initializePlaybackControls(): void {
+	const playButton = document.getElementById(
+		"playButton",
+	) as HTMLButtonElement | null;
+	const textArea = document.getElementById(
+		"text",
+	) as HTMLTextAreaElement | null;
+	const exportButton = document.getElementById(
+		"exportButton",
+	) as HTMLButtonElement | null;
+	const loopCheckboxEl = document.getElementById(
+		"loopCheckbox",
+	) as HTMLInputElement | null;
+
+	setLoopCheckboxElement(loopCheckboxEl);
+
+	if (loopCheckboxEl) {
+		loopCheckboxEl.addEventListener("change", () => {
+			if (
+				loopCheckboxEl.checked &&
+				!appState.isProcessing &&
+				!isPlaybackActive() &&
+				!isPlayRequestPending()
+			) {
+				void handlePlay();
+			}
+		});
+	}
+
+	if (playButton) {
+		playButton.addEventListener("click", handlePlayButtonClick);
+		setPlayButtonAppearance("play");
+		playButton.focus();
+	}
+
+	if (textArea) {
+		textArea.addEventListener("input", scheduleAutoPlay);
+	}
+
+	if (exportButton) {
+		exportButton.addEventListener("click", downloadLastAudio);
+		updateExportButtonState(exportButton);
+	}
+
+	window.addEventListener("keydown", (event: KeyboardEvent) => {
+		if (event.key === "Enter" && (event.shiftKey || event.ctrlKey)) {
+			event.preventDefault();
+			handlePlayButtonClick();
+		}
+	});
+}

@@ -20,6 +20,8 @@ import {
 	createSpectrogramImageCache,
 	handleSpectrogramInitialization,
 	resetSpectrogramCaches,
+	getSpectrogramScale,
+	setSpectrogramScale,
 } from "./visualization/spectrogramCache";
 export {
 	getSpectrogramScale,
@@ -363,3 +365,30 @@ export {
 } from "./visualization/spectrogram";
 export { drawRenderedWaveform } from "./visualization/waveform";
 export { buildTimeTicks } from "./visualization/timeAxis";
+
+export function initializeSpectrogramScaleToggle(): void {
+	const spectrogramScaleToggle = document.getElementById(
+		"spectrogramScaleToggle",
+	) as HTMLButtonElement | null;
+	if (!spectrogramScaleToggle) return;
+
+	const updateLabel = () => {
+		const scale = getSpectrogramScale();
+		const isLogScale = scale === "log";
+		const nextLabel = isLogScale ? "リニアにする" : "対数にする";
+		spectrogramScaleToggle.textContent = nextLabel;
+		spectrogramScaleToggle.setAttribute("aria-pressed", String(isLogScale));
+		spectrogramScaleToggle.setAttribute(
+			"aria-label",
+			`スペクトログラムのスケールを${nextLabel}`,
+		);
+	};
+
+	updateLabel();
+	spectrogramScaleToggle.addEventListener("click", () => {
+		const nextScale: FrequencyScale =
+			getSpectrogramScale() === "linear" ? "log" : "linear";
+		setSpectrogramScale(nextScale);
+		updateLabel();
+	});
+}

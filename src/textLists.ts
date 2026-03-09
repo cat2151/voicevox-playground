@@ -131,12 +131,18 @@ export function addToHistory(text: string) {
 }
 
 export function initializeTextLists(options: {
-	favoritesList: HTMLUListElement | null;
-	historyList: HTMLUListElement | null;
+	favoritesList?: HTMLUListElement | null;
+	historyList?: HTMLUListElement | null;
 	onSelectText: (text: string) => void;
 }) {
-	favoritesListEl = options.favoritesList;
-	historyListEl = options.historyList;
+	favoritesListEl =
+		options.favoritesList !== undefined
+			? options.favoritesList
+			: (document.getElementById("favoritesList") as HTMLUListElement | null);
+	historyListEl =
+		options.historyList !== undefined
+			? options.historyList
+			: (document.getElementById("historyList") as HTMLUListElement | null);
 	onSelectText = options.onSelectText;
 	favoriteTexts = dedupeAndLimit(loadStoredList(FAVORITES_STORAGE_KEY));
 	historyTexts = dedupeAndLimit(loadStoredList(HISTORY_STORAGE_KEY));
