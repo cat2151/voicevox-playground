@@ -1,9 +1,5 @@
 import * as Tone from "tone";
-import {
-	AUDIO_CACHE_LIMIT,
-	AUTO_PLAY_DEBOUNCE_MS,
-	TEXT_MAX_LENGTH,
-} from "./config";
+import { AUTO_PLAY_DEBOUNCE_MS, TEXT_MAX_LENGTH } from "./config";
 import { addToHistory } from "./textLists";
 import {
 	fetchAndRenderIntonation,
@@ -39,12 +35,15 @@ import {
 	playAudio,
 	stopActivePlayback,
 } from "./visualization";
+import {
+	clearAudioCache,
+	getCachedAudio,
+	getAudioCacheKey,
+	setCachedAudio,
+} from "./playback/audioCache";
+import { confirmResetIntonationBeforePlay } from "./playback/confirmDialog";
 
-const audioCache = new Map<string, ArrayBuffer>();
-
-export function clearAudioCache(): void {
-	audioCache.clear();
-}
+export { clearAudioCache, getAudioCacheKey } from "./playback/audioCache";
 const PLAY_ICON_SVG =
 	'<svg class="icon icon--play" aria-hidden="true" viewBox="0 0 24 24" focusable="false" preserveAspectRatio="xMidYMid meet"><polygon points="3,2 22,12 3,22"/></svg>';
 const STOP_ICON_SVG =
@@ -90,10 +89,6 @@ function stopPlaybackAndResetLoop() {
 	setTimeout(() => {
 		stopInProgress = false;
 	}, 0);
-}
-
-export function getAudioCacheKey(text: string, styleId: number) {
-	return `${styleId}::${text}`;
 }
 
 export function setTextAndPlay(text: string) {
@@ -155,57 +150,6 @@ export function scheduleAutoPlay() {
 	};
 
 	autoPlayTimer = window.setTimeout(triggerPlay, AUTO_PLAY_DEBOUNCE_MS);
-}
-
-async function confirmResetIntonationBeforePlay() {
-	const dialog = document.getElementById("playConfirmDialog");
-	const resetButton = document.getElementById("playConfirmReset");
-	const cancelButton = document.getElementById("playConfirmCancel");
-	if (!dialog || !resetButton || !cancelButton) {
-		return window.confirm(
-			"イントネーションの編集内容が破棄されます。再生してよろしいですか？",
-		);
-	}
-	const previousActiveElement = document.activeElement as HTMLElement | null;
-	dialog.removeAttribute("hidden");
-	let settled = false;
-	(resetButton as HTMLElement).focus();
-	return new Promise<boolean>((resolve) => {
-		let keydownHandler: ((event: KeyboardEvent) => void) | null = null;
-		const cleanup = () => {
-			if (settled) return;
-			settled = true;
-			dialog.setAttribute("hidden", "true");
-			if (keydownHandler) {
-				dialog.removeEventListener("keydown", keydownHandler);
-			}
-			resetButton.removeEventListener("click", handleReset);
-			cancelButton.removeEventListener("click", handleCancel);
-			if (
-				previousActiveElement &&
-				typeof previousActiveElement.focus === "function"
-			) {
-				previousActiveElement.focus();
-			}
-		};
-		const handleReset = () => {
-			cleanup();
-			resolve(true);
-		};
-		const handleCancel = () => {
-			cleanup();
-			resolve(false);
-		};
-		keydownHandler = (event: KeyboardEvent) => {
-			if (event.key === "Escape" || event.key === "Esc") {
-				event.preventDefault();
-				handleCancel();
-			}
-		};
-		dialog.addEventListener("keydown", keydownHandler);
-		resetButton.addEventListener("click", handleReset, { once: true });
-		cancelButton.addEventListener("click", handleCancel, { once: true });
-	});
 }
 
 export function handlePlayButtonClick() {
@@ -373,7 +317,7 @@ export async function handlePlay() {
 			.join("|");
 		for (const segment of segments) {
 			const cacheKey = getAudioCacheKey(segment.text, segment.styleId);
-			let audioBuffer = bypassCache ? null : (audioCache.get(cacheKey) ?? null);
+			let audioBuffer = bypassCache ? null : getCachedAudio(cacheKey);
 			if (audioBuffer) {
 				usedCache = true;
 			} else {
@@ -393,13 +337,7 @@ export async function handlePlay() {
 				showStatus("音声を生成中...", "info");
 				audioBuffer = await synthesize(audioQuery, segment.styleId, apiBase);
 				if (!bypassCache) {
-					if (audioCache.size >= AUDIO_CACHE_LIMIT) {
-						const oldest = audioCache.keys().next().value;
-						if (oldest !== undefined) {
-							audioCache.delete(oldest);
-						}
-					}
-					audioCache.set(cacheKey, audioBuffer);
+					setCachedAudio(cacheKey, audioBuffer);
 				}
 			}
 			const decodedBuffer = await audioContext.decodeAudioData(

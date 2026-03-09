@@ -89,3 +89,42 @@ export function updateIntonationTiming(message: string) {
 		intonationState.intonationTimingEl.textContent = message;
 	}
 }
+
+export function getIntonationKeyboardEnabled(): boolean {
+	return intonationState.intonationKeyboardEnabled;
+}
+
+export function setIntonationKeyboardEnabled(enabled: boolean): void {
+	intonationState.intonationKeyboardEnabled = enabled;
+}
+
+export function resetIntonationState(): void {
+	intonationState.intonationInitialQuery = null;
+	intonationState.intonationInitialPitchRange = null;
+	intonationState.intonationDisplayRange = null;
+	intonationState.intonationRangeExtra = { top: 0, bottom: 0 };
+	intonationState.intonationStepSize = 1;
+	intonationState.currentIntonationQuery = null;
+	intonationState.currentIntonationText = null;
+	intonationState.intonationPoints = [];
+	intonationState.intonationPointPositions = [];
+	intonationState.intonationSelectedIndex = null;
+	intonationState.intonationTopScale = 1;
+	intonationState.intonationBottomScale = 1;
+	intonationState.intonationDirty = false;
+	if (intonationState.intonationCanvas) {
+		const ctx = intonationState.intonationCanvas.getContext("2d");
+		if (ctx) {
+			ctx.clearRect(
+				0,
+				0,
+				intonationState.intonationCanvas.width,
+				intonationState.intonationCanvas.height,
+			);
+		}
+	}
+	if (intonationState.intonationLabelsEl) {
+		intonationState.intonationLabelsEl.textContent = "";
+	}
+	updateIntonationTiming("イントネーション未取得");
+}
