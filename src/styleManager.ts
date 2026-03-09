@@ -5,6 +5,7 @@ import {
 	ZUNDAMON_SPEAKER_ID,
 } from "./config";
 import { getVoicevoxApiBase, getVoicevoxNemoApiBase } from "./settings";
+import { showStatus, scheduleHideStatus } from "./status";
 
 export type DelimiterConfig = { start: string; end: string };
 export type TextSegment = { text: string; styleId: number };
@@ -305,4 +306,80 @@ export async function fetchVoiceStyles(
 	populateSpeakerStyleSelect(speakerStyleSelect ?? null, selectedStyleId);
 
 	return anySuccess;
+}
+
+export function applyStyleSelection(styleId: number): void {
+	setSelectedStyleId(styleId);
+	const styleSelect = document.getElementById(
+		"styleSelect",
+	) as HTMLSelectElement | null;
+	if (styleSelect) {
+		styleSelect.value = String(styleId);
+	}
+	const speakerStyleSelect = document.getElementById(
+		"speakerStyleSelect",
+	) as HTMLSelectElement | null;
+	populateSpeakerStyleSelect(speakerStyleSelect, styleId);
+}
+
+export function initializeStyleControls(onAutoPlay: () => void): void {
+	const styleSelect = document.getElementById(
+		"styleSelect",
+	) as HTMLSelectElement | null;
+	const speakerStyleSelect = document.getElementById(
+		"speakerStyleSelect",
+	) as HTMLSelectElement | null;
+	const randomStyleCheckbox = document.getElementById(
+		"randomStyleCheckbox",
+	) as HTMLInputElement | null;
+
+	if (styleSelect) {
+		populateStyleSelect(styleSelect);
+		styleSelect.addEventListener("change", () => {
+			const parsed = Number(styleSelect.value);
+			if (!Number.isNaN(parsed)) {
+				applyStyleSelection(parsed);
+				onAutoPlay();
+			}
+		});
+		applyStyleSelection(getSelectedStyleId());
+	}
+
+	if (randomStyleCheckbox) {
+		randomStyleCheckbox.addEventListener("change", () => {
+			if (randomStyleCheckbox.checked) {
+				const randomId = selectRandomStyleId();
+				applyStyleSelection(randomId);
+			}
+			onAutoPlay();
+		});
+	}
+
+	if (speakerStyleSelect) {
+		speakerStyleSelect.addEventListener("change", () => {
+			const parsed = Number(speakerStyleSelect.value);
+			if (!Number.isNaN(parsed)) {
+				applyStyleSelection(parsed);
+				onAutoPlay();
+			}
+		});
+	}
+
+	void fetchVoiceStyles(styleSelect ?? null, speakerStyleSelect ?? null).then(
+		(success) => {
+			if (success) {
+				showStatus(
+					"ローカルサーバーとの通信成功。音声合成の準備ができました",
+					"success",
+				);
+				scheduleHideStatus(5000);
+			} else {
+				alert("ローカルVOICEVOXサーバーを起動してください");
+			}
+			if (randomStyleCheckbox?.checked) {
+				const randomId = selectRandomStyleId();
+				applyStyleSelection(randomId);
+			}
+		},
+	);
 }

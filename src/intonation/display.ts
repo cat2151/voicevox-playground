@@ -427,3 +427,8 @@ export function findNearestIntonationPoint(x: number) {
 	});
 	return closestIndex;
 }
+
+export function refreshIntonationChart(): void {
+	refreshDisplayRange();
+	drawIntonationChart(state.intonationPoints);
+}
